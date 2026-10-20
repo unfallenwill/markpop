@@ -118,10 +118,21 @@ impl BitmapEngine {
         sans_family: Option<&str>,
         mono_family: Option<&str>,
     ) -> Result<BitmapEngine, RenderError> {
+        BitmapEngine::with_variations(format, font_file, sans_family, mono_family, &[])
+    }
+
+    /// Creates a raster engine with variable-font axis settings applied.
+    pub fn with_variations(
+        format: OutputFormat,
+        font_file: Option<&str>,
+        sans_family: Option<&str>,
+        mono_family: Option<&str>,
+        variations: &[(String, f32)],
+    ) -> Result<BitmapEngine, RenderError> {
         debug_assert!(format.is_raster());
         Ok(BitmapEngine {
             format,
-            fonts: load_fonts(font_file, sans_family, mono_family)?,
+            fonts: load_fonts(font_file, sans_family, mono_family, variations)?,
         })
     }
 
@@ -175,13 +186,23 @@ pub fn engine_for_theme(
     font_file: Option<&str>,
     theme: Option<&Theme>,
 ) -> Result<Box<dyn Engine>, RenderError> {
+    engine_for_render(format, font_file, theme, &[])
+}
+
+/// Builds the engine for a format, with variable-font axis settings.
+pub fn engine_for_render(
+    format: OutputFormat,
+    font_file: Option<&str>,
+    theme: Option<&Theme>,
+    variations: &[(String, f32)],
+) -> Result<Box<dyn Engine>, RenderError> {
     match format {
         OutputFormat::Svg => Ok(Box::new(SvgEngine)),
         format => {
             let sans = theme.map(|t| t.sans_family.as_str());
             let mono = theme.map(|t| t.mono_family.as_str());
-            Ok(Box::new(BitmapEngine::with_families(
-                format, font_file, sans, mono,
+            Ok(Box::new(BitmapEngine::with_variations(
+                format, font_file, sans, mono, variations,
             )?))
         }
     }
@@ -192,15 +213,22 @@ fn load_fonts(
     font_file: Option<&str>,
     sans_family: Option<&str>,
     mono_family: Option<&str>,
+    variations: &[(String, f32)],
 ) -> Result<LoadedFonts, RenderError> {
     if let Some(path) = font_file {
-        let face = Face::load(Path::new(path)).ok_or(RenderError::FontUnavailable)?;
+        let mut face = Face::load(Path::new(path)).ok_or(RenderError::FontUnavailable)?;
+        face.set_variations(variations);
         return Ok(LoadedFonts {
             sans: vec![face.clone()],
             mono: vec![face],
         });
     }
     let mut fonts = FontSet::load(&font::discover()).ok_or(RenderError::FontUnavailable)?;
+    if !variations.is_empty() {
+        for face in fonts.sans.iter_mut().chain(fonts.mono.iter_mut()) {
+            face.set_variations(variations);
+        }
+    }
     if let Some(family) = sans_family {
         fonts.sans = prefer_family(fonts.sans, family);
     }

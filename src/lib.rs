@@ -177,10 +177,11 @@ pub fn render_pages(markdown: &str, options: &Options) -> Result<Vec<String>, Re
 pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, RenderError> {
     options.validate()?;
     let scene = to_scene_with_options(markdown, options);
-    let engine = engine::engine_for_theme(
+    let engine = engine::engine_for_render(
         options.format,
         options.font_file.as_deref(),
         Some(&options.theme),
+        &options.variations,
     )?;
     Ok(engine.encode(&scene, &options.theme, options.zoom))
 }
@@ -188,10 +189,11 @@ pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, Render
 /// Renders one image per page, in the format selected by [`Options::format`].
 pub fn render_bytes_pages(markdown: &str, options: &Options) -> Result<Vec<Vec<u8>>, RenderError> {
     options.validate()?;
-    let engine = engine::engine_for_theme(
+    let engine = engine::engine_for_render(
         options.format,
         options.font_file.as_deref(),
         Some(&options.theme),
+        &options.variations,
     )?;
     Ok(to_pages_inner(markdown, options)
         .iter()

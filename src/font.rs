@@ -52,9 +52,11 @@ pub struct Face {
     italic: bool,
     /// COLR v0 layers + CPAL palette, when the face has colour glyphs.
     colors: Option<ColorGlyphs>,
+    /// Variation axes and the currently selected instance.
+    vars: Variations,
 }
 
-/// Colour information for layered (COLR v0) glyphs.
+/// Colour information for layered (COLR v0) glyphs and COLR v1 paint graphs.
 #[derive(Debug, Clone)]
 struct ColorGlyphs {
     /// Absolute offset of the base glyph record array.
@@ -69,6 +71,12 @@ struct ColorGlyphs {
     base_list: Option<usize>,
     /// Absolute offset of the COLR v1 LayerList, when present.
     layer_list: Option<usize>,
+    /// Absolute offset of the COLR v1 ClipList, when present.
+    clip_list: Option<usize>,
+    /// Absolute offset of the COLR ItemVariationStore, when present.
+    var_store: Option<usize>,
+    /// Absolute offset of the COLR DeltaSetIndexMap, when present.
+    var_map: Option<usize>,
 }
 
 /// Gradient extension mode for coordinates outside `0..=1`.
@@ -108,9 +116,13 @@ pub enum Paint {
     /// Apply an affine transform to everything below.
     Transform { matrix: [f32; 6], paint: Box<Paint> },
     /// Linear gradient from `p0` to `p1`.
+    ///
+    /// `p2` is the rotation point: the colour line is projected along the
+    /// direction perpendicular to `p0`–`p2`, not necessarily along `p0`–`p1`.
     Linear {
         p0: [f32; 2],
         p1: [f32; 2],
+        p2: [f32; 2],
         stops: Vec<GradientStop>,
         extend: Extend,
     },
@@ -123,8 +135,20 @@ pub enum Paint {
         stops: Vec<GradientStop>,
         extend: Extend,
     },
-    /// Source painted over backdrop.
+    /// Sweep (conic) gradient around `center`.
+    ///
+    /// `start` and `end` are counter-clockwise angles in radians from the
+    /// positive x axis of the design grid.
+    Sweep {
+        center: [f32; 2],
+        start: f32,
+        end: f32,
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
+    /// Source composited over backdrop using a COLR composite mode index.
     Composite {
+        mode: u8,
         source: Box<Paint>,
         backdrop: Box<Paint>,
     },
@@ -136,6 +160,213 @@ pub struct ColorLayer {
     pub glyph: u16,
     /// Fill colour from the font's palette.
     pub color: Color,
+}
+
+/// One axis of a variable font, in design units.
+///
+/// ```
+/// use markdown2svg::font::Axis;
+/// let axis = Axis {
+///     tag: "wght".into(),
+///     min: 100.0,
+///     default: 400.0,
+///     max: 900.0,
+/// };
+/// assert_eq!(axis.default, 400.0);
+/// ```
+#[derive(Debug, Clone, PartialEq)]
+pub struct Axis {
+    /// Four-character axis tag (`wght`, `opsz`, …).
+    pub tag: String,
+    /// Minimum design value.
+    pub min: f32,
+    /// Default design value (the static instance).
+    pub default: f32,
+    /// Maximum design value.
+    pub max: f32,
+}
+
+impl Axis {
+    /// Restricts a design value to the axis range.
+    pub fn clamp(&self, value: f32) -> f32 {
+        if self.min <= self.max {
+            value.clamp(self.min, self.max)
+        } else {
+            self.default
+        }
+    }
+}
+
+/// Variation state of a face: axes, selected instance and table offsets.
+#[derive(Debug, Clone, Default)]
+struct Variations {
+    /// Axes declared by `fvar`, in font order.
+    axes: Vec<Axis>,
+    /// Selected design-space values, one per axis.
+    values: Vec<f32>,
+    /// Normalized coordinates in `-1.0..=1.0` (after `avar` mapping).
+    coords: Vec<f32>,
+    /// Absolute offset of `avar`, when present.
+    avar: Option<usize>,
+    /// Absolute offset of `gvar`, when present.
+    gvar: Option<usize>,
+    /// Absolute offset of `HVAR`, when present.
+    hvar: Option<usize>,
+}
+
+impl Variations {
+    fn parse(
+        data: &[u8],
+        table: &mut impl FnMut(&[u8; 4]) -> Option<(usize, usize)>,
+    ) -> Variations {
+        let mut vars = Variations::default();
+        let Some((fvar, _)) = table(b"fvar") else {
+            return vars;
+        };
+        let axes_offset = u16_at(data, fvar + 4) as usize;
+        let axis_count = u16_at(data, fvar + 8) as usize;
+        let axis_size = u16_at(data, fvar + 10) as usize;
+        for i in 0..axis_count {
+            let p = fvar + axes_offset + i * axis_size;
+            vars.axes.push(Axis {
+                tag: tag_at(data, p),
+                min: fixed(data, p + 4),
+                default: fixed(data, p + 8),
+                max: fixed(data, p + 12),
+            });
+        }
+        vars.values = vars.axes.iter().map(|a| a.default).collect();
+        vars.coords = vec![0.0; vars.axes.len()];
+        vars.avar = table(b"avar").map(|(off, _)| off);
+        vars.gvar = table(b"gvar").map(|(off, _)| off);
+        vars.hvar = table(b"HVAR").map(|(off, _)| off);
+        vars
+    }
+
+    /// Selects the instance described by `settings` (`tag = value` pairs)
+    /// and recomputes the normalized coordinates.
+    fn apply(&mut self, data: &[u8], settings: &[(String, f32)]) {
+        for (i, axis) in self.axes.iter().enumerate() {
+            if let Some((_, value)) = settings
+                .iter()
+                .rev()
+                .find(|(tag, _)| tag.eq_ignore_ascii_case(&axis.tag))
+            {
+                self.values[i] = axis.clamp(*value);
+            }
+        }
+        self.normalize(data);
+    }
+
+    fn normalize(&mut self, data: &[u8]) {
+        self.coords = self
+            .axes
+            .iter()
+            .zip(&self.values)
+            .enumerate()
+            .map(|(i, (axis, value))| {
+                let value = *value;
+                let normalized = if value < axis.default {
+                    -(axis.default - value) / (axis.default - axis.min).max(1e-6)
+                } else if value > axis.default {
+                    (value - axis.default) / (axis.max - axis.default).max(1e-6)
+                } else {
+                    0.0
+                }
+                .clamp(-1.0, 1.0);
+                match self.avar {
+                    Some(avar) => avar_map(data, avar, i, normalized),
+                    None => normalized,
+                }
+            })
+            .collect();
+    }
+
+    /// Whether every axis sits at its default value.
+    fn is_default(&self) -> bool {
+        self.coords.iter().all(|c| *c == 0.0)
+    }
+}
+
+/// Maps a normalized coordinate through the `avar` segment map of one axis.
+fn avar_map(data: &[u8], avar: usize, axis: usize, coord: f32) -> f32 {
+    let axes = u16_at(data, avar + 6) as usize;
+    if axis >= axes {
+        return coord;
+    }
+    // Segment maps are variable-length, so walk the axes before this one.
+    let mut p = avar + 8;
+    for i in 0..axes {
+        let pairs = u16_at(data, p) as usize;
+        if i == axis {
+            if pairs == 0 {
+                return coord;
+            }
+            let from = |k: usize| f2dot14(data, p + 2 + k * 4);
+            let to = |k: usize| f2dot14(data, p + 4 + k * 4);
+            if coord <= from(0) {
+                return to(0);
+            }
+            for k in 1..pairs {
+                if coord <= from(k) {
+                    let span = from(k) - from(k - 1);
+                    let f = if span.abs() < 1e-6 {
+                        1.0
+                    } else {
+                        (coord - from(k - 1)) / span
+                    };
+                    return to(k - 1) + (to(k) - to(k - 1)) * f;
+                }
+            }
+            return to(pairs - 1);
+        }
+        p += 2 + pairs * 4;
+    }
+    coord
+}
+
+/// Reads the variable fields of one COLR paint table.
+///
+/// Each variable field has a fixed position in the base/sequence scheme: the
+/// `k`-th variable field of a table uses the mapping entry `base + k`.
+struct VarFields<'a> {
+    face: &'a Face,
+    base: u32,
+}
+
+impl VarFields<'_> {
+    fn delta(&self, k: usize) -> f32 {
+        self.face.var_delta(self.base, k)
+    }
+
+    fn fword(&self, offset: usize, k: usize) -> f32 {
+        fword(&self.face.data, offset) + self.delta(k)
+    }
+
+    fn f2dot14(&self, offset: usize, k: usize) -> f32 {
+        f2dot14(&self.face.data, offset) + self.delta(k) / 16384.0
+    }
+
+    fn fixed(&self, offset: usize, k: usize) -> f32 {
+        fixed(&self.face.data, offset) + self.delta(k) / 65536.0
+    }
+}
+
+/// Base outline points of a glyph, as variation data sees them.
+#[derive(Debug, Clone)]
+enum GlyphPoints {
+    /// A simple glyph: points plus the last index of each contour.
+    Simple {
+        /// On/off-curve points in font units.
+        points: Vec<Point>,
+        /// Inclusive end index of each contour.
+        ends: Vec<usize>,
+    },
+    /// A composite glyph: gvar deltas refer to component offsets.
+    Composite {
+        /// Number of components.
+        count: usize,
+    },
 }
 
 fn u8_at(data: &[u8], off: usize) -> u8 {
@@ -237,6 +468,10 @@ impl Face {
             _ => None,
         };
 
+        // Variable-font tables: axes, instance coordinates and the
+        // per-glyph / per-metric variation data.
+        let vars = Variations::parse(&data, &mut table);
+
         // Normalize a TTC offset: table offsets are absolute already.
         data.shrink_to_fit();
 
@@ -255,6 +490,7 @@ impl Face {
             bold,
             italic,
             colors,
+            vars,
         })
     }
 
@@ -337,6 +573,51 @@ impl Face {
         ))
     }
 
+    /// Pre-declared clip box of a colour glyph, in font units as
+    /// `[x_min, y_min, x_max, y_max]`.
+    ///
+    /// COLR v1 fonts may give a glyph an overall bounds; anything painted
+    /// outside it must not render. Returns `None` when the font declares no
+    /// box for this glyph.
+    pub fn color_clip(&self, gid: u16) -> Option<[f32; 4]> {
+        let colors = self.colors.as_ref()?;
+        let list = colors.clip_list?;
+        let count = u32_at(&self.data, list + 1) as usize;
+        // Clip records are sorted by start glyph id.
+        // Find the last record whose range starts at or before `gid`.
+        let (mut lo, mut hi) = (0usize, count);
+        while lo < hi {
+            let mid = (lo + hi) / 2;
+            if u16_at(&self.data, list + 5 + mid * 7) <= gid {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if lo == 0 {
+            return None;
+        }
+        let record = list + 5 + (lo - 1) * 7;
+        let (start, end) = (u16_at(&self.data, record), u16_at(&self.data, record + 2));
+        if gid < start || gid > end {
+            return None;
+        }
+        let box_offset = list + u24_at(&self.data, record + 4) as usize;
+        let format = u8_at(&self.data, box_offset);
+        if format != 1 && format != 2 {
+            return None;
+        }
+        let var = self.var_fields(box_offset, 9, format == 2);
+        // The spec asks for an expanded box: round the minimum down and the
+        // maximum up, so no part of the glyph is clipped away.
+        Some([
+            var.fword(box_offset + 1, 0).floor(),
+            var.fword(box_offset + 3, 1).floor(),
+            var.fword(box_offset + 5, 2).ceil(),
+            var.fword(box_offset + 7, 3).ceil(),
+        ])
+    }
+
     /// Finds the paint offset for `gid` in a COLR v1 BaseGlyphList.
     fn paint_offset(&self, gid: u16, list: usize) -> Option<usize> {
         let count = u32_at(&self.data, list) as usize;
@@ -365,7 +646,8 @@ impl Face {
             return None;
         }
         let data = &self.data;
-        match u8_at(data, offset) {
+        let format = u8_at(data, offset);
+        match format {
             // PaintColrLayers
             1 => {
                 let count = u8_at(data, offset + 1) as usize;
@@ -388,29 +670,52 @@ impl Face {
             // PaintSolid / PaintVarSolid
             2 | 3 => {
                 let index = u16_at(data, offset + 1);
-                let alpha = f2dot14(data, offset + 3);
-                self.palette_paint(index, alpha)
+                // PaintVarSolid appends its varIndexBase after the alpha.
+                let var = self.var_fields(offset, 5, format == 3);
+                self.palette_paint(index, var.f2dot14(offset + 3, 0))
             }
             // PaintLinearGradient / PaintVarLinearGradient
             4 | 5 => {
+                let is_var = format == 5;
+                let var = self.var_fields(offset, 16, is_var);
                 let (extend, stops) =
-                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize)?;
+                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize, is_var)?;
                 Some(Paint::Linear {
-                    p0: [fword(data, offset + 4), fword(data, offset + 6)],
-                    p1: [fword(data, offset + 8), fword(data, offset + 10)],
+                    p0: [var.fword(offset + 4, 0), var.fword(offset + 6, 1)],
+                    p1: [var.fword(offset + 8, 2), var.fword(offset + 10, 3)],
+                    p2: [var.fword(offset + 12, 4), var.fword(offset + 14, 5)],
                     stops,
                     extend,
                 })
             }
             // PaintRadialGradient / PaintVarRadialGradient
             6 | 7 => {
+                let is_var = format == 7;
+                let var = self.var_fields(offset, 16, is_var);
                 let (extend, stops) =
-                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize)?;
+                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize, is_var)?;
+                let radius =
+                    |at: usize, k: usize| (u16_at(data, at) as f32 + var.delta(k)).max(0.0);
                 Some(Paint::Radial {
-                    c0: [fword(data, offset + 4), fword(data, offset + 6)],
-                    r0: u16_at(data, offset + 8) as f32,
-                    c1: [fword(data, offset + 10), fword(data, offset + 12)],
-                    r1: u16_at(data, offset + 14) as f32,
+                    c0: [var.fword(offset + 4, 0), var.fword(offset + 6, 1)],
+                    r0: radius(offset + 8, 2),
+                    c1: [var.fword(offset + 10, 3), var.fword(offset + 12, 4)],
+                    r1: radius(offset + 14, 5),
+                    stops,
+                    extend,
+                })
+            }
+            // PaintSweepGradient / PaintVarSweepGradient
+            8 | 9 => {
+                let is_var = format == 9;
+                let var = self.var_fields(offset, 12, is_var);
+                let (extend, stops) =
+                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize, is_var)?;
+                // Angles carry a +1.0 bias and count 180 degrees per unit.
+                Some(Paint::Sweep {
+                    center: [var.fword(offset + 4, 0), var.fword(offset + 6, 1)],
+                    start: (var.f2dot14(offset + 8, 2) + 1.0) * std::f32::consts::PI,
+                    end: (var.f2dot14(offset + 10, 3) + 1.0) * std::f32::consts::PI,
                     stops,
                     extend,
                 })
@@ -435,13 +740,14 @@ impl Face {
             12 | 13 => {
                 let paint_offset = offset + u24_at(data, offset + 1) as usize;
                 let affine = offset + u24_at(data, offset + 4) as usize;
+                let var = self.var_fields(affine, 24, format == 13);
                 let matrix = [
-                    fixed(data, affine),
-                    fixed(data, affine + 4),
-                    fixed(data, affine + 8),
-                    fixed(data, affine + 12),
-                    fixed(data, affine + 16),
-                    fixed(data, affine + 20),
+                    var.fixed(affine, 0),
+                    var.fixed(affine + 4, 1),
+                    var.fixed(affine + 8, 2),
+                    var.fixed(affine + 12, 3),
+                    var.fixed(affine + 16, 4),
+                    var.fixed(affine + 20, 5),
                 ];
                 Some(Paint::Transform {
                     matrix,
@@ -460,8 +766,12 @@ impl Face {
             // PaintComposite
             32 => {
                 let source = offset + u24_at(data, offset + 1) as usize;
+                let raw = u8_at(data, offset + 4);
+                // Unrecognised modes must behave like COMPOSITE_CLEAR.
+                let mode = if raw <= 27 { raw } else { 0 };
                 let backdrop = offset + u24_at(data, offset + 5) as usize;
                 Some(Paint::Composite {
+                    mode,
                     source: Box::new(self.parse_paint(source, depth + 1)?),
                     backdrop: Box::new(self.parse_paint(backdrop, depth + 1)?),
                 })
@@ -472,82 +782,94 @@ impl Face {
 
     /// Builds the affine matrix of a simple transform paint table.
     fn simple_transform(&self, offset: usize) -> Option<[f32; 6]> {
+        use std::f32::consts::PI;
         let data = &self.data;
         let format = u8_at(data, offset);
-        let angle = |o: usize| f2dot14(data, o).to_radians();
-        Some(match format {
+        if !(14..=31).contains(&format) {
+            return None;
+        }
+        // Even formats are the static version, odd ones carry a varIndexBase.
+        let is_var = format % 2 == 1;
+        let kind = (format - 14) / 2;
+        // Offset of the varIndexBase field, per transform kind.
+        let var_offset = [8, 8, 12, 6, 10, 6, 10, 8, 12][kind as usize];
+        let var = self.var_fields(offset, var_offset, is_var);
+        // Rotations and skews count 180 degrees per 1.0.
+        let angle = |k: usize, at: usize| var.f2dot14(at, k) * PI;
+        Some(match kind {
             // Translate
-            14 | 15 => [
+            0 => [
                 1.0,
                 0.0,
                 0.0,
                 1.0,
-                fword(data, offset + 4),
-                fword(data, offset + 6),
+                var.fword(offset + 4, 0),
+                var.fword(offset + 6, 1),
             ],
             // Scale
-            16 | 17 => [
-                f2dot14(data, offset + 4),
+            1 => [
+                var.f2dot14(offset + 4, 0),
                 0.0,
                 0.0,
-                f2dot14(data, offset + 6),
+                var.f2dot14(offset + 6, 1),
                 0.0,
                 0.0,
             ],
             // ScaleAroundCenter
-            18 | 19 => {
-                let sx = f2dot14(data, offset + 8);
-                let sy = f2dot14(data, offset + 10);
-                around_center(
-                    [sx, 0.0, 0.0, sy, 0.0, 0.0],
-                    fword(data, offset + 4),
-                    fword(data, offset + 6),
-                )
-            }
+            2 => around_center(
+                [
+                    var.f2dot14(offset + 8, 2),
+                    0.0,
+                    0.0,
+                    var.f2dot14(offset + 10, 3),
+                    0.0,
+                    0.0,
+                ],
+                var.fword(offset + 4, 0),
+                var.fword(offset + 6, 1),
+            ),
             // ScaleUniform
-            20 | 21 => {
-                let s = f2dot14(data, offset + 4);
+            3 => {
+                let s = var.f2dot14(offset + 4, 0);
                 [s, 0.0, 0.0, s, 0.0, 0.0]
             }
             // ScaleUniformAroundCenter
-            22 | 23 => {
-                let s = f2dot14(data, offset + 4);
+            4 => {
+                let s = var.f2dot14(offset + 8, 2);
                 around_center(
                     [s, 0.0, 0.0, s, 0.0, 0.0],
-                    fword(data, offset + 6),
-                    fword(data, offset + 8),
+                    var.fword(offset + 4, 0),
+                    var.fword(offset + 6, 1),
                 )
             }
             // Rotate
-            24 | 25 => {
-                let a = angle(offset + 4);
-                let (sin, cos) = a.sin_cos();
+            5 => {
+                let (sin, cos) = angle(0, offset + 4).sin_cos();
                 [cos, sin, -sin, cos, 0.0, 0.0]
             }
             // RotateAroundCenter
-            26 | 27 => {
-                let a = angle(offset + 4);
-                let (sin, cos) = a.sin_cos();
+            6 => {
+                let (sin, cos) = angle(2, offset + 8).sin_cos();
                 around_center(
                     [cos, sin, -sin, cos, 0.0, 0.0],
-                    fword(data, offset + 6),
-                    fword(data, offset + 8),
+                    var.fword(offset + 4, 0),
+                    var.fword(offset + 6, 1),
                 )
             }
             // Skew
-            28 | 29 => {
-                let x = f2dot14(data, offset + 4).to_radians().tan();
-                let y = f2dot14(data, offset + 6).to_radians().tan();
+            7 => {
+                let x = angle(0, offset + 4).tan();
+                let y = angle(1, offset + 6).tan();
                 [1.0, y, x, 1.0, 0.0, 0.0]
             }
             // SkewAroundCenter
-            30 | 31 => {
-                let x = f2dot14(data, offset + 4).to_radians().tan();
-                let y = f2dot14(data, offset + 6).to_radians().tan();
+            8 => {
+                let x = angle(2, offset + 8).tan();
+                let y = angle(3, offset + 10).tan();
                 around_center(
                     [1.0, y, x, 1.0, 0.0, 0.0],
-                    fword(data, offset + 8),
-                    fword(data, offset + 10),
+                    var.fword(offset + 4, 0),
+                    var.fword(offset + 6, 1),
                 )
             }
             _ => return None,
@@ -569,7 +891,7 @@ impl Face {
     }
 
     /// Reads a gradient colour line (extend mode plus sorted stops).
-    fn parse_color_line(&self, offset: usize) -> Option<(Extend, Vec<GradientStop>)> {
+    fn parse_color_line(&self, offset: usize, is_var: bool) -> Option<(Extend, Vec<GradientStop>)> {
         let data = &self.data;
         let extend = match u8_at(data, offset) {
             1 => Extend::Repeat,
@@ -577,12 +899,18 @@ impl Face {
             _ => Extend::Pad,
         };
         let count = u16_at(data, offset + 1) as usize;
+        // VarColorStop records carry a trailing varIndexBase.
+        let stride = if is_var { 10 } else { 6 };
         let mut stops = Vec::with_capacity(count);
         for i in 0..count {
-            let p = offset + 3 + i * 6;
-            let stop_offset = i16_at(data, p) as f32 / 16384.0;
+            let p = offset + 3 + i * stride;
+            let (stop_offset, alpha) = if is_var {
+                let var = self.var_fields(p, 6, true);
+                (var.f2dot14(p, 0), var.f2dot14(p + 4, 1))
+            } else {
+                (f2dot14(data, p), f2dot14(data, p + 4))
+            };
             let index = u16_at(data, p + 2);
-            let alpha = i16_at(data, p + 4) as f32 / 16384.0;
             let color = if index == 0xFFFF {
                 Color::BLACK
             } else {
@@ -609,6 +937,455 @@ impl Face {
         Some((extend, stops))
     }
 
+    /// Reads the variable fields of one paint table, applying deltas.
+    fn var_fields(&self, offset: usize, var_offset: usize, is_var: bool) -> VarFields<'_> {
+        VarFields {
+            face: self,
+            base: if is_var {
+                u32_at(&self.data, offset + var_offset)
+            } else {
+                u32::MAX
+            },
+        }
+    }
+
+    /// Variation delta for the item `k` places after `var_index_base`.
+    ///
+    /// Returns zero when the font has no variation data, when the index is
+    /// out of range, or when the recorded index marks "no variation".
+    fn var_delta(&self, var_index_base: u32, k: usize) -> f32 {
+        let Some(colors) = self.colors.as_ref() else {
+            return 0.0;
+        };
+        let Some(store) = colors.var_store else {
+            return 0.0;
+        };
+        if var_index_base == u32::MAX {
+            return 0.0;
+        }
+        let index = var_index_base.wrapping_add(k as u32);
+        let (outer, inner) = match colors.var_map {
+            Some(map) => self.map_delta_set(map, index),
+            // Without a map, the value itself is an outer/inner index pair.
+            None => ((index >> 16) as u16, index as u16),
+        };
+        if outer == 0xFFFF && inner == 0xFFFF {
+            return 0.0;
+        }
+        self.item_delta(store, outer, inner)
+    }
+
+    /// Net `gvar` deltas for a glyph at the current instance.
+    ///
+    /// One entry per outline point, plus the four phantom points. For a
+    /// composite glyph the entries refer to component offsets. Points the
+    /// font does not mention are interpolated (IUP) from their neighbours, as
+    /// the specification requires.
+    fn glyph_deltas(&self, gid: u16) -> Option<Vec<[f32; 2]>> {
+        let gvar = self.vars.gvar?;
+        if self.vars.is_default() {
+            return None;
+        }
+        let data = &self.data;
+        let axis_count = u16_at(data, gvar + 4) as usize;
+        if axis_count != self.vars.coords.len() {
+            return None;
+        }
+        let shared_count = u16_at(data, gvar + 6) as usize;
+        let shared_offset = gvar + u32_at(data, gvar + 8) as usize;
+        let glyph_count = u16_at(data, gvar + 12) as usize;
+        if gid as usize >= glyph_count {
+            return None;
+        }
+        let flags = u16_at(data, gvar + 14);
+        let array = gvar + u32_at(data, gvar + 16) as usize;
+        let offsets = gvar + 20;
+        let (start, end) = if flags & 1 != 0 {
+            (
+                u32_at(data, offsets + gid as usize * 4) as usize,
+                u32_at(data, offsets + gid as usize * 4 + 4) as usize,
+            )
+        } else {
+            (
+                u16_at(data, offsets + gid as usize * 2) as usize * 2,
+                u16_at(data, offsets + gid as usize * 2 + 2) as usize * 2,
+            )
+        };
+        if end <= start {
+            return None;
+        }
+        let table = array.checked_add(start)?;
+        let shape = self.outline_points(gid)?;
+        let point_count = match &shape {
+            GlyphPoints::Simple { points, .. } => points.len(),
+            GlyphPoints::Composite { count } => *count,
+        };
+        let total = point_count + 4;
+        let tuple_header = u16_at(data, table);
+        let count = (tuple_header & 0x0FFF) as usize;
+        let mut header = table + 4;
+        let mut data_pos = table + u16_at(data, table + 2) as usize;
+        // Shared point numbers live at the start of the serialized data.
+        let shared_points = if tuple_header & 0x8000 != 0 {
+            let (points, next) = self.read_points(data, data_pos, total)?;
+            data_pos = next;
+            Some(points)
+        } else {
+            None
+        };
+        let mut net = vec![[0.0f32; 2]; total];
+        let mut any = false;
+        for _ in 0..count {
+            let size = u16_at(data, header) as usize;
+            let tuple_index = u16_at(data, header + 2);
+            let mut p = header + 4;
+            let has_peak = tuple_index & 0x8000 != 0;
+            let intermediate = tuple_index & 0x4000 != 0;
+            let private_points = tuple_index & 0x2000 != 0;
+            let peak: Vec<f32> = if has_peak {
+                let values = (0..axis_count).map(|a| f2dot14(data, p + a * 2)).collect();
+                p += axis_count * 2;
+                values
+            } else {
+                let index = (tuple_index & 0x0FFF) as usize;
+                if index >= shared_count {
+                    return None;
+                }
+                (0..axis_count)
+                    .map(|a| f2dot14(data, shared_offset + (index * axis_count + a) * 2))
+                    .collect()
+            };
+            let (start_tuple, end_tuple) = if intermediate {
+                let start = (0..axis_count)
+                    .map(|a| f2dot14(data, p + a * 2))
+                    .collect::<Vec<f32>>();
+                p += axis_count * 2;
+                let end = (0..axis_count)
+                    .map(|a| f2dot14(data, p + a * 2))
+                    .collect::<Vec<f32>>();
+                p += axis_count * 2;
+                (start, end)
+            } else {
+                let start = peak.iter().map(|v| v.min(0.0)).collect();
+                let end = peak.iter().map(|v| v.max(0.0)).collect();
+                (start, end)
+            };
+            header = p;
+            let scalar = tuple_scalar(&self.vars.coords, &peak, &start_tuple, &end_tuple);
+            let tuple_data = data_pos;
+            data_pos += size;
+            if scalar == 0.0 {
+                continue;
+            }
+            let mut q = tuple_data;
+            let points = if private_points {
+                let (points, next) = self.read_points(data, q, total)?;
+                q = next;
+                points
+            } else {
+                match &shared_points {
+                    Some(points) => points.clone(),
+                    None => (0..total).collect(),
+                }
+            };
+            let (xs, next) = self.read_deltas(data, q, points.len())?;
+            let (ys, _) = self.read_deltas(data, next, points.len())?;
+            if xs.len() != points.len() || ys.len() != points.len() {
+                return None;
+            }
+            let mut dx = vec![0.0f32; point_count];
+            let mut dy = vec![0.0f32; point_count];
+            let mut touched = vec![false; point_count];
+            for (i, &point) in points.iter().enumerate() {
+                if point < point_count {
+                    dx[point] += xs[i] * scalar;
+                    dy[point] += ys[i] * scalar;
+                    touched[point] = true;
+                } else if point < total {
+                    // Phantom points carry the side bearings and the advance.
+                    let k = point - point_count;
+                    net[point_count + k][0] += xs[i] * scalar;
+                    net[point_count + k][1] += ys[i] * scalar;
+                }
+            }
+            match &shape {
+                GlyphPoints::Simple { points, ends } => {
+                    let base = points.clone();
+                    interpolate_contours(&mut dx, &mut dy, &touched, &base, ends);
+                }
+                GlyphPoints::Composite { .. } => {}
+            }
+            for i in 0..point_count {
+                net[i][0] += dx[i];
+                net[i][1] += dy[i];
+                any |= dx[i] != 0.0 || dy[i] != 0.0;
+            }
+        }
+        if any { Some(net) } else { None }
+    }
+
+    /// Base points of a glyph, before variation deltas.
+    fn outline_points(&self, gid: u16) -> Option<GlyphPoints> {
+        let (start, end) = self.glyph_range(gid)?;
+        let n_contours = i16_at(&self.data, start);
+        if n_contours < 0 {
+            let mut p = start + 10;
+            let mut count = 0usize;
+            loop {
+                if p + 4 > end {
+                    break;
+                }
+                let flags = u16_at(&self.data, p);
+                p += 4;
+                p += if flags & 0x0001 != 0 { 4 } else { 2 };
+                if flags & 0x0008 != 0 {
+                    p += 2;
+                } else if flags & 0x0040 != 0 {
+                    p += 4;
+                } else if flags & 0x0080 != 0 {
+                    p += 8;
+                }
+                count += 1;
+                if flags & 0x0020 == 0 {
+                    break;
+                }
+            }
+            return Some(GlyphPoints::Composite { count });
+        }
+        let n_contours = n_contours as usize;
+        let mut p = start + 10;
+        let mut ends = Vec::with_capacity(n_contours);
+        for _ in 0..n_contours {
+            ends.push(u16_at(&self.data, p) as usize);
+            p += 2;
+        }
+        let n_points = ends.last().map(|e| e + 1).unwrap_or(0);
+        let instructions = u16_at(&self.data, p) as usize;
+        p += 2 + instructions;
+        let mut flags = Vec::with_capacity(n_points);
+        while flags.len() < n_points {
+            let f = u8_at(&self.data, p);
+            p += 1;
+            flags.push(f);
+            if f & 0x08 != 0 {
+                let repeat = u8_at(&self.data, p);
+                p += 1;
+                for _ in 0..repeat {
+                    flags.push(f);
+                }
+            }
+        }
+        let mut points = vec![Point { x: 0.0, y: 0.0 }; n_points];
+        let mut x = 0i32;
+        for (i, flag) in flags.iter().enumerate().take(n_points) {
+            if flag & 0x02 != 0 {
+                let dx = u8_at(&self.data, p) as i32;
+                p += 1;
+                x += if flag & 0x10 != 0 { dx } else { -dx };
+            } else if flag & 0x10 == 0 {
+                x += i16_at(&self.data, p) as i32;
+                p += 2;
+            }
+            points[i].x = x as f32;
+        }
+        let mut y = 0i32;
+        for (i, flag) in flags.iter().enumerate().take(n_points) {
+            if flag & 0x04 != 0 {
+                let dy = u8_at(&self.data, p) as i32;
+                p += 1;
+                y += if flag & 0x20 != 0 { dy } else { -dy };
+            } else if flag & 0x20 == 0 {
+                y += i16_at(&self.data, p) as i32;
+                p += 2;
+            }
+            points[i].y = y as f32;
+        }
+        Some(GlyphPoints::Simple { points, ends })
+    }
+
+    /// Reads packed point numbers, returning them with the next offset.
+    fn read_points(&self, data: &[u8], offset: usize, limit: usize) -> Option<(Vec<usize>, usize)> {
+        let mut p = offset;
+        let first = u8_at(data, p);
+        p += 1;
+        let count = if first == 0 {
+            // Zero means "all points", which the caller supplies itself.
+            return Some(((0..limit).collect(), p));
+        } else if first & 0x80 != 0 {
+            // Two-byte count: the high bit is a flag, not part of the count.
+            (((first & 0x7F) as usize) << 8) | u8_at(data, p) as usize
+        } else {
+            first as usize
+        };
+        let mut points = Vec::with_capacity(count);
+        let mut last = 0usize;
+        while points.len() < count {
+            let control = u8_at(data, p);
+            p += 1;
+            let words = control & 0x80 != 0;
+            let run = (control & 0x7F) as usize + 1;
+            for _ in 0..run {
+                if points.len() >= count {
+                    break;
+                }
+                if words {
+                    last += u16_at(data, p) as usize;
+                    p += 2;
+                } else {
+                    last += u8_at(data, p) as usize;
+                    p += 1;
+                }
+                points.push(last);
+            }
+        }
+        Some((points, p))
+    }
+
+    /// Reads packed deltas, returning them with the next offset.
+    fn read_deltas(&self, data: &[u8], offset: usize, count: usize) -> Option<(Vec<f32>, usize)> {
+        let mut p = offset;
+        let mut out = Vec::with_capacity(count);
+        while out.len() < count {
+            let control = u8_at(data, p);
+            p += 1;
+            let zero = control & 0x80 != 0;
+            let words = control & 0x40 != 0;
+            let run = (control & 0x3F) as usize + 1;
+            for _ in 0..run {
+                if out.len() >= count {
+                    break;
+                }
+                if zero {
+                    out.push(0.0);
+                } else if words {
+                    out.push(i16_at(data, p) as f32);
+                    p += 2;
+                } else {
+                    out.push(u8_at(data, p) as i8 as f32);
+                    p += 1;
+                }
+            }
+        }
+        Some((out, p))
+    }
+
+    /// Resolves a delta-set index through a DeltaSetIndexMap.
+    fn map_delta_set(&self, map: usize, index: u32) -> (u16, u16) {
+        let data = &self.data;
+        let format = u8_at(data, map);
+        let entry_format = u8_at(data, map + 1);
+        let (count, data_offset) = if format == 0 {
+            (u16_at(data, map + 2) as u32, map + 4)
+        } else {
+            (u32_at(data, map + 2), map + 6)
+        };
+        if count == 0 {
+            return (0xFFFF, 0xFFFF);
+        }
+        // Out-of-range indices use the last entry.
+        let index = index.min(count - 1) as usize;
+        let entry_size = ((entry_format & 0x30) >> 4) as usize + 1;
+        let inner_bits = ((entry_format & 0x0F) as u32) + 1;
+        let mut entry = 0u32;
+        for i in 0..entry_size {
+            entry = (entry << 8) | u8_at(data, data_offset + index * entry_size + i) as u32;
+        }
+        let inner = (entry & ((1u32 << inner_bits) - 1)) as u16;
+        let outer = (entry >> inner_bits) as u16;
+        (outer, inner)
+    }
+
+    /// Sums the scaled deltas of one item variation store delta set.
+    fn item_delta(&self, store: usize, outer: u16, inner: u16) -> f32 {
+        let data = &self.data;
+        let count = u16_at(data, store + 6);
+        if outer >= count {
+            return 0.0;
+        }
+        let sub = store + u32_at(data, store + 8 + outer as usize * 4) as usize;
+        if sub == store {
+            // NULL offset: this subtable has no data.
+            return 0.0;
+        }
+        let item_count = u16_at(data, sub);
+        if inner >= item_count {
+            return 0.0;
+        }
+        let word_field = u16_at(data, sub + 2);
+        let long_words = word_field & 0x8000 != 0;
+        let word_count = (word_field & 0x7FFF) as usize;
+        let region_count = u16_at(data, sub + 4) as usize;
+        let regions = sub + 6;
+        let row_size = if long_words {
+            2 * (region_count + word_count)
+        } else {
+            region_count + word_count
+        };
+        let mut p = regions + region_count * 2 + inner as usize * row_size;
+        let mut total = 0.0;
+        for r in 0..region_count {
+            let delta = if r < word_count && long_words {
+                let v = i32::from_be_bytes([
+                    u8_at(data, p),
+                    u8_at(data, p + 1),
+                    u8_at(data, p + 2),
+                    u8_at(data, p + 3),
+                ]) as f32;
+                p += 4;
+                v
+            } else if r < word_count || long_words {
+                let v = i16_at(data, p) as f32;
+                p += 2;
+                v
+            } else {
+                let v = u8_at(data, p) as i8 as f32;
+                p += 1;
+                v
+            };
+            if delta == 0.0 {
+                continue;
+            }
+            let region = u16_at(data, regions + r * 2);
+            total += delta * self.region_scalar(store, region);
+        }
+        total
+    }
+
+    /// Scalar weight of one variation region at the current instance.
+    fn region_scalar(&self, store: usize, region: u16) -> f32 {
+        let data = &self.data;
+        let list = store + u32_at(data, store + 2) as usize;
+        let axis_count = u16_at(data, list) as usize;
+        let region_count = (u16_at(data, list + 2) & 0x7FFF) as usize;
+        if region as usize >= region_count || axis_count > self.vars.coords.len() {
+            return 0.0;
+        }
+        let base = list + 4 + region as usize * axis_count * 6;
+        let mut scalar = 1.0;
+        for axis in 0..axis_count {
+            let p = base + axis * 6;
+            let peak = f2dot14(data, p + 2);
+            let coord = self.vars.coords[axis];
+            if peak == 0.0 {
+                continue;
+            }
+            if coord == peak {
+                continue;
+            }
+            let start = f2dot14(data, p);
+            let end = f2dot14(data, p + 4);
+            if coord <= start || coord >= end {
+                return 0.0;
+            }
+            scalar *= if coord < peak {
+                (coord - start) / (peak - start)
+            } else {
+                (end - coord) / (end - peak)
+            };
+        }
+        scalar
+    }
+
     /// Family name (best effort).
     pub fn name(&self) -> &str {
         &self.name
@@ -628,14 +1405,64 @@ impl Face {
         self.glyph_id(c) != 0
     }
 
-    /// Horizontal advance in font units (unused for layout, exposed for
-    /// diagnostics and tests).
+    /// Horizontal advance in font units at the current instance.
+    ///
+    /// Layout keeps using the deterministic metric table, but raster text is
+    /// positioned with the font's own advances — including the `HVAR` delta
+    /// when the font is interpolated.
     pub fn advance(&self, gid: u16) -> f32 {
         if self.num_h_metrics == 0 {
             return 0.0;
         }
         let idx = gid.min(self.num_h_metrics - 1) as usize;
-        u16_at(&self.data, self.hmtx + idx * 4) as f32
+        u16_at(&self.data, self.hmtx + idx * 4) as f32 + self.advance_delta(gid)
+    }
+
+    /// `HVAR` advance-width delta for `gid` at the current instance.
+    fn advance_delta(&self, gid: u16) -> f32 {
+        if self.vars.is_default() {
+            return 0.0;
+        }
+        if let Some(hvar) = self.vars.hvar {
+            let store = hvar + u32_at(&self.data, hvar + 4) as usize;
+            let map = u32_at(&self.data, hvar + 8);
+            // A missing map means the glyph id is the delta-set index itself.
+            let (outer, inner) = if map == 0 {
+                (0, gid)
+            } else {
+                self.map_delta_set(hvar + map as usize, gid as u32)
+            };
+            return self.item_delta(store, outer, inner);
+        }
+        // Without `HVAR`, the gvar phantom points give the same answer:
+        // advance = right side bearing - left side bearing.
+        let Some(deltas) = self.glyph_deltas(gid) else {
+            return 0.0;
+        };
+        let Some(points) = deltas.len().checked_sub(4) else {
+            return 0.0;
+        };
+        deltas[points + 1][0] - deltas[points][0]
+    }
+
+    /// Variation axes of the face, in font order.
+    ///
+    /// Empty for a static font.
+    pub fn axes(&self) -> &[Axis] {
+        &self.vars.axes
+    }
+
+    /// Design-space values currently selected, one per axis.
+    pub fn axis_values(&self) -> &[f32] {
+        &self.vars.values
+    }
+
+    /// Selects a variable-font instance.
+    ///
+    /// `settings` are `(tag, value)` pairs; unknown tags are ignored and
+    /// values are clamped to the axis range.
+    pub fn set_variations(&mut self, settings: &[(String, f32)]) {
+        self.vars.apply(&self.data, settings);
     }
 
     /// Units per em (2048 for most TrueType faces, 1000 for CFF).
@@ -735,10 +1562,19 @@ impl Face {
             _ => return,
         };
         let n_contours = i16_at(&self.data, start);
+        // Interpolated points move the outline; a static instance has none.
+        let deltas = self.glyph_deltas(gid);
         if n_contours >= 0 {
-            self.simple_glyph(start, n_contours as usize, xf, flatness, out);
+            self.simple_glyph(
+                start,
+                n_contours as usize,
+                deltas.as_deref(),
+                xf,
+                flatness,
+                out,
+            );
         } else {
-            self.composite_glyph(start, xf, flatness, depth, out);
+            self.composite_glyph(start, deltas.as_deref(), xf, flatness, depth, out);
         }
         let _ = end;
     }
@@ -766,6 +1602,7 @@ impl Face {
         &self,
         start: usize,
         n_contours: usize,
+        deltas: Option<&[[f32; 2]]>,
         xf: Transform,
         flatness: f32,
         out: &mut Vec<Contour>,
@@ -820,6 +1657,15 @@ impl Face {
             coords[i].y = y as f32;
         }
 
+        if let Some(deltas) = deltas {
+            for (i, point) in coords.iter_mut().enumerate() {
+                if let Some(delta) = deltas.get(i) {
+                    point.x += delta[0];
+                    point.y += delta[1];
+                }
+            }
+        }
+
         let mut first = 0usize;
         for end in end_pts {
             if end < first || end >= n_points {
@@ -837,12 +1683,14 @@ impl Face {
     fn composite_glyph(
         &self,
         start: usize,
+        deltas: Option<&[[f32; 2]]>,
         mut xf: Transform,
         flatness: f32,
         depth: u32,
         out: &mut Vec<Contour>,
     ) {
         let mut p = start + 10;
+        let mut component = 0usize;
         loop {
             let flags = u16_at(&self.data, p);
             let gid = u16_at(&self.data, p + 2);
@@ -905,9 +1753,15 @@ impl Face {
             if flags & 0x0002 != 0 {
                 local.dx = arg1;
                 local.dy = arg2;
+                // gvar deltas for a composite move individual components.
+                if let Some(delta) = deltas.and_then(|d| d.get(component)) {
+                    local.dx += delta[0];
+                    local.dy += delta[1];
+                }
             }
 
             self.outline_into(gid, xf.then(local), flatness, depth + 1, out);
+            component += 1;
 
             if flags & 0x0020 == 0 {
                 break;
@@ -960,13 +1814,11 @@ impl Transform {
 
 /// Parses COLR v0 layer records and the first CPAL palette.
 fn parse_colors(data: &[u8], colr: usize, cpal: usize) -> Option<ColorGlyphs> {
-    if u16_at(data, colr) > 1 {
+    let version = u16_at(data, colr);
+    if version > 1 {
         return None;
     }
     let num_base = u16_at(data, colr + 2);
-    if num_base == 0 {
-        return None;
-    }
     let base_records = colr.checked_add(u32_at(data, colr + 4) as usize)?;
     let layer_records = colr.checked_add(u32_at(data, colr + 8) as usize)?;
     if base_records >= data.len() || layer_records >= data.len() {
@@ -997,18 +1849,32 @@ fn parse_colors(data: &[u8], colr: usize, cpal: usize) -> Option<ColorGlyphs> {
             u8_at(data, p + 3),
         ));
     }
-    // COLR v1 adds a paint-graph list; v0-only fonts leave these empty.
-    let (base_list, layer_list) = if u16_at(data, colr) >= 1 {
+    // COLR v1 adds a paint-graph list, clip boxes and variation data;
+    // v0-only fonts leave these empty.
+    let (base_list, layer_list, clip_list, var_store, var_map) = if version >= 1 {
         let base = u32_at(data, colr + 14) as usize;
         let layers = u32_at(data, colr + 18) as usize;
-        if base != 0 && layers != 0 {
-            (Some(colr + base), Some(colr + layers))
-        } else {
-            (None, None)
-        }
+        let clips = u32_at(data, colr + 22) as usize;
+        let map = u32_at(data, colr + 26) as usize;
+        let store = u32_at(data, colr + 30) as usize;
+        let base_list = if base != 0 { Some(colr + base) } else { None };
+        (
+            base_list,
+            if layers != 0 {
+                Some(colr + layers)
+            } else {
+                None
+            },
+            if clips != 0 { Some(colr + clips) } else { None },
+            if store != 0 { Some(colr + store) } else { None },
+            if map != 0 { Some(colr + map) } else { None },
+        )
     } else {
-        (None, None)
+        (None, None, None, None, None)
     };
+    if num_base == 0 && base_list.is_none() {
+        return None;
+    }
     Some(ColorGlyphs {
         base_records,
         num_base,
@@ -1016,6 +1882,9 @@ fn parse_colors(data: &[u8], colr: usize, cpal: usize) -> Option<ColorGlyphs> {
         palette,
         base_list,
         layer_list,
+        clip_list,
+        var_store,
+        var_map,
     })
 }
 
@@ -1050,6 +1919,121 @@ fn around_center(m: [f32; 6], cx: f32, cy: f32) -> [f32; 6] {
         e + cx - a * cx - c * cy,
         f + cy - b * cx - d * cy,
     ]
+}
+
+/// Reads a four-character tag as a string.
+fn tag_at(data: &[u8], offset: usize) -> String {
+    let bytes = [
+        u8_at(data, offset),
+        u8_at(data, offset + 1),
+        u8_at(data, offset + 2),
+        u8_at(data, offset + 3),
+    ];
+    String::from_utf8_lossy(&bytes).to_string()
+}
+
+/// Scalar weight of one tuple variation region at `coords`.
+fn tuple_scalar(coords: &[f32], peak: &[f32], start: &[f32], end: &[f32]) -> f32 {
+    let mut scalar = 1.0;
+    for i in 0..coords.len().min(peak.len()) {
+        let coord = coords[i];
+        let peak = peak[i];
+        if peak == 0.0 {
+            continue;
+        }
+        if coord == peak {
+            continue;
+        }
+        let (lo, hi) = (start[i], end[i]);
+        if coord <= lo || coord >= hi {
+            return 0.0;
+        }
+        scalar *= if coord < peak {
+            (coord - lo) / (peak - lo)
+        } else {
+            (hi - coord) / (hi - peak)
+        };
+    }
+    scalar
+}
+
+/// Fills in deltas for points a tuple does not mention (IUP).
+fn interpolate_contours(
+    dx: &mut [f32],
+    dy: &mut [f32],
+    touched: &[bool],
+    points: &[Point],
+    ends: &[usize],
+) {
+    let mut first = 0usize;
+    for &end in ends {
+        if end < first || end >= points.len() {
+            first = end.saturating_add(1);
+            continue;
+        }
+        let range = first..=end;
+        let touched_indices: Vec<usize> = range.clone().filter(|i| touched[*i]).collect();
+        match touched_indices.len() {
+            0 => {}
+            1 => {
+                let only = touched_indices[0];
+                for i in range {
+                    if i != only {
+                        dx[i] = dx[only];
+                        dy[i] = dy[only];
+                    }
+                }
+            }
+            _ => {
+                let n = touched_indices.len();
+                for i in range {
+                    if touched[i] {
+                        continue;
+                    }
+                    // Nearest touched points before and after, wrapping around.
+                    let (mut prev, mut next) = (0usize, 0usize);
+                    for (k, &t) in touched_indices.iter().enumerate() {
+                        if t < i {
+                            prev = k;
+                        } else if t > i {
+                            next = k;
+                            break;
+                        }
+                    }
+                    let p1 = touched_indices[prev];
+                    let p2 = touched_indices[(next) % n];
+                    if p1 == i || p2 == i || p1 == p2 {
+                        continue;
+                    }
+                    dx[i] = iup_axis(points[i].x, points[p1].x, dx[p1], points[p2].x, dx[p2]);
+                    dy[i] = iup_axis(points[i].y, points[p1].y, dy[p1], points[p2].y, dy[p2]);
+                }
+            }
+        }
+        first = end + 1;
+    }
+}
+
+/// Interpolates one coordinate axis between two touched points.
+///
+/// `c1`/`c2` are the deltas of the reference points at coordinates `x1`/`x2`.
+fn iup_axis(coord: f32, x1: f32, c1: f32, x2: f32, c2: f32) -> f32 {
+    if x1 == x2 {
+        // Coincident references cannot be interpolated: use the nearest.
+        if c1 == c2 || (coord - x1).abs() <= (coord - x2).abs() {
+            c1
+        } else {
+            c2
+        }
+    } else if coord <= x1.min(x2) || coord >= x1.max(x2) {
+        if (coord - x1).abs() < (coord - x2).abs() {
+            c1
+        } else {
+            c2
+        }
+    } else {
+        c1 + (c2 - c1) * (coord - x1) / (x2 - x1)
+    }
 }
 
 fn f2dot14(data: &[u8], off: usize) -> f32 {
@@ -1664,7 +2648,9 @@ mod tests {
                 return;
             }
             match p {
-                Paint::Linear { .. } | Paint::Radial { .. } => *gradients += 1,
+                Paint::Linear { .. } | Paint::Radial { .. } | Paint::Sweep { .. } => {
+                    *gradients += 1
+                }
                 Paint::Solid { .. } => *solids += 1,
                 Paint::Layers(items) => {
                     for item in items {
@@ -1674,7 +2660,9 @@ mod tests {
                 Paint::Glyph { paint, .. } | Paint::Transform { paint, .. } => {
                     walk(paint, gradients, solids, depth + 1);
                 }
-                Paint::Composite { source, backdrop } => {
+                Paint::Composite {
+                    source, backdrop, ..
+                } => {
                     walk(source, gradients, solids, depth + 1);
                     walk(backdrop, gradients, solids, depth + 1);
                 }
@@ -1685,5 +2673,119 @@ mod tests {
         walk(&paint, &mut gradients, &mut solids, 0);
         assert!(gradients > 0, "expected gradient paints in the heart");
         assert!(solids + gradients > 1, "expected several paint layers");
+    }
+
+    #[test]
+    fn tuple_scalar_interpolates_between_start_and_peak() {
+        // Non-intermediate region: peak +1, start 0, end +1.
+        let peak = [1.0];
+        let start = [0.0];
+        let end = [1.0];
+        assert_eq!(tuple_scalar(&[0.0], &peak, &start, &end), 0.0);
+        assert_eq!(tuple_scalar(&[1.0], &peak, &start, &end), 1.0);
+        assert_eq!(tuple_scalar(&[0.5], &peak, &start, &end), 0.5);
+        // Outside the region the tuple does not apply.
+        assert_eq!(tuple_scalar(&[-0.5], &peak, &start, &end), 0.0);
+        // An axis whose peak is zero does not restrict the region.
+        assert_eq!(tuple_scalar(&[0.0], &[0.0], &[-1.0], &[1.0]), 1.0);
+        // Two axes multiply their scalars.
+        let scalar = tuple_scalar(&[0.5, 0.5], &[1.0, 1.0], &[0.0, 0.0], &[1.0, 1.0]);
+        assert_eq!(scalar, 0.25);
+        // Intermediate regions ramp on both sides of the peak.
+        let scalar = tuple_scalar(&[0.2], &[0.5], &[0.0], &[1.0]);
+        assert!((scalar - 0.4).abs() < 1e-6);
+        let scalar = tuple_scalar(&[0.8], &[0.5], &[0.0], &[1.0]);
+        assert!((scalar - 0.4).abs() < 1e-6);
+    }
+
+    #[test]
+    fn iup_interpolates_between_touched_points() {
+        // Two reference points at x=0 and x=100 with deltas 0 and 20.
+        assert_eq!(iup_axis(50.0, 0.0, 0.0, 100.0, 20.0), 10.0);
+        // Inside the span but past the reference: still linear.
+        assert_eq!(iup_axis(0.0, 0.0, 0.0, 100.0, 20.0), 0.0);
+        assert_eq!(iup_axis(100.0, 0.0, 0.0, 100.0, 20.0), 20.0);
+        // Outside the span, the nearest reference wins.
+        assert_eq!(iup_axis(-10.0, 0.0, 5.0, 100.0, 20.0), 5.0);
+        assert_eq!(iup_axis(110.0, 0.0, 5.0, 100.0, 20.0), 20.0);
+        // Coincident references cannot interpolate: the first wins.
+        assert_eq!(iup_axis(3.0, 5.0, 1.0, 5.0, 2.0), 1.0);
+        assert_eq!(iup_axis(5.0, 5.0, 1.0, 5.0, 1.0), 1.0);
+    }
+
+    #[test]
+    fn iup_fills_unmentioned_points_of_a_contour() {
+        // A pentagon with the left and right extremes touched: everything in
+        // between is interpolated, per axis, from its neighbours.
+        let points = vec![
+            Point { x: 0.0, y: 5.0 },
+            Point { x: 5.0, y: 0.0 },
+            Point { x: 10.0, y: 5.0 },
+            Point { x: 5.0, y: 10.0 },
+        ];
+        let mut dx = vec![0.0, 0.0, 20.0, 0.0];
+        let mut dy = vec![0.0, 0.0, 0.0, 0.0];
+        let touched = vec![true, false, true, false];
+        interpolate_contours(&mut dx, &mut dy, &touched, &points, &[3]);
+        // x = 5 sits halfway between the references, so it gets half of 20.
+        assert_eq!(dx, vec![0.0, 10.0, 20.0, 10.0]);
+        assert_eq!(dy, vec![0.0, 0.0, 0.0, 0.0]);
+    }
+
+    #[test]
+    fn a_contour_with_one_touched_point_moves_as_a_whole() {
+        let points = vec![
+            Point { x: 0.0, y: 0.0 },
+            Point { x: 10.0, y: 0.0 },
+            Point { x: 10.0, y: 10.0 },
+        ];
+        let mut dx = vec![7.0, 0.0, 0.0];
+        let mut dy = vec![-3.0, 0.0, 0.0];
+        let touched = vec![true, false, false];
+        interpolate_contours(&mut dx, &mut dy, &touched, &points, &[2]);
+        assert_eq!(dx, vec![7.0, 7.0, 7.0]);
+        assert_eq!(dy, vec![-3.0, -3.0, -3.0]);
+    }
+
+    #[test]
+    fn avar_maps_normalized_coordinates() {
+        // One axis, with a +0.5 -> +0.75 segment mid-point.
+        let mut data = vec![0u8; 6];
+        data.extend_from_slice(&1u16.to_be_bytes()); // axisCount
+        data.extend_from_slice(&4u16.to_be_bytes()); // positionMapCount
+        for (from, to) in [(-1.0f32, -1.0f32), (0.0, 0.0), (0.5, 0.75), (1.0, 1.0)] {
+            data.extend_from_slice(&((from * 16384.0) as i16).to_be_bytes());
+            data.extend_from_slice(&((to * 16384.0) as i16).to_be_bytes());
+        }
+        let at = 0;
+        assert_eq!(avar_map(&data, at, 0, 0.0), 0.0);
+        assert_eq!(avar_map(&data, at, 0, 0.5), 0.75);
+        assert!((avar_map(&data, at, 0, 0.25) - 0.375).abs() < 1e-4);
+        // Between the last two pairs the map keeps interpolating.
+        assert!((avar_map(&data, at, 0, 0.9) - 0.95).abs() < 1e-4);
+        // Beyond the last pair it clamps.
+        assert_eq!(avar_map(&data, at, 0, 1.5), 1.0);
+        // Unknown axes are left alone.
+        assert_eq!(avar_map(&data, at, 3, 0.4), 0.4);
+    }
+
+    #[test]
+    fn axis_values_clamp_to_their_range() {
+        let axis = Axis {
+            tag: "wght".into(),
+            min: 100.0,
+            default: 400.0,
+            max: 900.0,
+        };
+        assert_eq!(axis.clamp(50.0), 100.0);
+        assert_eq!(axis.clamp(1200.0), 900.0);
+        assert_eq!(axis.clamp(700.0), 700.0);
+        // A nonsense range falls back to the default.
+        let broken = Axis {
+            min: 900.0,
+            max: 100.0,
+            ..axis
+        };
+        assert_eq!(broken.clamp(500.0), 400.0);
     }
 }

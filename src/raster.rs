@@ -57,6 +57,42 @@ impl Bitmap {
         ]
     }
 
+    /// Stores one pixel.
+    fn set_pixel(&mut self, x: u32, y: u32, px: [u8; 4]) {
+        if x >= self.width || y >= self.height {
+            return;
+        }
+        let i = (y as usize * self.width as usize + x as usize) * 4;
+        self.data[i..i + 4].copy_from_slice(&px);
+    }
+
+    /// Source-over composite of `src` at pixel `(x, y)`.
+    fn draw_over(&self, dst: &mut Bitmap, x: u32, y: u32) {
+        for py in 0..self.height {
+            for px in 0..self.width {
+                let (tx, ty) = (x + px, y + py);
+                if tx >= dst.width || ty >= dst.height {
+                    continue;
+                }
+                let src = self.pixel(px, py);
+                let sa = src[3] as f32 / 255.0;
+                if sa <= 0.0 {
+                    continue;
+                }
+                let dst_px = dst.pixel(tx, ty);
+                let da = dst_px[3] as f32 / 255.0;
+                let out_a = sa + da * (1.0 - sa);
+                let mut out = [0u8; 4];
+                for c in 0..3 {
+                    let v = (src[c] as f32 * sa + dst_px[c] as f32 * da * (1.0 - sa)) / out_a;
+                    out[c] = v.round().clamp(0.0, 255.0) as u8;
+                }
+                out[3] = (out_a * 255.0).round().clamp(0.0, 255.0) as u8;
+                dst.set_pixel(tx, ty, out);
+            }
+        }
+    }
+
     /// Source-over composite of `color` at `coverage` (`0.0..=1.0`).
     fn blend(&mut self, x: usize, y: usize, color: Color, coverage: f32) {
         if x >= self.width as usize || y >= self.height as usize {
@@ -193,10 +229,10 @@ impl Rasterizer {
         let size_px = t.size * self.scale;
         let baseline = t.y * self.scale;
         let mut pen = t.x * self.scale;
-        // Groups of outlines sharing one paint, drawn in order. Colour glyphs
-        // contribute one group per COLR layer; ordinary text contributes one
-        // group with the text colour.
-        let mut groups: Vec<(Vec<Contour>, Fill)> = Vec::new();
+        // Painted regions in draw order. Colour glyphs contribute their whole
+        // paint graph (layers, transforms, composites); ordinary text
+        // contributes one solid-filled shape.
+        let mut shapes: Vec<Shape> = Vec::new();
         // Faux-bold offset, used only when the font has no bold design.
         let bold_dx = (size_px * 0.055).max(0.45);
 
@@ -216,10 +252,19 @@ impl Rasterizer {
                 if !ch.is_whitespace() && gid != 0 {
                     let flatness = (0.35 / k).max(0.5);
                     if let Some(paint) = face.color_paint(gid) {
+                        // Clip boxes are declared in font units, so map them to
+                        // page space once, with the same y flip as outlines.
+                        let clip = face.color_clip(gid).map(|b| {
+                            [
+                                pen + b[0] * k,
+                                baseline - b[3] * k,
+                                pen + b[2] * k,
+                                baseline - b[1] * k,
+                            ]
+                        });
                         // Draw the font's own paint graph: exact outlines, exact
-                        // palette, gradients and transforms. No synthesis.
-                        self.emit_paint(
-                            &mut groups,
+                        // palette, gradients, transforms and blend modes.
+                        if let Some(shape) = self.emit_paint(
                             face,
                             &paint,
                             Affine::IDENTITY,
@@ -228,8 +273,11 @@ impl Rasterizer {
                             k,
                             flatness,
                             t.color,
+                            clip,
                             0,
-                        );
+                        ) {
+                            shapes.push(shape);
+                        }
                     } else {
                         // Synthesise weight/slant only when the face itself is
                         // not the requested design.
@@ -245,7 +293,10 @@ impl Rasterizer {
                             }
                         }
                         if !polys.is_empty() {
-                            groups.push((polys, Fill::Solid(t.color)));
+                            shapes.push(Shape::Fill {
+                                polys,
+                                fill: Fill::Solid(t.color),
+                            });
                         }
                     }
                 }
@@ -258,20 +309,20 @@ impl Rasterizer {
             }
             pen += advance.unwrap_or_else(|| metrics.advance(ch, &style) * self.scale);
         }
-        for (polys, fill) in groups {
-            fill_polygons(bmp, &polys, &fill);
+        for shape in &shapes {
+            shape.render(bmp, 0.0, 0.0);
         }
     }
 
-    /// Walks a COLR paint graph and appends filled regions to `out`.
+    /// Walks a COLR paint graph and turns it into a [`Shape`].
     ///
     /// `xf` accumulates COLR transforms (in font units); glyph outlines are
     /// transformed before being mapped to pixels, so the font's geometry is
-    /// preserved exactly.
+    /// preserved exactly. `clip` is an optional page-space clip box declared
+    /// by the font.
     #[allow(clippy::too_many_arguments)]
     fn emit_paint(
         &self,
-        out: &mut Vec<(Vec<Contour>, Fill)>,
         face: &crate::font::Face,
         paint: &ColorPaint,
         xf: Affine,
@@ -280,57 +331,51 @@ impl Rasterizer {
         k: f32,
         flatness: f32,
         foreground: Color,
+        clip: Option<[f32; 4]>,
         depth: u32,
-    ) {
+    ) -> Option<Shape> {
         if depth > 24 {
-            return;
+            return None;
         }
         match paint {
             ColorPaint::Layers(layers) => {
-                for layer in layers {
-                    self.emit_paint(
-                        out,
-                        face,
-                        layer,
-                        xf,
-                        pen,
-                        baseline,
-                        k,
-                        flatness,
-                        foreground,
-                        depth + 1,
-                    );
-                }
+                let shapes: Vec<Shape> = layers
+                    .iter()
+                    .filter_map(|layer| {
+                        self.emit_paint(
+                            face,
+                            layer,
+                            xf,
+                            pen,
+                            baseline,
+                            k,
+                            flatness,
+                            foreground,
+                            clip,
+                            depth + 1,
+                        )
+                    })
+                    .collect();
+                (!shapes.is_empty()).then_some(Shape::Group(shapes))
             }
-            ColorPaint::Transform { matrix, paint } => {
-                self.emit_paint(
-                    out,
-                    face,
-                    paint,
-                    xf.compose(*matrix),
-                    pen,
-                    baseline,
-                    k,
-                    flatness,
-                    foreground,
-                    depth + 1,
-                );
-            }
-            ColorPaint::Composite { source, backdrop } => {
-                self.emit_paint(
-                    out,
-                    face,
-                    backdrop,
-                    xf,
-                    pen,
-                    baseline,
-                    k,
-                    flatness,
-                    foreground,
-                    depth + 1,
-                );
-                self.emit_paint(
-                    out,
+            ColorPaint::Transform { matrix, paint } => self.emit_paint(
+                face,
+                paint,
+                xf.compose(*matrix),
+                pen,
+                baseline,
+                k,
+                flatness,
+                foreground,
+                clip,
+                depth + 1,
+            ),
+            ColorPaint::Composite {
+                mode,
+                source,
+                backdrop,
+            } => {
+                let source = self.emit_paint(
                     face,
                     source,
                     xf,
@@ -339,27 +384,48 @@ impl Rasterizer {
                     k,
                     flatness,
                     foreground,
+                    clip,
                     depth + 1,
-                );
+                )?;
+                let backdrop = self.emit_paint(
+                    face,
+                    backdrop,
+                    xf,
+                    pen,
+                    baseline,
+                    k,
+                    flatness,
+                    foreground,
+                    clip,
+                    depth + 1,
+                )?;
+                Some(Shape::Composite {
+                    mode: *mode,
+                    source: Box::new(source),
+                    backdrop: Box::new(backdrop),
+                })
             }
             ColorPaint::Glyph { glyph, paint } => {
-                let Some(fill) = resolve_fill(paint, xf, pen, baseline, k, foreground) else {
-                    return;
-                };
+                let fill = resolve_fill(paint, xf, pen, baseline, k, foreground)?;
                 let mut polys = Vec::new();
                 for contour in face.outline(*glyph, flatness) {
                     let transformed: Contour = contour.iter().map(|p| xf.apply(*p)).collect();
                     push_contour(&mut polys, &transformed, pen, baseline, k, false, 0.0);
                 }
-                if !polys.is_empty() {
-                    out.push((polys, fill));
+                if let Some(rect) = clip {
+                    polys = clip_contours(&polys, rect);
                 }
+                if polys.is_empty() {
+                    return None;
+                }
+                Some(Shape::Fill { polys, fill })
             }
             // A solid or gradient alone has no shape to fill.
             ColorPaint::Solid { .. }
             | ColorPaint::Foreground
             | ColorPaint::Linear { .. }
-            | ColorPaint::Radial { .. } => {}
+            | ColorPaint::Radial { .. }
+            | ColorPaint::Sweep { .. } => None,
         }
     }
 }
@@ -392,11 +458,13 @@ fn resolve_fill(
         ColorPaint::Linear {
             p0,
             p1,
+            p2,
             stops,
             extend,
         } => Fill::Linear {
             p0: to_px(*p0),
             p1: to_px(*p1),
+            p2: to_px(*p2),
             stops: stops.clone(),
             extend: *extend,
         },
@@ -415,6 +483,29 @@ fn resolve_fill(
             stops: stops.clone(),
             extend: *extend,
         },
+        ColorPaint::Sweep {
+            center,
+            start,
+            end,
+            stops,
+            extend,
+        } => {
+            // A mirroring transform flips the sweep direction, so the colour
+            // line then runs the other way round.
+            let (mut start, mut end) = (*start, *end);
+            if xf.det() < 0.0 {
+                std::mem::swap(&mut start, &mut end);
+                start = -start;
+                end = -end;
+            }
+            Fill::Sweep {
+                center: to_px(*center),
+                start,
+                end,
+                stops: stops.clone(),
+                extend: *extend,
+            }
+        }
         _ => return None,
     })
 }
@@ -555,6 +646,11 @@ impl Affine {
         }
     }
 
+    /// Determinant: negative when the transform mirrors the geometry.
+    fn det(self) -> f32 {
+        self.a * self.d - self.b * self.c
+    }
+
     /// Average scale factor, used to scale gradient radii.
     fn scale(self) -> f32 {
         let sx = (self.a * self.a + self.b * self.b).sqrt();
@@ -569,9 +665,13 @@ pub enum Fill {
     /// A single colour.
     Solid(Color),
     /// Linear gradient between two pixel-space points.
+    ///
+    /// `p2` is the rotation point: iso-colour lines run parallel to `p0`–`p2`,
+    /// so the colour parameter is the projection onto the normal of that line.
     Linear {
         p0: Point,
         p1: Point,
+        p2: Point,
         stops: Vec<GradientStop>,
         extend: Extend,
     },
@@ -584,26 +684,42 @@ pub enum Fill {
         stops: Vec<GradientStop>,
         extend: Extend,
     },
+    /// Sweep (conic) gradient around a pixel-space centre.
+    ///
+    /// Angles are counter-clockwise radians in the design grid; because the
+    /// raster y axis points down, sampling negates the y delta.
+    Sweep {
+        center: Point,
+        start: f32,
+        end: f32,
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
 }
 
 impl Fill {
     /// Colour of this paint at a pixel centre.
+    ///
+    /// Transparent means "nothing painted here", which the two-circle radial
+    /// and ill-formed gradients return for uncovered pixels.
     fn color_at(&self, x: f32, y: f32) -> Color {
         match self {
             Fill::Solid(color) => *color,
             Fill::Linear {
                 p0,
                 p1,
+                p2,
                 stops,
                 extend,
             } => {
-                let (dx, dy) = (p1.x - p0.x, p1.y - p0.y);
-                let denom = dx * dx + dy * dy;
-                let t = if denom <= 1e-6 {
-                    0.0
-                } else {
-                    ((x - p0.x) * dx + (y - p0.y) * dy) / denom
-                };
+                // Iso-colour lines are parallel to p0→p2, so project onto the
+                // normal of that direction.
+                let (nx, ny) = (-(p2.y - p0.y), p2.x - p0.x);
+                let denom = (p1.x - p0.x) * nx + (p1.y - p0.y) * ny;
+                if denom.abs() <= 1e-6 {
+                    return Color::TRANSPARENT;
+                }
+                let t = ((x - p0.x) * nx + (y - p0.y) * ny) / denom;
                 sample_stops(stops, t, *extend)
             }
             Fill::Radial {
@@ -614,6 +730,9 @@ impl Fill {
                 stops,
                 extend,
             } => {
+                if c0.x == c1.x && c0.y == c1.y && r0 == r1 {
+                    return Color::TRANSPARENT;
+                }
                 // Solve |p - c(t)|² = r(t)² for the two-circle gradient.
                 let (dcx, dcy) = (c1.x - c0.x, c1.y - c0.y);
                 let (vx, vy) = (x - c0.x, y - c0.y);
@@ -621,26 +740,66 @@ impl Fill {
                 let a = dcx * dcx + dcy * dcy - dr * dr;
                 let b = -2.0 * (vx * dcx + vy * dcy + r0 * dr);
                 let c = vx * vx + vy * vy - r0 * r0;
-                let t = if a.abs() < 1e-6 {
-                    if b.abs() < 1e-6 { 0.0 } else { -c / b }
+                // Circles are painted from the largest ω down; a pixel keeps
+                // the colour of the smallest ω whose radius is positive.
+                let mut best: Option<f32> = None;
+                let mut consider = |t: f32| {
+                    // Only circles with a positive radius are painted; the
+                    // degenerate r == 0 circle is the centre point itself.
+                    if (r0 + (r1 - r0) * t) < -1e-6 {
+                        return;
+                    }
+                    best = Some(match best {
+                        Some(b) => b.min(t),
+                        None => t,
+                    });
+                };
+                if a.abs() < 1e-6 {
+                    if b.abs() >= 1e-6 {
+                        consider(-c / b);
+                    }
                 } else {
                     let disc = b * b - 4.0 * a * c;
-                    if disc < 0.0 {
+                    if disc >= 0.0 {
+                        let sq = disc.sqrt();
+                        consider((-b - sq) / (2.0 * a));
+                        consider((-b + sq) / (2.0 * a));
+                    }
+                }
+                match best {
+                    Some(t) => sample_stops(stops, t, *extend),
+                    None => Color::TRANSPARENT,
+                }
+            }
+            Fill::Sweep {
+                center,
+                start,
+                end,
+                stops,
+                extend,
+            } => {
+                // Counter-clockwise angle in the design grid.
+                let angle = (center.y - y).atan2(x - center.x);
+                let angle = if angle < 0.0 {
+                    angle + 2.0 * std::f32::consts::PI
+                } else {
+                    angle
+                };
+                let span = end - start;
+                const TWO_PI: f32 = std::f32::consts::TAU;
+                let t = if span.abs() <= 1e-6 {
+                    if matches!(extend, Extend::Pad) {
                         0.0
                     } else {
-                        let sq = disc.sqrt();
-                        let t1 = (-b - sq) / (2.0 * a);
-                        let t2 = (-b + sq) / (2.0 * a);
-                        if t1 >= 0.0 && t2 >= 0.0 {
-                            t1.min(t2)
-                        } else if t1 >= 0.0 {
-                            t1
-                        } else if t2 >= 0.0 {
-                            t2
-                        } else {
-                            t1.max(t2)
-                        }
+                        // A zero-width repeated sweep is ill-formed.
+                        return Color::TRANSPARENT;
                     }
+                } else if span.abs() >= TWO_PI - 1e-4 {
+                    // At most one full turn is drawn; wrap into 0..1.
+                    let signed = if span > 0.0 { TWO_PI } else { -TWO_PI };
+                    ((angle - start) / signed).rem_euclid(1.0)
+                } else {
+                    (angle - start) / span
                 };
                 sample_stops(stops, t, *extend)
             }
@@ -679,13 +838,53 @@ fn sample_stops(stops: &[GradientStop], t: f32, extend: Extend) -> Color {
     stops[stops.len() - 1].color
 }
 
-fn lerp_color(a: Color, b: Color, t: f32) -> Color {
-    let mix = |x: u8, y: u8| {
-        (x as f32 + (y as f32 - x as f32) * t)
-            .round()
-            .clamp(0.0, 255.0) as u8
+/// Exact sRGB transfer function, sRGB value to linear light.
+fn to_linear(v: u8) -> f32 {
+    let c = v as f32 / 255.0;
+    if c <= 0.04045 {
+        c / 12.92
+    } else {
+        ((c + 0.055) / 1.055).powf(2.4)
+    }
+}
+
+/// Inverse of [`to_linear`], linear light to an sRGB byte.
+fn from_linear(v: f32) -> u8 {
+    let c = if v <= 0.003_130_8 {
+        12.92 * v
+    } else {
+        1.055 * v.powf(1.0 / 2.4) - 0.055
     };
-    Color::rgba(mix(a.r, b.r), mix(a.g, b.g), mix(a.b, b.b), mix(a.a, b.a))
+    (c * 255.0).round().clamp(0.0, 255.0) as u8
+}
+
+/// Interpolates two stop colours the way COLR gradients require.
+///
+/// The specification asks for linear-light values with alpha premultiplied,
+/// so a fade to transparent does not darken towards black.
+fn lerp_color(a: Color, b: Color, t: f32) -> Color {
+    if t <= 0.0 {
+        return a;
+    }
+    if t >= 1.0 {
+        return b;
+    }
+    let (aa, ab) = (a.a as f32 / 255.0, b.a as f32 / 255.0);
+    let out_a = aa + (ab - aa) * t;
+    if out_a <= 0.0 {
+        return Color::TRANSPARENT;
+    }
+    let mix = |x: u8, y: u8| {
+        let x = to_linear(x) * aa;
+        let y = to_linear(y) * ab;
+        from_linear((x + (y - x) * t) / out_a)
+    };
+    Color::rgba(
+        mix(a.r, b.r),
+        mix(a.g, b.g),
+        mix(a.b, b.b),
+        (out_a * 255.0).round().clamp(0.0, 255.0) as u8,
+    )
 }
 
 /// An edge of a filled polygon, oriented top-to-bottom with a winding sign.
@@ -701,7 +900,20 @@ struct Edge {
 ///
 /// Horizontal coverage is exact (fractional spans), vertical coverage uses
 /// four sub-scanlines.
+/// Fills polygons with the non-zero winding rule and anti-aliasing.
+///
+/// Horizontal coverage is exact (fractional spans), vertical coverage uses
+/// four sub-scanlines.
 pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill) {
+    fill_polygons_at(bmp, polys, fill, 0.0, 0.0);
+}
+
+/// Fills polygons whose coordinates are in page space into a bitmap whose
+/// pixel `(0, 0)` sits at page `(ox, oy)`.
+///
+/// The offset lets a composite sub-graph render into a small scratch bitmap
+/// while its geometry and gradients stay in absolute page coordinates.
+fn fill_polygons_at(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill, ox: f32, oy: f32) {
     if let Fill::Solid(color) = fill
         && color.a == 0
     {
@@ -740,8 +952,8 @@ pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill) {
 
     let h = bmp.height as i32;
     let w = bmp.width as i32;
-    let y_start = ymin.floor().max(0.0) as i32;
-    let y_end = (ymax.ceil() as i32).min(h);
+    let y_start = (ymin.floor() - oy).max(0.0) as i32;
+    let y_end = ((ymax.ceil() - oy) as i32).min(h);
     if y_start >= y_end {
         return;
     }
@@ -754,40 +966,44 @@ pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill) {
         let mut touched = false;
         let mut min_x = f32::INFINITY;
         let mut max_x = f32::NEG_INFINITY;
+        let base_y = py as f32 + oy;
 
         for s in 0..SUBSAMPLES {
-            let sy = py as f32 + (s as f32 + 0.5) * weight;
+            let sy = base_y + (s as f32 + 0.5) * weight;
             xs.clear();
             for e in &edges {
                 if sy >= e.y0 && sy < e.y1 {
                     let t = (sy - e.y0) / (e.y1 - e.y0);
-                    xs.push((e.x0 + t * (e.x1 - e.x0), e.dir));
+                    xs.push((e.x0 + (e.x1 - e.x0) * t, e.dir));
                 }
             }
             if xs.len() < 2 {
                 continue;
             }
             xs.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Equal));
-
             let mut winding = 0;
-            for k in 0..xs.len() {
-                winding += xs[k].1;
-                if winding == 0 || k + 1 >= xs.len() {
-                    continue;
+            let mut span: Option<f32> = None;
+            for (x, dir) in &xs {
+                let was_inside = winding != 0;
+                winding += dir;
+                let inside = winding != 0;
+                if !was_inside && inside {
+                    span = Some(*x);
+                } else if was_inside
+                    && !inside
+                    && let Some(x0) = span.take()
+                {
+                    let (x0, x1) = (x0 - ox, *x - ox);
+                    let x0 = x0.max(0.0);
+                    let x1 = x1.min(w as f32);
+                    if x1 <= x0 {
+                        continue;
+                    }
+                    add_span(&mut coverage, x0, x1, weight);
+                    min_x = min_x.min(x0);
+                    max_x = max_x.max(x1);
+                    touched = true;
                 }
-                let (mut x0, mut x1) = (xs[k].0, xs[k + 1].0);
-                if x1 <= 0.0 || x0 >= w as f32 {
-                    continue;
-                }
-                x0 = x0.max(0.0);
-                x1 = x1.min(w as f32);
-                if x1 <= x0 {
-                    continue;
-                }
-                add_span(&mut coverage, x0, x1, weight);
-                min_x = min_x.min(x0);
-                max_x = max_x.max(x1);
-                touched = true;
             }
         }
 
@@ -799,11 +1015,383 @@ pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill) {
         for (offset, &c) in coverage[px_start..px_end].iter().enumerate() {
             let c = c.min(1.0);
             if c > 0.002 {
-                let color = fill.color_at((px_start + offset) as f32 + 0.5, py as f32 + 0.5);
+                let color = fill.color_at((px_start + offset) as f32 + ox + 0.5, base_y + 0.5);
                 bmp.blend(px_start + offset, py as usize, color, c);
             }
         }
     }
+}
+
+/// A painted region of a colour glyph's paint graph.
+#[derive(Debug, Clone)]
+enum Shape {
+    /// Polygons filled with one paint.
+    Fill {
+        /// Page-space polygons.
+        polys: Vec<Contour>,
+        /// Paint applied to them.
+        fill: Fill,
+    },
+    /// Layers stacked with plain source-over.
+    Group(Vec<Shape>),
+    /// Two sub-graphs combined with a COLR composite mode.
+    Composite {
+        /// `CompositeMode` index (0..=27).
+        mode: u8,
+        /// Source sub-graph.
+        source: Box<Shape>,
+        /// Backdrop sub-graph.
+        backdrop: Box<Shape>,
+    },
+}
+
+impl Shape {
+    /// Bounding box of everything this shape can paint, in page space.
+    fn bounds(&self) -> Option<[f32; 4]> {
+        match self {
+            Shape::Fill { polys, .. } => {
+                let mut b = [
+                    f32::INFINITY,
+                    f32::INFINITY,
+                    f32::NEG_INFINITY,
+                    f32::NEG_INFINITY,
+                ];
+                for p in polys.iter().flatten() {
+                    b[0] = b[0].min(p.x);
+                    b[1] = b[1].min(p.y);
+                    b[2] = b[2].max(p.x);
+                    b[3] = b[3].max(p.y);
+                }
+                (b[0] <= b[2] && b[1] <= b[3]).then_some(b)
+            }
+            Shape::Group(items) => items.iter().filter_map(|s| s.bounds()).reduce(union),
+            Shape::Composite {
+                source, backdrop, ..
+            } => match (source.bounds(), backdrop.bounds()) {
+                (Some(a), Some(b)) => Some(union(a, b)),
+                (a, b) => a.or(b),
+            },
+        }
+    }
+
+    /// Paints this shape into `bmp`, whose pixel `(0, 0)` is page `(ox, oy)`.
+    fn render(&self, bmp: &mut Bitmap, ox: f32, oy: f32) {
+        match self {
+            Shape::Fill { polys, fill } => fill_polygons_at(bmp, polys, fill, ox, oy),
+            Shape::Group(items) => {
+                for shape in items {
+                    shape.render(bmp, ox, oy);
+                }
+            }
+            Shape::Composite {
+                mode,
+                source,
+                backdrop,
+            } => {
+                let Some(bounds) = self.bounds() else {
+                    return;
+                };
+                // One pixel of slack so anti-aliased edges are kept.
+                let x0 = (bounds[0].floor() as i32 - 1).max(0);
+                let y0 = (bounds[1].floor() as i32 - 1).max(0);
+                let x1 = (bounds[2].ceil() as i32 + 1).min(bmp.width as i32);
+                let y1 = (bounds[3].ceil() as i32 + 1).min(bmp.height as i32);
+                if x1 <= x0 || y1 <= y0 {
+                    return;
+                }
+                let (w, h) = ((x1 - x0) as u32, (y1 - y0) as u32);
+                let mut src = Bitmap::new(w, h);
+                let mut dst = Bitmap::new(w, h);
+                // Scratch pixel (0, 0) sits at page (x0, y0).
+                let (dx, dy) = (x0 as f32, y0 as f32);
+                backdrop.render(&mut dst, dx, dy);
+                source.render(&mut src, dx, dy);
+                for py in 0..h {
+                    for px in 0..w {
+                        let blended = composite_pixel(*mode, src.pixel(px, py), dst.pixel(px, py));
+                        dst.set_pixel(px, py, blended);
+                    }
+                }
+                dst.draw_over(bmp, x0 as u32, y0 as u32);
+            }
+        }
+    }
+}
+
+/// Smallest box containing both inputs.
+fn union(a: [f32; 4], b: [f32; 4]) -> [f32; 4] {
+    [
+        a[0].min(b[0]),
+        a[1].min(b[1]),
+        a[2].max(b[2]),
+        a[3].max(b[3]),
+    ]
+}
+
+/// Clips polygons to an axis-aligned rectangle (Sutherland–Hodgman).
+fn clip_contours(polys: &[Contour], rect: [f32; 4]) -> Vec<Contour> {
+    let [x0, y0, x1, y1] = rect;
+    let mut out = Vec::with_capacity(polys.len());
+    for poly in polys {
+        if poly.len() < 3 {
+            continue;
+        }
+        // Each pass clips against one edge: left, right, top, bottom.
+        let mut current = poly.clone();
+        let edges = [(0, x0, true), (0, x1, false), (1, y0, true), (1, y1, false)];
+        for (axis, limit, keep_greater) in edges {
+            if current.is_empty() {
+                break;
+            }
+            let inside = |p: &Point| {
+                let v = if axis == 0 { p.x } else { p.y };
+                if keep_greater { v >= limit } else { v <= limit }
+            };
+            let mut clipped: Contour = Vec::with_capacity(current.len() + 1);
+            for i in 0..current.len() {
+                let a = current[i];
+                let b = current[(i + 1) % current.len()];
+                let (a_in, b_in) = (inside(&a), inside(&b));
+                if a_in {
+                    clipped.push(a);
+                }
+                if a_in != b_in {
+                    let (av, bv) = if axis == 0 { (a.x, b.x) } else { (a.y, b.y) };
+                    let f = if (bv - av).abs() < 1e-9 {
+                        0.0
+                    } else {
+                        (limit - av) / (bv - av)
+                    };
+                    clipped.push(Point {
+                        x: a.x + (b.x - a.x) * f,
+                        y: a.y + (b.y - a.y) * f,
+                    });
+                }
+            }
+            current = clipped;
+        }
+        if current.len() >= 3 {
+            out.push(current);
+        }
+    }
+    out
+}
+
+/// Composites `src` over `dst` with a COLR `CompositeMode`.
+///
+/// The colour math follows Compositing and Blending Level 1: blends are
+/// evaluated in linear light and the result is returned as straight sRGB.
+fn composite_pixel(mode: u8, src: [u8; 4], dst: [u8; 4]) -> [u8; 4] {
+    let mode = if mode > 27 { 0 } else { mode };
+    let sa = src[3] as f32 / 255.0;
+    let da = dst[3] as f32 / 255.0;
+    let cs = [to_linear(src[0]), to_linear(src[1]), to_linear(src[2])];
+    let cb = [to_linear(dst[0]), to_linear(dst[1]), to_linear(dst[2])];
+    let (co, ao) = if mode < 13 {
+        let (fa, fb) = porter_duff_factors(mode, sa, da);
+        let mut ao = sa * fa + da * fb;
+        let mut co = [0.0f32; 3];
+        for i in 0..3 {
+            co[i] = sa * fa * cs[i] + da * fb * cb[i];
+        }
+        if mode == 12 {
+            // PLUS clamps in premultiplied space, not after un-premultiplying.
+            ao = ao.min(1.0);
+            for c in &mut co {
+                *c = c.min(1.0);
+            }
+        }
+        (co, ao)
+    } else {
+        let blended = blend_channels(mode, cb, cs);
+        let ao = sa + da * (1.0 - sa);
+        let mut co = [0.0f32; 3];
+        for i in 0..3 {
+            co[i] = sa * (1.0 - da) * cs[i] + sa * da * blended[i] + (1.0 - sa) * da * cb[i];
+        }
+        (co, ao)
+    };
+    if ao <= 0.0 {
+        return [0, 0, 0, 0];
+    }
+    [
+        from_linear(co[0] / ao),
+        from_linear(co[1] / ao),
+        from_linear(co[2] / ao),
+        (ao * 255.0).round().clamp(0.0, 255.0) as u8,
+    ]
+}
+
+/// Porter-Duff source and backdrop factors for the composite modes 0..=12.
+fn porter_duff_factors(mode: u8, sa: f32, da: f32) -> (f32, f32) {
+    match mode {
+        // CLEAR
+        0 => (0.0, 0.0),
+        // SRC
+        1 => (1.0, 0.0),
+        // DST
+        2 => (0.0, 1.0),
+        // SRC_OVER
+        3 => (1.0, 1.0 - sa),
+        // DST_OVER
+        4 => (1.0 - da, 1.0),
+        // SRC_IN
+        5 => (da, 0.0),
+        // DST_IN
+        6 => (0.0, sa),
+        // SRC_OUT
+        7 => (1.0 - da, 0.0),
+        // DST_OUT
+        8 => (0.0, 1.0 - sa),
+        // SRC_ATOP
+        9 => (da, 1.0 - sa),
+        // DST_ATOP
+        10 => (1.0 - da, sa),
+        // XOR
+        11 => (1.0 - da, 1.0 - sa),
+        // PLUS
+        _ => (1.0, 1.0),
+    }
+}
+
+/// Blend functions of the separable and non-separable composite modes.
+fn blend_channels(mode: u8, cb: [f32; 3], cs: [f32; 3]) -> [f32; 3] {
+    let mut out = [0.0f32; 3];
+    match mode {
+        13..=23 => {
+            for i in 0..3 {
+                out[i] = blend_channel(mode, cb[i], cs[i]);
+            }
+        }
+        24 => out = set_lum(set_sat(cs, sat(cb)), lum(cb)),
+        25 => out = set_lum(set_sat(cb, sat(cs)), lum(cb)),
+        26 => out = set_lum(cs, lum(cb)),
+        27 => out = set_lum(cb, lum(cs)),
+        _ => out = cs,
+    }
+    out
+}
+
+/// One separable blend mode, applied per colour channel.
+fn blend_channel(mode: u8, cb: f32, cs: f32) -> f32 {
+    match mode {
+        // SCREEN
+        13 => cb + cs - cb * cs,
+        // OVERLAY
+        14 => hard_light(cs, cb),
+        // DARKEN
+        15 => cb.min(cs),
+        // LIGHTEN
+        16 => cb.max(cs),
+        // COLOR_DODGE
+        17 => {
+            if cb <= 0.0 {
+                0.0
+            } else if cs >= 1.0 {
+                1.0
+            } else {
+                (cb / (1.0 - cs)).min(1.0)
+            }
+        }
+        // COLOR_BURN
+        18 => {
+            if cb >= 1.0 {
+                1.0
+            } else if cs <= 0.0 {
+                0.0
+            } else {
+                1.0 - ((1.0 - cb) / cs).min(1.0)
+            }
+        }
+        // HARD_LIGHT
+        19 => hard_light(cb, cs),
+        // SOFT_LIGHT
+        20 => {
+            if cs <= 0.5 {
+                cb - (1.0 - 2.0 * cs) * cb * (1.0 - cb)
+            } else {
+                let d = if cb <= 0.25 {
+                    ((16.0 * cb - 12.0) * cb + 4.0) * cb
+                } else {
+                    cb.sqrt()
+                };
+                cb + (2.0 * cs - 1.0) * (d - cb)
+            }
+        }
+        // DIFFERENCE
+        21 => (cb - cs).abs(),
+        // EXCLUSION
+        22 => cb + cs - 2.0 * cb * cs,
+        // MULTIPLY
+        23 => cb * cs,
+        _ => cs,
+    }
+}
+
+/// The `hard-light` rule, shared by `hard-light` and `overlay`.
+fn hard_light(cb: f32, cs: f32) -> f32 {
+    if cs <= 0.5 {
+        2.0 * cb * cs
+    } else {
+        1.0 - 2.0 * (1.0 - cb) * (1.0 - cs)
+    }
+}
+
+fn lum(c: [f32; 3]) -> f32 {
+    0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]
+}
+
+fn sat(c: [f32; 3]) -> f32 {
+    c[0].max(c[1]).max(c[2]) - c[0].min(c[1]).min(c[2])
+}
+
+/// Clamps an out-of-gamut colour back into `0..=1` while keeping its
+/// luminance, as the compositing spec requires.
+fn clip_color(mut c: [f32; 3]) -> [f32; 3] {
+    let l = lum(c);
+    let n = c[0].min(c[1]).min(c[2]);
+    let x = c[0].max(c[1]).max(c[2]);
+    if n < 0.0 {
+        for v in &mut c {
+            *v = l + (*v - l) * l / (l - n);
+        }
+    }
+    if x > 1.0 {
+        for v in &mut c {
+            *v = l + (*v - l) * (1.0 - l) / (x - l);
+        }
+    }
+    c
+}
+
+fn set_lum(mut c: [f32; 3], l: f32) -> [f32; 3] {
+    let d = l - lum(c);
+    for v in &mut c {
+        *v += d;
+    }
+    clip_color(c)
+}
+
+fn set_sat(mut c: [f32; 3], s: f32) -> [f32; 3] {
+    let (mut min, mut mid, mut max) = (0, 1, 2);
+    if c[min] > c[mid] {
+        std::mem::swap(&mut min, &mut mid);
+    }
+    if c[mid] > c[max] {
+        std::mem::swap(&mut mid, &mut max);
+    }
+    if c[min] > c[mid] {
+        std::mem::swap(&mut min, &mut mid);
+    }
+    if c[max] > c[min] {
+        c[mid] = (c[mid] - c[min]) * s / (c[max] - c[min]);
+        c[max] = s;
+    } else {
+        c[mid] = 0.0;
+        c[max] = 0.0;
+    }
+    c[min] = 0.0;
+    c
 }
 
 /// Adds horizontal coverage for the span `[x0, x1)` weighted by `weight`.
@@ -1161,6 +1749,8 @@ mod tests {
         Fill::Linear {
             p0: Point { x: 0.0, y: 0.0 },
             p1: Point { x: 100.0, y: 0.0 },
+            // Iso-colour lines are vertical, so colour varies along x.
+            p2: Point { x: 0.0, y: 100.0 },
             stops,
             extend: Extend::Pad,
         }
@@ -1184,8 +1774,10 @@ mod tests {
         let fill = ramp(black_to_white());
         assert_eq!(fill.color_at(0.0, 0.0), Color::BLACK);
         assert_eq!(fill.color_at(100.0, 0.0), Color::WHITE);
+        // Interpolation happens in linear light, so the midpoint is much
+        // lighter than the sRGB average (~128): 0.5 linear is ~188 sRGB.
         let mid = fill.color_at(50.0, 0.0);
-        assert!(mid.r > 120 && mid.r < 135, "{mid:?}");
+        assert!(mid.r > 180 && mid.r < 195, "{mid:?}");
         // Perpendicular position does not change the colour.
         assert_eq!(fill.color_at(50.0, 500.0), mid);
     }
@@ -1198,22 +1790,24 @@ mod tests {
         let repeat = Fill::Linear {
             p0: Point { x: 0.0, y: 0.0 },
             p1: Point { x: 100.0, y: 0.0 },
+            p2: Point { x: 0.0, y: 100.0 },
             stops: black_to_white(),
             extend: Extend::Repeat,
         };
-        // t = 1.25 wraps to 0.25.
+        // t = 1.25 wraps to 0.25 (sRGB ~137 for a linear-light ramp).
         let c = repeat.color_at(125.0, 0.0);
-        assert!(c.r > 55 && c.r < 70, "{c:?}");
+        assert!(c.r > 130 && c.r < 145, "{c:?}");
 
         let reflect = Fill::Linear {
             p0: Point { x: 0.0, y: 0.0 },
             p1: Point { x: 100.0, y: 0.0 },
+            p2: Point { x: 0.0, y: 100.0 },
             stops: black_to_white(),
             extend: Extend::Reflect,
         };
         // t = 1.75 reflects to 0.25 as well.
         let c = reflect.color_at(175.0, 0.0);
-        assert!(c.r > 55 && c.r < 70, "{c:?}");
+        assert!(c.r > 130 && c.r < 145, "{c:?}");
     }
 
     #[test]
@@ -1229,7 +1823,7 @@ mod tests {
         assert_eq!(fill.color_at(50.0, 50.0), Color::BLACK);
         assert_eq!(fill.color_at(100.0, 50.0), Color::WHITE);
         let mid = fill.color_at(75.0, 50.0);
-        assert!(mid.r > 120 && mid.r < 135, "{mid:?}");
+        assert!(mid.r > 180 && mid.r < 195, "{mid:?}");
     }
 
     #[test]
@@ -1250,8 +1844,9 @@ mod tests {
         fill_polygons(&mut bmp, &[square], &ramp(black_to_white()));
         let left = bmp.pixel(2, 10);
         let right = bmp.pixel(97, 10);
-        assert!(left[0] < 30, "left should be dark: {left:?}");
-        assert!(right[0] > 225, "right should be light: {right:?}");
+        // Linear-light ramp: sRGB 0 -> 255 still ends at the extremes.
+        assert!(left[0] < 60, "left should be dark: {left:?}");
+        assert!(right[0] > 245, "right should be light: {right:?}");
         let middle = bmp.pixel(50, 10);
         assert!(middle[0] > left[0] && middle[0] < right[0]);
         scene.draws.clear();
@@ -1306,5 +1901,232 @@ mod tests {
             colors.len()
         );
         assert!(warm > 100, "expected warm flame colours, got {warm} pixels");
+    }
+
+    fn sweep(start_deg: f32, end_deg: f32, extend: Extend) -> Fill {
+        Fill::Sweep {
+            center: Point { x: 0.0, y: 0.0 },
+            start: start_deg.to_radians(),
+            end: end_deg.to_radians(),
+            stops: vec![
+                GradientStop {
+                    offset: 0.0,
+                    color: Color::rgba(255, 0, 0, 255),
+                },
+                GradientStop {
+                    offset: 1.0,
+                    color: Color::rgba(0, 0, 255, 255),
+                },
+            ],
+            extend,
+        }
+    }
+
+    /// Samples the sweep gradient in design orientation (y up).
+    fn sweep_at(fill: &Fill, angle_deg: f32) -> Color {
+        let a = angle_deg.to_radians();
+        fill.color_at(10.0 * a.cos(), -10.0 * a.sin())
+    }
+
+    #[test]
+    fn sweep_gradient_runs_counter_clockwise() {
+        let fill = sweep(0.0, 360.0, Extend::Pad);
+        // 0 degrees is the positive x axis: the first stop.
+        assert_eq!(sweep_at(&fill, 0.0), Color::rgba(255, 0, 0, 255));
+        // Half a turn is halfway along the colour line.
+        let half = sweep_at(&fill, 180.0);
+        assert!(half.r > 170 && half.b > 170, "{half:?}");
+        // Just below a full turn is (almost) the last stop.
+        let end = sweep_at(&fill, 359.0);
+        assert!(end.b > 200 && end.r < 40, "{end:?}");
+    }
+
+    #[test]
+    fn sweep_gradient_pads_outside_its_range() {
+        // A 90..270 degree sweep: below 90 is the first stop, above 270 the
+        // last one, whatever the angle wrap does.
+        let fill = sweep(90.0, 270.0, Extend::Pad);
+        assert_eq!(sweep_at(&fill, 0.0), Color::rgba(255, 0, 0, 255));
+        assert_eq!(sweep_at(&fill, 350.0), Color::rgba(0, 0, 255, 255));
+        let mid = sweep_at(&fill, 180.0);
+        assert!(mid.r > 170 && mid.b > 170, "{mid:?}");
+    }
+
+    #[test]
+    fn sweep_gradient_can_run_clockwise() {
+        // 270 -> 90 is a negative span, so the colour line runs clockwise.
+        let fill = sweep(270.0, 90.0, Extend::Pad);
+        assert_eq!(sweep_at(&fill, 270.0), Color::rgba(255, 0, 0, 255));
+        assert_eq!(sweep_at(&fill, 90.0), Color::rgba(0, 0, 255, 255));
+        // Going on past the end (towards 0) stays at the last stop.
+        assert_eq!(sweep_at(&fill, 0.0), Color::rgba(0, 0, 255, 255));
+    }
+
+    #[test]
+    fn zero_width_sweep_only_makes_sense_when_padded() {
+        let pad = sweep(90.0, 90.0, Extend::Pad);
+        assert_eq!(sweep_at(&pad, 0.0), Color::rgba(255, 0, 0, 255));
+        // A repeated zero-width sweep is ill-formed: nothing is painted.
+        for extend in [Extend::Repeat, Extend::Reflect] {
+            let fill = sweep(90.0, 90.0, extend);
+            assert_eq!(sweep_at(&fill, 0.0), Color::TRANSPARENT, "{extend:?}");
+        }
+    }
+
+    fn opaque(r: u8, g: u8, b: u8) -> [u8; 4] {
+        [r, g, b, 255]
+    }
+
+    #[test]
+    fn porter_duff_composite_modes_follow_the_spec() {
+        let red = opaque(255, 0, 0);
+        let blue = opaque(0, 0, 255);
+        // CLEAR wipes everything.
+        assert_eq!(composite_pixel(0, red, blue), [0, 0, 0, 0]);
+        // SRC/DST pick one side wholesale.
+        assert_eq!(composite_pixel(1, red, blue), red);
+        assert_eq!(composite_pixel(2, red, blue), blue);
+        // SRC_OVER keeps the source where it is opaque.
+        assert_eq!(composite_pixel(3, red, blue), red);
+        // SRC_IN / DST_IN are multiplicative on alpha.
+        assert_eq!(composite_pixel(5, red, blue), red);
+        assert_eq!(composite_pixel(6, red, blue), blue);
+        // SRC_OUT / XOR remove the overlap, which is all of it here.
+        assert_eq!(composite_pixel(7, red, blue)[3], 0);
+        assert_eq!(composite_pixel(11, red, blue)[3], 0);
+        // PLUS adds the channels and clamps.
+        assert_eq!(composite_pixel(12, red, blue), opaque(255, 0, 255));
+        // A transparent backdrop leaves SRC_IN with nothing.
+        assert_eq!(composite_pixel(5, red, [0, 0, 0, 0])[3], 0);
+    }
+
+    #[test]
+    fn separable_blend_modes_match_the_spec() {
+        let red = opaque(255, 0, 0);
+        let blue = opaque(0, 0, 255);
+        // MULTIPLY of complementary channels is black.
+        assert_eq!(composite_pixel(23, red, blue), opaque(0, 0, 0));
+        // SCREEN is the inverse of multiply: full magenta.
+        assert_eq!(composite_pixel(13, red, blue), opaque(255, 0, 255));
+        // DARKEN / LIGHTEN take per-channel extremes: red and blue share no
+        // channel, so one mode gives black and the other magenta.
+        assert_eq!(composite_pixel(15, red, blue), opaque(0, 0, 0));
+        assert_eq!(composite_pixel(16, red, blue), opaque(255, 0, 255));
+        // DIFFERENCE of red over blue is magenta.
+        let diff = composite_pixel(21, red, blue);
+        assert_eq!(diff[3], 255);
+        assert!(diff[0] > 250 && diff[2] > 250, "{diff:?}");
+        // OVERLAY is hard-light with the backdrop deciding: a fully blue
+        // backdrop stays blue.
+        assert_eq!(composite_pixel(14, red, blue), opaque(0, 0, 255));
+        // MULTIPLY with a mid grey darkens on every channel.
+        let grey = opaque(128, 128, 128);
+        let out = composite_pixel(23, grey, opaque(200, 200, 200));
+        assert!(out[0] < 150, "{out:?}");
+    }
+
+    #[test]
+    fn non_separable_blend_modes_keep_luminance() {
+        // HUE / SATURATION / COLOR / LUMINOSITY must stay in gamut and keep
+        // the alpha of a source-over composite.
+        for mode in 24..=27 {
+            let px = composite_pixel(mode, opaque(10, 200, 90), opaque(240, 30, 70));
+            assert_eq!(px[3], 255, "mode {mode}");
+        }
+        // LUMINOSITY of the source over an opaque backdrop differs from the
+        // backdrop itself, so the mode really did something.
+        let src = opaque(255, 255, 255);
+        let dst = opaque(0, 0, 255);
+        assert_ne!(composite_pixel(27, src, dst), dst);
+    }
+
+    #[test]
+    fn composite_with_transparent_source_leaves_the_backdrop() {
+        // Source-over with no source is the backdrop.
+        let dst = opaque(20, 200, 120);
+        assert_eq!(composite_pixel(3, [0, 0, 0, 0], dst), dst);
+    }
+
+    #[test]
+    fn clipping_a_square_in_half_keeps_half_its_area() {
+        let square = vec![
+            Point { x: 0.0, y: 0.0 },
+            Point { x: 100.0, y: 0.0 },
+            Point { x: 100.0, y: 100.0 },
+            Point { x: 0.0, y: 100.0 },
+        ];
+        let clipped = clip_contours(std::slice::from_ref(&square), [0.0, 0.0, 50.0, 100.0]);
+        assert_eq!(clipped.len(), 1);
+        let xs: Vec<f32> = clipped[0].iter().map(|p| p.x).collect();
+        assert!(xs.iter().all(|x| *x <= 50.0 + 1e-3), "{xs:?}");
+        assert!(xs.iter().any(|x| (*x - 50.0).abs() < 1e-3), "{xs:?}");
+
+        // A rectangle that misses the polygon removes it entirely.
+        let none = clip_contours(&[square], [200.0, 200.0, 300.0, 300.0]);
+        assert!(none.is_empty());
+    }
+
+    #[test]
+    fn composite_shapes_punch_holes_with_xor() {
+        // Two overlapping squares, combined with XOR: only the parts that
+        // belong to exactly one square remain.
+        let left = vec![
+            Point { x: 10.0, y: 10.0 },
+            Point { x: 60.0, y: 10.0 },
+            Point { x: 60.0, y: 60.0 },
+            Point { x: 10.0, y: 60.0 },
+        ];
+        let right = vec![
+            Point { x: 40.0, y: 10.0 },
+            Point { x: 90.0, y: 10.0 },
+            Point { x: 90.0, y: 60.0 },
+            Point { x: 40.0, y: 60.0 },
+        ];
+        let shape = Shape::Composite {
+            mode: 11,
+            source: Box::new(Shape::Fill {
+                polys: vec![right],
+                fill: Fill::Solid(Color::rgba(0, 0, 255, 255)),
+            }),
+            backdrop: Box::new(Shape::Fill {
+                polys: vec![left],
+                fill: Fill::Solid(Color::rgba(255, 0, 0, 255)),
+            }),
+        };
+        let mut bmp = Bitmap::new(100, 80);
+        shape.render(&mut bmp, 0.0, 0.0);
+        // Left-only, right-only and overlap.
+        assert_eq!(bmp.pixel(20, 35)[3], 255);
+        assert_eq!(bmp.pixel(80, 35)[3], 255);
+        assert_eq!(bmp.pixel(50, 35)[3], 0, "the overlap must be cleared");
+        assert_eq!(bmp.pixel(5, 5)[3], 0);
+    }
+
+    #[test]
+    fn composite_renders_into_a_clipped_scratch_area() {
+        // A composite whose bounds lie partly outside the target must still
+        // paint the visible remainder.
+        let big = vec![
+            Point { x: -50.0, y: 10.0 },
+            Point { x: 50.0, y: 10.0 },
+            Point { x: 50.0, y: 50.0 },
+            Point { x: -50.0, y: 50.0 },
+        ];
+        let shape = Shape::Composite {
+            mode: 3,
+            source: Box::new(Shape::Fill {
+                polys: vec![big.clone()],
+                fill: Fill::Solid(Color::rgba(0, 128, 0, 255)),
+            }),
+            backdrop: Box::new(Shape::Fill {
+                polys: vec![big],
+                fill: Fill::Solid(Color::rgba(0, 0, 128, 255)),
+            }),
+        };
+        let mut bmp = Bitmap::new(60, 60);
+        shape.render(&mut bmp, 0.0, 0.0);
+        // Inside the target, the source wins; outside it nothing leaks.
+        assert_eq!(bmp.pixel(10, 30), [0, 128, 0, 255]);
+        assert_eq!(bmp.pixel(55, 30)[3], 0);
     }
 }

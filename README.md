@@ -83,6 +83,7 @@ OPTIONS:
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
         --font <FILE>         TrueType font used for png/webp output
+        --variation <TAG=VAL> Variable-font axis, e.g. wght=700 (repeatable)
         --toc                 Prepend a table of contents
     -h, --help                Print this help
     -V, --version             Print version information
@@ -96,6 +97,7 @@ markdown2svg doc.md --canvas a4 -o page.svg                          # A4, auto-
 markdown2svg doc.md --canvas mobile -o long.svg                     # 750px long image
 markdown2svg doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
 markdown2svg doc.md --format webp --font myfont.ttf -o doc.webp
+markdown2svg doc.md --font SegUIVar.ttf --variation wght=700 -o doc.png   # bold instance
 markdown2svg doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
 markdown2svg doc.md --columns 3 --page-height 1123 -o page.svg      # 3 columns per page
 markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \
@@ -155,6 +157,7 @@ The layout engine is driven entirely by configuration; nothing is hard-coded.
 | Code font | `--mono-family "Consolas, monospace"` | `with_mono_family(...)` | system mono |
 | Columns | `--columns 2` | `with_columns(2)` | 1 |
 | Column gap | `--column-gap 28` | `with_column_gap(28.0)` | 24 |
+| Variable axis | `--variation wght=700` | `with_variation("wght", 700.0)` | font default |
 
 ```rust
 let theme = markdown2svg::Theme::light()
@@ -173,6 +176,8 @@ Notes:
   bitmap output uses the closest discovered TrueType face (or `--font`).
 - For bitmap output the family name is also used to prefer a matching face
   among the discovered fonts.
+- `--variation` only affects bitmap output; SVG text is resolved by the viewer,
+  so pass the font stack you want there instead.
 - Columns are either **balanced** (no page height: the shortest height that fits
   the requested number of columns) or **paginated** (a page height fills each
   column; every N columns starts a new page).
@@ -361,13 +366,19 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
 - PNG: chunk CRCs, adaptive-filter round-trip, exact pixel recovery (own inflater)
 - WebP: RIFF/VP8L headers, canonical prefix codes, full-tree Kraft check, LZ77 token replay,
   distance-range invariants, and a built-in VP8L decoder that round-trips a full rendered page
-- gradients: axis projection, radial two-circle solving, pad/repeat/reflect extend modes
-- COLR v1: paint graph parsing (layers, glyphs, transforms, composite) and gradient layers
+- gradients: axis projection through the rotation point, radial two-circle solving,
+  sweep angles (including reversed spans), pad/repeat/reflect extend modes, linear-light stops
+- COLR v1: paint graph parsing (layers, glyphs, transforms, composites, sweeps), clip boxes
+  and variable-field deltas, exercised with fonts built byte-by-byte inside the tests
+- composite modes: every Porter-Duff and blend mode, plus an XOR composite that really
+  punches a hole in the rendered bitmap
+- variable fonts: tuple scalars, IUP interpolation, `avar` segment maps, axis clamping, and
+  gvar/HVAR interpolation against a system variable face
 - PNG vs WebP decode to **pixel-identical** images (verified in Chromium: 8,092,800 bytes
   compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
 
-Current coverage: **95% of lines** across 464 tests (`cargo llvm-cov`).
+Current coverage: **94% of lines** across 497 tests (`cargo llvm-cov`).
 
 ## SVG compatibility
 
@@ -404,15 +415,23 @@ The rasterizer follows the font's own design rather than approximating it:
   `consolai.ttf`, …). Faux bold (a sub-pixel second pass) and faux italic (a shear) are only
   fallbacks for families that ship a single style.
 - **Colour emoji** follow the font's own `COLR` paint graph and `CPAL` palette: layers,
-  affine transforms, solid fills and linear/radial gradients are all taken from the font's
-  geometry. COLR v1 is preferred, with the v0 layer list as a fallback for older fonts.
-  No tinting or re-colouring is synthesised.
+  affine transforms, solid fills, linear, radial and sweep gradients, clip boxes and all 28
+  composite/blend modes are taken from the font's geometry and mode numbers. COLR v1 is
+  preferred, with the v0 layer list as a fallback for older fonts. No tinting or
+  re-colouring is synthesised. Gradient interpolation and blending happen in linear light
+  with premultiplied alpha, as the specification requires.
+- **Variable fonts** interpolate: `fvar`/`avar` axes are normalized, `gvar` moves outline
+  points (with IUP interpolation for points the font leaves implicit, and component offsets
+  for composites), and `HVAR` updates advances. COLR variation deltas (`PaintVar*`, variable
+  clip boxes, colour lines) are read through the item variation store, so colour glyphs
+  follow the selected instance too.
 - Glyphs are positioned with the font's own advances, like a browser does for SVG; line
   breaking uses the deterministic metric table so output stays stable.
 
 Bitmap output needs a TrueType font. Discovery covers common Windows/macOS/Linux locations;
-pass `--font <FILE>` to pin one. Colour requires a COLR-based font (Segoe UI Emoji, Noto COLR
-builds, …); bitmap-only colour formats (`CBDT`, `sbix`) render monochrome.
+pass `--font <FILE>` to pin one, and `--variation TAG=VALUE` (repeatable) to pick a variable
+instance. Colour requires a COLR-based font (Segoe UI Emoji, Noto COLR builds, …);
+bitmap-only colour formats (`CBDT`, `sbix`) render monochrome.
 
 ## Sample
 

@@ -52,6 +52,9 @@ pub struct Options {
     /// Optional `.ttf`/`.ttc` file used for bitmap output. When `None`, a
     /// font is discovered from the system font directories.
     pub font_file: Option<String>,
+    /// Variable-font axis settings as `(tag, value)` pairs, e.g.
+    /// `("wght", 700.0)`. Ignored by static faces.
+    pub variations: Vec<(String, f32)>,
 }
 
 impl Options {
@@ -98,6 +101,19 @@ impl Options {
         self
     }
 
+    /// Selects a variable-font instance (builder style).
+    ///
+    /// ```
+    /// use markdown2svg::Options;
+    ///
+    /// let opts = Options::default().with_variation("wght", 700.0);
+    /// assert_eq!(opts.variations, vec![("wght".to_string(), 700.0)]);
+    /// ```
+    pub fn with_variation(mut self, tag: impl Into<String>, value: f32) -> Options {
+        self.variations.push((tag.into(), value));
+        self
+    }
+
     /// Checks that the options describe a renderable picture.
     ///
     /// Zoom must be a finite, positive number; the canvas must be wide
@@ -139,6 +155,7 @@ impl Default for Options {
             toc_title: "Contents".to_string(),
             format: OutputFormat::Svg,
             font_file: None,
+            variations: Vec::new(),
         }
     }
 }

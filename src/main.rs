@@ -35,6 +35,7 @@ OPTIONS:
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
         --font <FILE>         TrueType font used for png/webp output
+        --variation <TAG=VAL> Variable-font axis, e.g. wght=700 (repeatable)
         --toc                 Prepend a table of contents
     -h, --help                Print this help
     -V, --version             Print version information
@@ -66,6 +67,7 @@ struct Cli {
     page_height: Option<f32>,
     format: OutputFormat,
     font: Option<String>,
+    variations: Vec<(String, f32)>,
     toc: bool,
     help: bool,
     version: bool,
@@ -90,6 +92,7 @@ impl Default for Cli {
             page_height: None,
             format: OutputFormat::Svg,
             font: None,
+            variations: Vec::new(),
             toc: false,
             help: false,
             version: false,
@@ -138,6 +141,7 @@ impl Cli {
             toc_title: "Contents".to_string(),
             format: self.format,
             font_file: self.font.clone(),
+            variations: self.variations.clone(),
         }
     }
 }
@@ -367,6 +371,10 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
             "--font" => {
                 cli.font = Some(take_value(args, &mut i, arg)?);
             }
+            "--variation" => {
+                let raw = take_value(args, &mut i, arg)?;
+                cli.variations.push(parse_variation(&raw)?);
+            }
             "--toc" => {
                 cli.toc = true;
                 i += 1;
@@ -406,6 +414,22 @@ fn parse_number(raw: &str, what: &str) -> Result<f32, String> {
         return Err(format!("invalid {what} `{raw}` (expected a finite number)"));
     }
     Ok(value)
+}
+
+/// Parses a variation setting such as `wght=700` or `opsz:12.5`.
+fn parse_variation(raw: &str) -> Result<(String, f32), String> {
+    let (tag, value) = raw
+        .split_once('=')
+        .or_else(|| raw.split_once(':'))
+        .ok_or_else(|| format!("invalid variation `{raw}` (expected TAG=VALUE)"))?;
+    let tag = tag.trim();
+    if tag.len() != 4 || !tag.chars().all(|c| c.is_ascii_alphanumeric()) {
+        return Err(format!(
+            "invalid variation axis `{tag}` (expected a four-character tag such as wght)"
+        ));
+    }
+    let value = parse_number(value.trim(), "variation value")?;
+    Ok((tag.to_string(), value))
 }
 
 /// Parses a zoom percentage (`100`, `150`, `12.5`, `150%`) into a factor.
@@ -994,5 +1018,40 @@ mod tests {
         );
         let _ = std::fs::remove_file(first);
         let _ = std::fs::remove_file(&input);
+    }
+
+    #[test]
+    fn variation_flags_are_collected() {
+        let cli = parse_args(&args(&[
+            "doc.md",
+            "--variation",
+            "wght=700",
+            "--variation",
+            "opsz:12.5",
+        ]))
+        .unwrap();
+        assert_eq!(
+            cli.options().variations,
+            vec![("wght".to_string(), 700.0), ("opsz".to_string(), 12.5)]
+        );
+    }
+
+    #[test]
+    fn malformed_variations_are_rejected() {
+        for bad in ["wght", "wght=abc", "wg=700", "wght1=700"] {
+            let err = parse_args(&args(&["doc.md", "--variation", bad])).unwrap_err();
+            assert!(
+                err.contains("variation"),
+                "`{bad}` should mention variation: {err}"
+            );
+        }
+        // Non-finite values are refused as well.
+        let err = parse_args(&args(&["doc.md", "--variation", "wght=inf"])).unwrap_err();
+        assert!(err.contains("finite"), "{err}");
+    }
+
+    #[test]
+    fn help_lists_the_variation_flag() {
+        assert!(USAGE.contains("--variation"), "help should document axes");
     }
 }
