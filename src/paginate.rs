@@ -17,7 +17,7 @@
 use crate::ast::{Block, CodeBlock};
 use crate::layout::{self, BlockMark};
 use crate::scene::FontKind;
-use crate::scene::{Draw, LineDraw, RectDraw, Scene, TextDraw};
+use crate::scene::{RectDraw, Scene};
 use crate::text::{Metrics, TextStyle};
 use crate::theme::Theme;
 
@@ -142,7 +142,7 @@ pub(crate) fn paginate(
             draws.extend(
                 scene.draws[mark.draw_start..mark.draw_end]
                     .iter()
-                    .map(|d| shifted(d, -offset)),
+                    .map(|d| d.translated(0.0, -offset)),
             );
         }
         pages.push(Scene {
@@ -155,31 +155,12 @@ pub(crate) fn paginate(
     pages
 }
 
-/// Returns a copy of `draw` translated vertically by `dy`.
-fn shifted(draw: &Draw, dy: f32) -> Draw {
-    match draw {
-        Draw::Text(t) => Draw::Text(TextDraw {
-            y: t.y + dy,
-            ..t.clone()
-        }),
-        Draw::Rect(r) => Draw::Rect(RectDraw {
-            y: r.y + dy,
-            ..r.clone()
-        }),
-        Draw::Line(l) => Draw::Line(LineDraw {
-            y1: l.y1 + dy,
-            y2: l.y2 + dy,
-            ..l.clone()
-        }),
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::Theme;
     use crate::parse::parse;
-    use crate::scene::FontKind;
+    use crate::scene::{Draw, FontKind};
 
     fn render(doc: &crate::ast::Document, theme: &Theme) -> (Scene, Vec<BlockMark>) {
         crate::layout::Layout::new(theme).render_marked(doc)

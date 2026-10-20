@@ -75,6 +75,10 @@ OPTIONS:
         --font-size <PX>      Base font size in pixels (default: 16)
         --line-height <MULT>  Line height multiplier (default: 1.6)
         --letter-spacing <EM> Extra tracking in em units (default: 0)
+        --font-family <STACK> Font stack for body text (default: system sans)
+        --mono-family <STACK> Font stack for code (default: system mono)
+        --columns <N>         Text columns per page (default: 1)
+        --column-gap <PX>     Gap between columns (default: 24)
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
         --font <FILE>         TrueType font used for png/webp output
@@ -89,9 +93,51 @@ Examples:
 markdown2svg doc.md -o doc.svg
 markdown2svg doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
 markdown2svg doc.md --format webp --font myfont.ttf -o doc.webp
-markdown2svg doc.md --font-size 17 --line-height 1.75 --toc -o doc.svg
+markdown2svg doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
+markdown2svg doc.md --columns 3 --page-height 1123 -o page.svg      # 3 columns per page
+markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \
+    --font-family "Georgia, serif" -o doc.svg
 cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
 ```
+
+## Typography configuration
+
+The layout engine is driven entirely by configuration; nothing is hard-coded.
+
+| Knob | CLI | API (`Theme`) | Default |
+|---|---|---|---|
+| Font size | `--font-size 18` | `with_font_size(18.0)` | 16 |
+| Line height | `--line-height 1.8` | `with_line_height(1.8)` | 1.6 |
+| Letter spacing | `--letter-spacing 0.02` | `with_letter_spacing(0.02)` | 0 |
+| Font family | `--font-family "Georgia, serif"` | `with_font_family("Georgia, serif")` | system sans |
+| Code font | `--mono-family "Consolas, monospace"` | `with_mono_family(...)` | system mono |
+| Columns | `--columns 2` | `with_columns(2)` | 1 |
+| Column gap | `--column-gap 28` | `with_column_gap(28.0)` | 24 |
+
+```rust
+let theme = markdown2svg::Theme::light()
+    .with_font_size(17.0)
+    .with_line_height(1.75)
+    .with_letter_spacing(0.01)
+    .with_font_family("Georgia, 'Times New Roman', serif")
+    .with_columns(2);
+let svg = markdown2svg::render_with("# Hi", &markdown2svg::Options::default().with_theme(theme))?;
+```
+
+Notes:
+
+- Layout is measured with the theme's own metrics, so changing these values
+  changes line breaks predictably. `--font-family` is what SVG viewers resolve;
+  bitmap output uses the closest discovered TrueType face (or `--font`).
+- For bitmap output the family name is also used to prefer a matching face
+  among the discovered fonts.
+- Columns are either **balanced** (no page height: the shortest height that fits
+  the requested number of columns) or **paginated** (a page height fills each
+  column; every N columns starts a new page).
+- Cuts happen between blocks; headings stay with the block they introduce, and
+  code blocks taller than a column are split between lines.
+- A single block that cannot fit (e.g. a very wide table) is placed alone and
+  is allowed to overflow, rather than overlapping its neighbour.
 
 ## Library
 
@@ -228,6 +274,7 @@ src/
     inline.rs     emphasis resolution, links, code spans, escapes
   text.rs         deterministic advance table + greedy line breaking
   layout.rs       flow engine: margins, atoms, wrapping, decorations
+  columns.rs      multi-column flow (balanced or paginated)
   paginate.rs     block-aligned page splitting + code chunking
   outline.rs      headings → table of contents
   scene.rs        geometry primitives (text/rect/line) + Scene
@@ -274,7 +321,7 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
   compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
 
-Current coverage: **96% of lines** across 400 tests (`cargo llvm-cov`).
+Current coverage: **96% of lines** across 430 tests (`cargo llvm-cov`).
 
 ## SVG compatibility
 
@@ -316,6 +363,7 @@ msedge --headless --screenshot=out.png --window-size=800,1200 out.svg
 - `demo-print.svg` — print theme (serif, paper tone)
 - `demo.png` — same document rasterized (800 × 2648, RGBA)
 - `demo.webp` — lossless WebP of the same pixels, ~38% smaller
+- `demo-2col.svg` — the same document balanced into two text columns
 
 ## License
 

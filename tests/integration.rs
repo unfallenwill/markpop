@@ -937,3 +937,137 @@ fn svg_never_needs_a_font_file() {
         "SVG must ignore font_file"
     );
 }
+
+// ---------------------------------------------------------------------------
+// Multi-column typography configuration
+// ---------------------------------------------------------------------------
+
+#[test]
+fn two_column_layout_uses_both_columns() {
+    let theme = Theme::light().with_columns(2);
+    let scene = to_scene(
+        &"Paragraph text that wraps across the column.\n\n".repeat(30),
+        &theme,
+    );
+    let column_width = theme.column_width();
+    let mid = theme.padding + column_width;
+    let texts: Vec<&markdown2svg::scene::TextDraw> = scene
+        .draws
+        .iter()
+        .filter_map(|d| match d {
+            Draw::Text(t) => Some(t),
+            _ => None,
+        })
+        .collect();
+    assert!(texts.iter().any(|t| t.x < mid), "nothing in column 1");
+    assert!(texts.iter().any(|t| t.x >= mid), "nothing in column 2");
+}
+
+#[test]
+fn two_column_layout_is_shorter_than_one_column() {
+    // Short paragraphs stay on one line in a narrow column, so two columns
+    // should nearly halve the height.
+    let src = "Short line of text.\n\n".repeat(60);
+    let single = to_scene(&src, &Theme::light());
+    let double = to_scene(&src, &Theme::light().with_columns(2));
+    assert!(
+        double.height < single.height * 0.65,
+        "two columns: {} vs one column: {}",
+        double.height,
+        single.height
+    );
+}
+
+#[test]
+fn columns_stay_inside_the_canvas() {
+    let theme = Theme::light().with_columns(3);
+    let scene = to_scene(
+        &"# Heading\n\nSome text with **bold** and `code`.\n\n".repeat(25),
+        &theme,
+    );
+    let metrics = Metrics::new();
+    for draw in &scene.draws {
+        match draw {
+            Draw::Text(t) => {
+                let style = TextStyle {
+                    size: t.size,
+                    family: t.family,
+                    bold: t.bold,
+                    italic: t.italic,
+                    letter_spacing: if t.size > 0.0 {
+                        t.letter_spacing / t.size
+                    } else {
+                        0.0
+                    },
+                };
+                let w = metrics.measure(&t.text, &style);
+                assert!(
+                    t.x + w <= theme.width - theme.padding + 1.0,
+                    "text overflows the canvas: {:?}",
+                    t.text
+                );
+            }
+            Draw::Rect(r) => assert!(r.x + r.w <= theme.width + 1.0),
+            Draw::Line(l) => assert!(l.x1.max(l.x2) <= theme.width - theme.padding + 1.0),
+        }
+    }
+}
+
+#[test]
+fn multi_column_pagination_produces_pages() {
+    let opts = Options::default()
+        .with_theme(Theme::light().with_columns(2))
+        .with_page_height(500.0);
+    let pages = render_pages(&"Paragraph words here.\n\n".repeat(60), &opts).unwrap();
+    assert!(pages.len() > 1);
+    for page in &pages {
+        assert!(page.contains(r#"height="500""#));
+    }
+}
+
+#[test]
+fn multi_column_raster_output_matches_the_page_size() {
+    let opts = Options::default()
+        .with_theme(Theme::light().with_columns(2))
+        .with_format(OutputFormat::Png);
+    let bytes = render_bytes("A short two-column document.", &opts).unwrap();
+    let (w, _h) = png_size(&bytes);
+    assert_eq!(w, 800);
+}
+
+#[test]
+fn typography_configuration_reaches_the_output() {
+    // Font size, line height and tracking all change the layout.
+    let base = to_scene("Text", &Theme::light());
+    let bigger = to_scene("Text", &Theme::light().with_font_size(24.0));
+    let a = base.find_text("Text").expect("text");
+    let b = bigger.find_text("Text").expect("text");
+    assert_eq!(b.size, 24.0);
+    assert!(b.y > a.y);
+
+    let loose = to_scene("A\n\nB", &Theme::light().with_line_height(2.4));
+    let tight = to_scene("A\n\nB", &Theme::light().with_line_height(1.1));
+    assert!(loose.height > tight.height);
+
+    let tracked = to_scene("Tracked", &Theme::light().with_letter_spacing(0.1));
+    let plain = to_scene("Tracked", &Theme::light());
+    let tw = tracked.find_text("Tracked").unwrap().letter_spacing;
+    assert!(tw > 0.0);
+    assert_eq!(plain.find_text("Tracked").unwrap().letter_spacing, 0.0);
+}
+
+#[test]
+fn font_family_configuration_reaches_the_svg() {
+    let theme = Theme::light().with_font_family("Georgia, 'Times New Roman', serif");
+    let svg = render_with("# Hi", &Options::default().with_theme(theme)).unwrap();
+    assert!(svg.contains("Georgia"), "{svg}");
+}
+
+#[test]
+fn invalid_column_counts_are_rejected() {
+    let opts = Options::default().with_theme(Theme::light().with_columns(30));
+    assert!(matches!(
+        render_bytes("x", &opts),
+        Err(markdown2svg::RenderError::InvalidColumns(30))
+    ));
+}

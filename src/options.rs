@@ -117,6 +117,14 @@ impl Options {
                 return Err(RenderError::InvalidPageHeight(h));
             }
         }
+        let columns = self.theme.columns;
+        if columns == 0 || columns > 12 || !self.theme.column_gap.is_finite() {
+            return Err(RenderError::InvalidColumns(columns));
+        }
+        // Every column must still hold a readable amount of text.
+        if self.theme.column_width() < 96.0 {
+            return Err(RenderError::InvalidColumns(columns));
+        }
         Ok(())
     }
 }
@@ -147,6 +155,8 @@ pub enum RenderError {
     InvalidCanvasWidth(f32),
     /// Page height was NaN/infinite or too small for its padding.
     InvalidPageHeight(f32),
+    /// Column count was out of range or left too little width per column.
+    InvalidColumns(u32),
     /// Bitmap output was requested but no usable TrueType font was found.
     FontUnavailable,
 }
@@ -169,6 +179,10 @@ impl std::fmt::Display for RenderError {
                     "invalid page height `{h}`: too small for the theme padding"
                 )
             }
+            RenderError::InvalidColumns(n) => write!(
+                f,
+                "invalid column count `{n}`: must be 1..=12 and leave at least 96px per column"
+            ),
             RenderError::FontUnavailable => write!(
                 f,
                 "no TrueType font available for bitmap output: install a system font or pass one explicitly"
@@ -257,5 +271,44 @@ mod tests {
             msg.contains("height"),
             "message should name the field: {msg}"
         );
+    }
+
+    #[test]
+    fn column_configuration_is_validated() {
+        // Reasonable counts pass.
+        for n in 1..=4u32 {
+            let opts = Options::default().with_theme(Theme::light().with_columns(n));
+            assert!(opts.validate().is_ok(), "columns={n} should be valid");
+        }
+        // Zero and absurd counts fail (the builder clamps, so set the field).
+        for n in [0u32, 13, 40] {
+            let theme = Theme {
+                columns: n,
+                ..Theme::light()
+            };
+            let opts = Options::default().with_theme(theme);
+            assert!(
+                matches!(opts.validate(), Err(RenderError::InvalidColumns(_))),
+                "columns={n} should be rejected"
+            );
+        }
+        // Too many columns for the canvas width fails.
+        let narrow = Theme {
+            width: 300.0,
+            ..Theme::light()
+        }
+        .with_columns(3);
+        let opts = Options::default().with_theme(narrow);
+        assert!(matches!(
+            opts.validate(),
+            Err(RenderError::InvalidColumns(3))
+        ));
+    }
+
+    #[test]
+    fn column_error_message_explains_the_limit() {
+        let msg = RenderError::InvalidColumns(99).to_string();
+        assert!(msg.contains("column"), "{msg}");
+        assert!(msg.contains("96"), "{msg}");
     }
 }

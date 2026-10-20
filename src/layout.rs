@@ -45,7 +45,7 @@ mod code {
 /// Width available to code lines (content column minus the code box's
 /// horizontal padding).
 pub(crate) fn code_wrap_width(theme: &Theme) -> f32 {
-    (theme.width - 2.0 * theme.padding - 2.0 * code::PAD_X).max(1.0)
+    (theme.column_width() - 2.0 * code::PAD_X).max(1.0)
 }
 
 /// How many *rendered* code lines fit on one page of `page_height`.
@@ -229,12 +229,6 @@ impl<'a> Layout<'a> {
         }
     }
 
-    /// Lays out a whole document and returns the finished scene.
-    pub(crate) fn render(self, doc: &Document) -> Scene {
-        let (scene, _) = self.render_marked(doc);
-        scene
-    }
-
     /// Like [`Self::render`], but also reports where each top-level block
     /// ended up, which is what pagination needs in order to cut between
     /// blocks without slicing through them.
@@ -279,9 +273,9 @@ impl<'a> Layout<'a> {
         marks
     }
 
-    /// Width available to top-level block content.
+    /// Width available to top-level block content (one column).
     fn content_width(&self) -> f32 {
-        self.theme.width - 2.0 * self.theme.padding
+        self.theme.column_width()
     }
 
     // -----------------------------------------------------------------
@@ -1236,7 +1230,7 @@ mod tests {
     fn scene(src: &str) -> Scene {
         let theme = Theme::light();
         let doc = parse(src);
-        Layout::new(&theme).render(&doc)
+        Layout::new(&theme).render_marked(&doc).0
     }
 
     fn texts(scene: &Scene) -> Vec<String> {
@@ -1653,7 +1647,7 @@ mod tests {
             background: None,
             ..Theme::light()
         };
-        let s = Layout::new(&theme).render(&parse("> q"));
+        let s = Layout::new(&theme).render_marked(&parse("> q")).0;
         assert!(
             s.draws
                 .iter()
@@ -1776,7 +1770,7 @@ mod tests {
             letter_spacing: 0.1,
             ..Theme::light()
         };
-        let s = Layout::new(&theme).render(&parse("spaced text"));
+        let s = Layout::new(&theme).render_marked(&parse("spaced text")).0;
         let t = s.find_text("spaced").expect("text");
         assert!(t.letter_spacing > 0.0);
         assert!((t.letter_spacing - 0.1 * t.size).abs() < 1e-4);

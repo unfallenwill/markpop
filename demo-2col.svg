@@ -1,0 +1,261 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="2083" viewBox="0 0 800 2083" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="2083" fill="#ffffff"/>
+  <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">markdown2svg</text>
+  <line x1="48" y1="100.8" x2="388" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve">把 Markdown</text>
+  <text x="152.32" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">直接</text>
+  <text x="184.96" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve">渲染成 SVG —— 不经过</text>
+  <text x="48" y="159" font-size="16" fill="#1f2328" xml:space="preserve">HTML，不启动浏览器，不依赖任何字体文件。</text>
+  <text x="48" y="212.2" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">为什么</text>
+  <line x1="48" y1="229" x2="388" y2="229" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="261.6" font-size="16" fill="#1f2328" xml:space="preserve">传统方案</text>
+  <rect x="116.98" y="247.28" width="249.24" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="120.56" y="261.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown → HTML → 无头浏览器截图</text>
+  <text x="48" y="287.2" font-size="16" fill="#1f2328" xml:space="preserve">有三个问题：慢、依赖重、输出是位图。 这里</text>
+  <text x="48" y="312.8" font-size="16" fill="#1f2328" xml:space="preserve">用纯 Rust 重写整条管线：</text>
+  <text x="48" y="349.6" font-size="16" fill="#1f2328" xml:space="preserve">1.</text>
+  <text x="72.08" y="354.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">解析</text>
+  <text x="104.72" y="354.4" font-size="16" fill="#1f2328" xml:space="preserve">：手写块级 / 行内解析器（</text>
+  <text x="72.08" y="380" font-size="16" fill="#1f2328" xml:space="preserve">CommonMark 子集 + GFM 表格、删除线</text>
+  <text x="72.08" y="405.6" font-size="16" fill="#1f2328" xml:space="preserve">）</text>
+  <text x="48" y="426.4" font-size="16" fill="#1f2328" xml:space="preserve">2.</text>
+  <text x="72.08" y="431.2" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">布局</text>
+  <text x="104.72" y="431.2" font-size="16" fill="#1f2328" xml:space="preserve">：把 AST 变成带坐标的几何图元（段</text>
+  <text x="72.08" y="456.8" font-size="16" fill="#1f2328" xml:space="preserve">落、引用、列表、表格）</text>
+  <text x="48" y="477.6" font-size="16" fill="#1f2328" xml:space="preserve">3.</text>
+  <text x="72.08" y="482.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">序列化</text>
+  <text x="121.04" y="482.4" font-size="16" fill="#1f2328" xml:space="preserve">：直接写 SVG 标签，缩放通过</text>
+  <rect x="72.58" y="493.68" width="64.28" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="76.16" y="508" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">viewBox</text>
+  <text x="137.36" y="508" font-size="16" fill="#1f2328" xml:space="preserve"> 实现，矢量无损</text>
+  <rect x="48" y="532" width="340" height="67.2" fill="#f8f9fb"/>
+  <rect x="48" y="532" width="4" height="67.2" fill="#d1d9e0"/>
+  <text x="64" y="557.6" font-size="16" fill="#1f2328" xml:space="preserve">相同输入永远产生相同字节 —— 度量用的是</text>
+  <text x="64" y="583.2" font-size="16" fill="#1f2328" xml:space="preserve">确定性字宽表，而不是系统字体。</text>
+  <text x="48" y="644.4" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">支持的语法</text>
+  <line x1="48" y1="661.2" x2="388" y2="661.2" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="48" y="680.2" width="340" height="61.1" fill="#f2f4f7"/>
+  <text x="58" y="703.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">特性</text>
+  <text x="117.36" y="703.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">状</text>
+  <text x="117.36" y="726.94" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">态</text>
+  <text x="161.29" y="703.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">说明</text>
+  <line x1="48" y1="680.2" x2="388" y2="680.2" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="48" y1="741.3" x2="388" y2="741.3" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="764.5" font-size="14.72" fill="#1f2328" xml:space="preserve">标题</text>
+  <text x="117.36" y="764.5" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="764.5" font-size="14.72" fill="#1f2328" xml:space="preserve">ATX</text>
+  <rect x="195.94" y="750.56" width="15.32" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="199.52" y="764.5" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">#</text>
+  <text x="211.76" y="764.5" font-size="14.72" fill="#1f2328" xml:space="preserve"> 与 Setext</text>
+  <rect x="287.92" y="750.56" width="31.64" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="291.5" y="764.5" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">===</text>
+  <line x1="48" y1="778.86" x2="388" y2="778.86" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="802.05" font-size="14.72" fill="#1f2328" xml:space="preserve">强调</text>
+  <text x="117.36" y="802.05" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <rect x="161.79" y="788.11" width="50.68" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="802.05" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">*斜体*</text>
+  <text x="212.97" y="802.05" font-size="14.72" fill="#1f2328" xml:space="preserve">、</text>
+  <rect x="228.19" y="788.11" width="67" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="231.77" y="802.05" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">**粗体**</text>
+  <text x="295.69" y="802.05" font-size="14.72" fill="#1f2328" xml:space="preserve">、</text>
+  <rect x="161.79" y="811.66" width="83.32" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="825.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">***两者***</text>
+  <line x1="48" y1="839.96" x2="388" y2="839.96" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="863.15" font-size="14.72" fill="#1f2328" xml:space="preserve">删除</text>
+  <text x="58" y="886.7" font-size="14.72" fill="#1f2328" xml:space="preserve">线</text>
+  <text x="117.36" y="863.15" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="863.15" font-size="14.72" fill="#1f2328" xml:space="preserve">GFM</text>
+  <rect x="198.59" y="849.22" width="72.44" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="202.17" y="863.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">~~text~~</text>
+  <line x1="48" y1="901.06" x2="388" y2="901.06" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="924.26" font-size="14.72" fill="#1f2328" xml:space="preserve">行内</text>
+  <text x="58" y="947.81" font-size="14.72" fill="#1f2328" xml:space="preserve">代码</text>
+  <text x="117.36" y="924.26" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="924.26" font-size="14.72" fill="#1f2328" xml:space="preserve">带背景色块</text>
+  <line x1="48" y1="962.17" x2="388" y2="962.17" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="985.36" font-size="14.72" fill="#1f2328" xml:space="preserve">代码</text>
+  <text x="58" y="1008.91" font-size="14.72" fill="#1f2328" xml:space="preserve">块</text>
+  <text x="117.36" y="985.36" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="985.36" font-size="14.72" fill="#1f2328" xml:space="preserve">围栏式 + 缩进式，附语言标签</text>
+  <line x1="48" y1="1023.27" x2="388" y2="1023.27" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1046.46" font-size="14.72" fill="#1f2328" xml:space="preserve">链接</text>
+  <text x="117.36" y="1046.46" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1046.46" font-size="14.72" fill="#1f2328" xml:space="preserve">行内式、自动链接</text>
+  <rect x="161.79" y="1056.08" width="96.92" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="1070.02" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;https://…&gt;</text>
+  <line x1="48" y1="1084.38" x2="388" y2="1084.38" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1107.57" font-size="14.72" fill="#1f2328" xml:space="preserve">图片</text>
+  <text x="117.36" y="1107.57" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1107.57" font-size="14.72" fill="#1f2328" xml:space="preserve">渲染为占位图框 + URL 标题</text>
+  <line x1="48" y1="1121.93" x2="388" y2="1121.93" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1145.12" font-size="14.72" fill="#1f2328" xml:space="preserve">引用</text>
+  <text x="117.36" y="1145.12" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1145.12" font-size="14.72" fill="#1f2328" xml:space="preserve">支持任意层嵌套</text>
+  <line x1="48" y1="1159.48" x2="388" y2="1159.48" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1182.67" font-size="14.72" fill="#1f2328" xml:space="preserve">列表</text>
+  <text x="117.36" y="1182.67" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1182.67" font-size="14.72" fill="#1f2328" xml:space="preserve">有序 / 无序、松散 / 紧凑、嵌套</text>
+  <line x1="48" y1="1197.03" x2="388" y2="1197.03" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1220.22" font-size="14.72" fill="#1f2328" xml:space="preserve">表格</text>
+  <text x="117.36" y="1220.22" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1220.22" font-size="14.72" fill="#1f2328" xml:space="preserve">支持</text>
+  <rect x="195.35" y="1206.29" width="39.8" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="198.93" y="1220.22" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">:---</text>
+  <text x="235.65" y="1220.22" font-size="14.72" fill="#1f2328" xml:space="preserve"> 对齐</text>
+  <line x1="48" y1="1234.58" x2="388" y2="1234.58" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1257.78" font-size="14.72" fill="#1f2328" xml:space="preserve">分隔</text>
+  <text x="58" y="1281.33" font-size="14.72" fill="#1f2328" xml:space="preserve">线</text>
+  <text x="117.36" y="1257.78" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <rect x="161.79" y="1243.84" width="31.64" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="1257.78" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">---</text>
+  <text x="193.93" y="1257.78" font-size="14.72" fill="#1f2328" xml:space="preserve"> /</text>
+  <rect x="207.97" y="1243.84" width="31.64" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="211.55" y="1257.78" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">***</text>
+  <text x="240.11" y="1257.78" font-size="14.72" fill="#1f2328" xml:space="preserve"> /</text>
+  <rect x="254.16" y="1243.84" width="31.64" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="257.74" y="1257.78" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">___</text>
+  <line x1="48" y1="1295.69" x2="388" y2="1295.69" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1318.88" font-size="14.72" fill="#1f2328" xml:space="preserve">分页</text>
+  <text x="117.36" y="1318.88" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <rect x="161.79" y="1304.94" width="113.24" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="1318.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--page-height</text>
+  <text x="275.53" y="1318.88" font-size="14.72" fill="#1f2328" xml:space="preserve">，按块切分</text>
+  <line x1="48" y1="1333.24" x2="388" y2="1333.24" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1356.43" font-size="14.72" fill="#1f2328" xml:space="preserve">目录</text>
+  <text x="117.36" y="1356.43" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <rect x="161.79" y="1342.5" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="1356.43" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--toc</text>
+  <text x="210.25" y="1356.43" font-size="14.72" fill="#1f2328" xml:space="preserve">，按标题层级嵌套</text>
+  <line x1="48" y1="1370.79" x2="388" y2="1370.79" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1393.98" font-size="14.72" fill="#1f2328" xml:space="preserve">输出</text>
+  <text x="58" y="1417.54" font-size="14.72" fill="#1f2328" xml:space="preserve">格式</text>
+  <text x="117.36" y="1393.98" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <rect x="161.79" y="1380.05" width="178.52" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="165.37" y="1393.98" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--format svg/png/webp</text>
+  <text x="340.81" y="1393.98" font-size="14.72" fill="#1f2328" xml:space="preserve">，</text>
+  <text x="161.29" y="1417.54" font-size="14.72" fill="#1f2328" xml:space="preserve">PNG/WebP 由内置光栅器生成</text>
+  <line x1="48" y1="1431.9" x2="388" y2="1431.9" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1455.09" font-size="14.72" fill="#1f2328" xml:space="preserve">排版</text>
+  <text x="58" y="1478.64" font-size="14.72" fill="#1f2328" xml:space="preserve">配置</text>
+  <text x="117.36" y="1455.09" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
+  <text x="161.29" y="1455.09" font-size="14.72" fill="#1f2328" xml:space="preserve">字号、字距、行距、字体栈、分</text>
+  <text x="161.29" y="1478.64" font-size="14.72" fill="#1f2328" xml:space="preserve">栏，均可用参数或 API 配置</text>
+  <line x1="48" y1="1493" x2="388" y2="1493" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="1531.2" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">中文与 CJK</text>
+  <text x="48" y="1567.8" font-size="16" fill="#1f2328" xml:space="preserve">中日韩字符按全角（1 em）度量，逐字断行；</text>
+  <text x="48" y="1593.4" font-size="16" fill="#1f2328" xml:space="preserve">中英混排不会溢出画布：</text>
+  <rect x="48" y="1617.4" width="340" height="60.8" rx="6" fill="#f1f3f6"/>
+  <text x="60" y="1641.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">中文测试内容中文测试内容中文测试内容中文测试内</text>
+  <text x="60" y="1662.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">容</text>
+  <text x="412" y="70.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">用法</text>
+  <line x1="412" y1="87.6" x2="752" y2="87.6" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="412" y="106.6" width="340" height="650" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="120.56" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="424" y="148.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 标准输入 / 输出</text>
+  <text x="424" y="169.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cat README.md | markdown2svg &gt; </text>
+  <text x="424" y="189.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">README.svg</text>
+  <text x="424" y="230.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 指定文件、主题与缩放</text>
+  <text x="424" y="250.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --theme dark </text>
+  <text x="424" y="271.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--zoom 150 -o doc.svg</text>
+  <text x="424" y="312.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 自定义画布宽度</text>
+  <text x="424" y="332.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --width 1200 -o </text>
+  <text x="424" y="352.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">doc.svg</text>
+  <text x="424" y="393.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 分页 + 目录（输出 page-1.svg、</text>
+  <text x="424" y="414.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">page-2.svg…）</text>
+  <text x="424" y="434.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --toc </text>
+  <text x="424" y="454.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--page-height 1123 -o page.svg</text>
+  <text x="424" y="495.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 位图输出：PNG / 无损 WebP（内置软件光栅化</text>
+  <text x="424" y="516.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">，不用浏览器）</text>
+  <text x="424" y="536.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --format png -o </text>
+  <text x="424" y="556.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">doc.png</text>
+  <text x="424" y="577.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --format webp -o </text>
+  <text x="424" y="597.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">doc.webp</text>
+  <text x="424" y="638.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 排版配置：字号 / 字距 / 行距 / 字体 / 列</text>
+  <text x="424" y="658.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">数</text>
+  <text x="424" y="679.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg doc.md --font-size 17 </text>
+  <text x="424" y="699.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--line-height 1.75 --letter-spacing </text>
+  <text x="424" y="720.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">0.01 \n  --font-family &quot;Georgia, </text>
+  <text x="424" y="740.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">serif&quot; --columns 2 -o doc.svg</text>
+  <text x="412" y="790.2" font-size="16" fill="#1f2328" xml:space="preserve">作为库使用：</text>
+  <rect x="412" y="814.2" width="340" height="242" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="828.16" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="424" y="856.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markdown2svg::render(&quot;# </text>
+  <text x="424" y="876.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Hello\n\nWorld&quot;);</text>
+  <text x="424" y="917.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let opts = </text>
+  <text x="424" y="938.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown2svg::Options::default()</text>
+  <text x="424" y="958.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_theme(markdown2svg::Theme::d</text>
+  <text x="424" y="978.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">ark())</text>
+  <text x="424" y="999.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_zoom(1.5);</text>
+  <text x="424" y="1019.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markdown2svg::render_with(&quot;# </text>
+  <text x="424" y="1040.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Hi&quot;, &amp;opts).unwrap();</text>
+  <text x="412" y="1101.4" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">架构</text>
+  <line x1="412" y1="1118.2" x2="752" y2="1118.2" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="412" y="1137.2" width="340" height="122" rx="6" fill="#f1f3f6"/>
+  <text x="424" y="1161.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown</text>
+  <text x="424" y="1181.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → parse     (ast::Document)   块级 / </text>
+  <text x="424" y="1202.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">行内</text>
+  <text x="424" y="1222.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → layout    (scene::Scene)    几何图元</text>
+  <text x="424" y="1243.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → svg       (String)          纯序列化</text>
+  <text x="412" y="1292.8" font-size="16" fill="#1f2328" xml:space="preserve">每一层都是纯函数，可以单独断言：</text>
+  <rect x="421.44" y="1322.24" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1334.4" font-size="16" fill="#1f2328" xml:space="preserve">解析层断言 AST</text>
+  <rect x="421.44" y="1347.84" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1360" font-size="16" fill="#1f2328" xml:space="preserve">布局层断言坐标与图元</text>
+  <rect x="421.44" y="1373.44" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1385.6" font-size="16" fill="#1f2328" xml:space="preserve">序列化层断言标记</text>
+  <text x="412" y="1431.8" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">扩展点</text>
+  <rect x="421.44" y="1460.24" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1472.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">主题</text>
+  <text x="468.64" y="1472.4" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="485.14" y="1458.08" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="488.72" y="1472.4" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme</text>
+  <text x="533.6" y="1472.4" font-size="16" fill="#1f2328" xml:space="preserve"> 是纯数据，从</text>
+  <rect x="436.5" y="1483.68" width="121.4" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="440.08" y="1498" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme::light()</text>
+  <text x="558.4" y="1498" font-size="16" fill="#1f2328" xml:space="preserve"> 改字段即可</text>
+  <rect x="421.44" y="1511.44" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1523.6" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">语法</text>
+  <text x="468.64" y="1523.6" font-size="16" fill="#1f2328" xml:space="preserve">：新增</text>
+  <rect x="521.62" y="1509.28" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="525.2" y="1523.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Block</text>
+  <text x="570.08" y="1523.6" font-size="16" fill="#1f2328" xml:space="preserve"> /</text>
+  <rect x="585.3" y="1509.28" width="56.12" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="588.88" y="1523.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Inline</text>
+  <text x="641.92" y="1523.6" font-size="16" fill="#1f2328" xml:space="preserve"> 变体，解析与</text>
+  <text x="436" y="1549.2" font-size="16" fill="#1f2328" xml:space="preserve">布局各加一个分支</text>
+  <rect x="421.44" y="1562.64" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1574.8" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">输出格式</text>
+  <text x="501.28" y="1574.8" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="517.78" y="1560.48" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="521.36" y="1574.8" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Scene</text>
+  <text x="566.24" y="1574.8" font-size="16" fill="#1f2328" xml:space="preserve"> 只有几何，另写一个序</text>
+  <text x="436" y="1600.4" font-size="16" fill="#1f2328" xml:space="preserve">列化器即可</text>
+  <rect x="421.44" y="1613.84" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1626" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">字体度量</text>
+  <text x="501.28" y="1626" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="517.78" y="1611.68" width="113.24" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="521.36" y="1626" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">text::Metrics</text>
+  <text x="631.52" y="1626" font-size="16" fill="#1f2328" xml:space="preserve"> 是唯一的宽度</text>
+  <text x="436" y="1651.6" font-size="16" fill="#1f2328" xml:space="preserve">来源</text>
+  <text x="412" y="1704.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">限制</text>
+  <line x1="412" y1="1721.6" x2="752" y2="1721.6" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="421.44" y="1746.04" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1758.2" font-size="16" fill="#1f2328" xml:space="preserve">不下载远程图片（输出始终自包含）</text>
+  <rect x="421.44" y="1771.64" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1783.8" font-size="16" fill="#1f2328" xml:space="preserve">引用式链接</text>
+  <rect x="520.98" y="1769.48" width="56.12" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="524.56" y="1783.8" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">[a][b]</text>
+  <text x="577.6" y="1783.8" font-size="16" fill="#1f2328" xml:space="preserve"> 与 HTML 内联暂不支</text>
+  <text x="436" y="1809.4" font-size="16" fill="#1f2328" xml:space="preserve">持</text>
+  <rect x="421.44" y="1822.84" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1835" font-size="16" fill="#1f2328" xml:space="preserve">嵌套强调按等长标记配对，极端的</text>
+  <rect x="436.5" y="1846.28" width="80.6" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="440.08" y="1860.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">***a** b*</text>
+  <text x="517.6" y="1860.6" font-size="16" fill="#1f2328" xml:space="preserve"> 会退化为字面量</text>
+  <rect x="421.44" y="1874.04" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="436" y="1886.2" font-size="16" fill="#1f2328" xml:space="preserve">高于一页的非代码块（例如超大表格）会独</text>
+  <text x="436" y="1911.8" font-size="16" fill="#1f2328" xml:space="preserve">占一页并可能溢出</text>
+  <line x1="412" y1="1951.8" x2="752" y2="1951.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="412" y="2001.4" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">由 markdown2svg 自身渲染生成，100% 缩放</text>
+  <text x="412" y="2027" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">。</text>
+</svg>

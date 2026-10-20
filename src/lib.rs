@@ -63,6 +63,23 @@
 //! assert_eq!(&bytes[..4], b"RIFF");
 //! ```
 //!
+//! Typography is configuration. [`Theme`] carries font size, line height,
+//! tracking, font stacks and multi-column flow, each with a builder:
+//!
+//! ```
+//! use markdown2svg::Theme;
+//!
+//! let theme = Theme::light()
+//!     .with_font_size(17.0)
+//!     .with_line_height(1.75)
+//!     .with_letter_spacing(0.01)
+//!     .with_font_family("Georgia, serif")
+//!     .with_columns(2)
+//!     .with_column_gap(28.0);
+//! assert_eq!(theme.columns, 2);
+//! assert!(theme.column_width() < theme.width / 2.0);
+//! ```
+//!
 //! # Extending
 //!
 //! * **Looks** — [`Theme`] is plain data; start from [`Theme::light`],
@@ -91,6 +108,7 @@ pub mod svg;
 pub mod text;
 pub mod theme;
 
+mod columns;
 mod layout;
 mod paginate;
 
@@ -151,14 +169,22 @@ pub fn render_pages(markdown: &str, options: &Options) -> Result<Vec<String>, Re
 pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, RenderError> {
     options.validate()?;
     let scene = to_scene_with_options(markdown, options);
-    let engine = engine::engine_for(options.format, options.font_file.as_deref())?;
+    let engine = engine::engine_for_theme(
+        options.format,
+        options.font_file.as_deref(),
+        Some(&options.theme),
+    )?;
     Ok(engine.encode(&scene, &options.theme, options.zoom))
 }
 
 /// Renders one image per page, in the format selected by [`Options::format`].
 pub fn render_bytes_pages(markdown: &str, options: &Options) -> Result<Vec<Vec<u8>>, RenderError> {
     options.validate()?;
-    let engine = engine::engine_for(options.format, options.font_file.as_deref())?;
+    let engine = engine::engine_for_theme(
+        options.format,
+        options.font_file.as_deref(),
+        Some(&options.theme),
+    )?;
     Ok(to_pages_inner(markdown, options)
         .iter()
         .map(|scene| engine.encode(scene, &options.theme, options.zoom))
@@ -175,15 +201,20 @@ pub fn to_pages(markdown: &str, options: &Options) -> Result<Vec<Scene>, RenderE
 
 /// Applies document-level transforms (TOC, code chunking) and paginates.
 fn to_pages_inner(markdown: &str, options: &Options) -> Vec<Scene> {
+    let theme = &options.theme;
     let mut doc = prepare(markdown, options);
     if let Some(page_height) = options.page_height {
         doc = Document {
-            blocks: paginate::split_tall_code(doc.blocks, &options.theme, page_height),
+            blocks: paginate::split_tall_code(doc.blocks, theme, page_height),
         };
     }
-    let (scene, marks) = layout::Layout::new(&options.theme).render_marked(&doc);
+    let (scene, marks) = layout::Layout::new(theme).render_marked(&doc);
+
+    if theme.columns > 1 {
+        return columns::layout_columns(scene, &marks, theme, options.page_height);
+    }
     match options.page_height {
-        Some(page_height) => paginate::paginate(scene, &marks, &options.theme, page_height),
+        Some(page_height) => paginate::paginate(scene, &marks, theme, page_height),
         None => vec![scene],
     }
 }
@@ -202,11 +233,21 @@ fn prepare(markdown: &str, options: &Options) -> Document {
 ///
 /// Useful for tests, alternate renderers, and inspecting positions.
 pub fn to_scene(markdown: &str, theme: &Theme) -> Scene {
-    layout::Layout::new(theme).render(&parse(markdown))
+    let doc = parse(markdown);
+    let (scene, marks) = layout::Layout::new(theme).render_marked(&doc);
+    if theme.columns > 1 {
+        // Balanced columns, since there is no page height to fill.
+        columns::layout_columns(scene, &marks, theme, None).remove(0)
+    } else {
+        scene
+    }
 }
 
 fn to_scene_with_options(markdown: &str, options: &Options) -> Scene {
-    layout::Layout::new(&options.theme).render(&prepare(markdown, options))
+    // A single image never paginates, but it does honour columns.
+    let mut single = options.clone();
+    single.page_height = None;
+    to_pages_inner(markdown, &single).remove(0)
 }
 
 #[cfg(test)]

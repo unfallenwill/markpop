@@ -31,6 +31,7 @@
 | 分页 | ✅ | `--page-height`，按块切分 |
 | 目录 | ✅ | `--toc`，按标题层级嵌套 |
 | 输出格式 | ✅ | `--format svg/png/webp`，PNG/WebP 由内置光栅器生成 |
+| 排版配置 | ✅ | 字号、字距、行距、字体栈、分栏，均可用参数或 API 配置 |
 
 ### 中文与 CJK
 
@@ -58,6 +59,9 @@ markdown2svg doc.md --toc --page-height 1123 -o page.svg
 # 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）
 markdown2svg doc.md --format png -o doc.png
 markdown2svg doc.md --format webp -o doc.webp
+
+# 排版配置：字号 / 字距 / 行距 / 字体 / 列数
+markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  --font-family "Georgia, serif" --columns 2 -o doc.svg
 ```
 
 作为库使用：

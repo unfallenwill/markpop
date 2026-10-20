@@ -27,6 +27,10 @@ OPTIONS:
         --font-size <PX>      Base font size in pixels (default: 16)
         --line-height <MULT>  Line height multiplier (default: 1.6)
         --letter-spacing <EM> Extra tracking in em units (default: 0)
+        --font-family <STACK> Font stack for body text (default: system sans)
+        --mono-family <STACK> Font stack for code (default: system mono)
+        --columns <N>         Text columns per page (default: 1)
+        --column-gap <PX>     Gap between columns (default: 24)
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
         --font <FILE>         TrueType font used for png/webp output
@@ -53,6 +57,10 @@ struct Cli {
     font_size: Option<f32>,
     line_height: Option<f32>,
     letter_spacing: Option<f32>,
+    font_family: Option<String>,
+    mono_family: Option<String>,
+    columns: Option<u32>,
+    column_gap: Option<f32>,
     page_height: Option<f32>,
     format: OutputFormat,
     font: Option<String>,
@@ -72,6 +80,10 @@ impl Default for Cli {
             font_size: None,
             line_height: None,
             letter_spacing: None,
+            font_family: None,
+            mono_family: None,
+            columns: None,
+            column_gap: None,
             page_height: None,
             format: OutputFormat::Svg,
             font: None,
@@ -97,6 +109,18 @@ impl Cli {
         }
         if let Some(s) = self.letter_spacing {
             theme.letter_spacing = s;
+        }
+        if let Some(f) = &self.font_family {
+            theme.sans_family = f.clone();
+        }
+        if let Some(f) = &self.mono_family {
+            theme.mono_family = f.clone();
+        }
+        if let Some(n) = self.columns {
+            theme.columns = n;
+        }
+        if let Some(g) = self.column_gap {
+            theme.column_gap = g;
         }
         Options {
             theme,
@@ -227,6 +251,12 @@ fn render_message(err: RenderError) -> String {
         RenderError::InvalidPageHeight(_) => {
             format!("{err}\n      hint: --page-height must be at least 176 pixels")
         }
+        RenderError::InvalidColumns(_) => {
+            format!(
+                "{err}
+      hint: --columns accepts 1..=12 and needs at least 96px per column"
+            )
+        }
         RenderError::FontUnavailable => {
             format!("{err}\n      hint: install a system font, or pass one with --font <FILE.ttf>")
         }
@@ -284,6 +314,29 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
                     return Err("invalid letter spacing: must not be negative".into());
                 }
                 cli.letter_spacing = Some(v);
+            }
+            "--font-family" => {
+                cli.font_family = Some(take_value(args, &mut i, arg)?);
+            }
+            "--mono-family" => {
+                cli.mono_family = Some(take_value(args, &mut i, arg)?);
+            }
+            "--columns" => {
+                let raw = take_value(args, &mut i, arg)?;
+                let n: u32 = raw
+                    .parse()
+                    .map_err(|_| format!("invalid columns `{raw}` (expected a number)"))?;
+                if n == 0 {
+                    return Err("invalid columns: must be at least 1".into());
+                }
+                cli.columns = Some(n);
+            }
+            "--column-gap" => {
+                let v = parse_number(&take_value(args, &mut i, arg)?, "column gap")?;
+                if v < 0.0 {
+                    return Err("invalid column gap: must not be negative".into());
+                }
+                cli.column_gap = Some(v);
             }
             "--page-height" => {
                 let v = parse_number(&take_value(args, &mut i, arg)?, "page height")?;
@@ -772,5 +825,86 @@ mod tests {
     fn font_unavailable_is_reported_with_a_hint() {
         let msg = render_message(RenderError::FontUnavailable);
         assert!(msg.contains("font") && msg.contains("--font"), "{msg}");
+    }
+
+    #[test]
+    fn typography_flags_configure_the_layout_engine() {
+        let cli = parse_args(&args(&[
+            "--font-size",
+            "18",
+            "--line-height",
+            "1.8",
+            "--letter-spacing",
+            "0.02",
+            "--font-family",
+            "Georgia, serif",
+            "--mono-family",
+            "Courier New, monospace",
+            "--columns",
+            "3",
+            "--column-gap",
+            "30",
+        ]))
+        .unwrap();
+        let theme = cli.options().theme;
+        assert_eq!(theme.font_size, 18.0);
+        assert_eq!(theme.line_height, 1.8);
+        assert!((theme.letter_spacing - 0.02).abs() < 1e-6);
+        assert_eq!(theme.sans_family, "Georgia, serif");
+        assert_eq!(theme.mono_family, "Courier New, monospace");
+        assert_eq!(theme.columns, 3);
+        assert_eq!(theme.column_gap, 30.0);
+    }
+
+    #[test]
+    fn column_flags_validate_input() {
+        for bad in ["0", "-1", "two"] {
+            assert!(
+                parse_args(&args(&["--columns", bad])).is_err(),
+                "--columns {bad} should fail"
+            );
+        }
+        assert!(parse_args(&args(&["--column-gap", "-5"])).is_err());
+    }
+
+    #[test]
+    fn run_renders_two_columns() {
+        let input = scratch("cols.md");
+        let output = scratch("cols.svg");
+        let body = "Short paragraph line.\n\n".repeat(40);
+        std::fs::write(&input, body).unwrap();
+        let cli = parse_args(&args(&[
+            input.to_str().unwrap(),
+            "--columns",
+            "2",
+            "--font-family",
+            "Georgia, serif",
+            "-o",
+            output.to_str().unwrap(),
+        ]))
+        .unwrap();
+        run(&cli).unwrap();
+        let svg = std::fs::read_to_string(&output).unwrap();
+        assert!(svg.contains("Georgia"), "custom family missing");
+        // Text must appear on both sides of the column boundary.
+        let mid = 48.0 + (800.0 - 96.0 - 24.0) / 2.0;
+        let mut left = false;
+        let mut right = false;
+        for line in svg.lines().filter(|l| l.starts_with("  <text")) {
+            let x: f32 = line
+                .split("x=\"")
+                .nth(1)
+                .and_then(|s| s.split('"').next())
+                .and_then(|s| s.parse().ok())
+                .unwrap_or(0.0);
+            if x < mid {
+                left = true;
+            } else {
+                right = true;
+            }
+        }
+        assert!(left && right, "expected content in both columns");
+        let _ = std::fs::remove_file(&input);
+        let _ = std::fs::remove_file(&output);
     }
 }

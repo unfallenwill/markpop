@@ -32,6 +32,15 @@ pub struct Theme {
     pub line_height: f32,
     /// Extra tracking between characters, in em units (`0.0` = none).
     pub letter_spacing: f32,
+    /// Number of text columns (`1` = a single full-width column).
+    ///
+    /// With more than one column, content flows down a column and continues
+    /// at the top of the next one. Without a page height the columns are
+    /// balanced (CSS `column-count` style); with one, columns fill the page
+    /// and new pages are started as needed.
+    pub columns: u32,
+    /// Horizontal gap between text columns, in base units.
+    pub column_gap: f32,
     /// Font size of code text as a multiple of the base size.
     pub code_scale: f32,
     /// Line height inside code blocks as a multiple of the code font size.
@@ -82,6 +91,8 @@ impl Theme {
             font_size: 16.0,
             line_height: 1.6,
             letter_spacing: 0.0,
+            columns: 1,
+            column_gap: 24.0,
             code_scale: 0.85,
             code_line_height: 1.5,
             sans_family: "Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, \
@@ -175,6 +186,63 @@ impl Theme {
         let idx = level.saturating_sub(1).min(5) as usize;
         self.font_size * self.heading_scales[idx]
     }
+
+    /// Width of one text column, in base units.
+    ///
+    /// With a single column this is the full content width; with `n`
+    /// columns it subtracts the gaps and divides what is left.
+    pub fn column_width(&self) -> f32 {
+        let total = (self.width - 2.0 * self.padding).max(1.0);
+        let n = self.columns.max(1) as f32;
+        if n <= 1.0 {
+            total
+        } else {
+            ((total - (n - 1.0) * self.column_gap) / n).max(1.0)
+        }
+    }
+
+    /// Sets the base font size, in base units (builder style).
+    pub fn with_font_size(mut self, size: f32) -> Theme {
+        self.font_size = size;
+        self
+    }
+
+    /// Sets the line-height multiplier (builder style).
+    pub fn with_line_height(mut self, mult: f32) -> Theme {
+        self.line_height = mult;
+        self
+    }
+
+    /// Sets the tracking between characters, in em units (builder style).
+    pub fn with_letter_spacing(mut self, em: f32) -> Theme {
+        self.letter_spacing = em;
+        self
+    }
+
+    /// Sets the proportional font stack, e.g. `"Georgia, serif"`
+    /// (builder style).
+    pub fn with_font_family(mut self, stack: impl Into<String>) -> Theme {
+        self.sans_family = stack.into();
+        self
+    }
+
+    /// Sets the monospace font stack (builder style).
+    pub fn with_mono_family(mut self, stack: impl Into<String>) -> Theme {
+        self.mono_family = stack.into();
+        self
+    }
+
+    /// Sets the number of text columns; `0` is treated as `1` (builder style).
+    pub fn with_columns(mut self, columns: u32) -> Theme {
+        self.columns = columns.max(1);
+        self
+    }
+
+    /// Sets the gap between columns, in base units (builder style).
+    pub fn with_column_gap(mut self, gap: f32) -> Theme {
+        self.column_gap = gap.max(0.0);
+        self
+    }
 }
 
 impl Default for Theme {
@@ -237,5 +305,44 @@ mod tests {
     fn code_size_derives_from_base() {
         let t = Theme::light();
         assert!((t.code_size() - 16.0 * 0.85).abs() < 1e-6);
+    }
+
+    #[test]
+    fn typography_builders_are_chainable() {
+        let theme = Theme::light()
+            .with_font_size(18.0)
+            .with_line_height(1.9)
+            .with_letter_spacing(0.02)
+            .with_font_family("Georgia, serif")
+            .with_mono_family("Courier New, monospace")
+            .with_columns(2)
+            .with_column_gap(30.0);
+        assert_eq!(theme.font_size, 18.0);
+        assert_eq!(theme.line_height, 1.9);
+        assert!((theme.letter_spacing - 0.02).abs() < 1e-6);
+        assert_eq!(theme.sans_family, "Georgia, serif");
+        assert_eq!(theme.mono_family, "Courier New, monospace");
+        assert_eq!(theme.columns, 2);
+        assert_eq!(theme.column_gap, 30.0);
+    }
+
+    #[test]
+    fn columns_are_clamped_to_at_least_one() {
+        assert_eq!(Theme::light().with_columns(0).columns, 1);
+        assert_eq!(Theme::light().with_columns(3).columns, 3);
+        assert_eq!(Theme::light().with_column_gap(-5.0).column_gap, 0.0);
+    }
+
+    #[test]
+    fn column_width_matches_the_content_width_in_one_column() {
+        let theme = Theme::light();
+        assert_eq!(theme.column_width(), theme.width - 2.0 * theme.padding);
+    }
+
+    #[test]
+    fn column_width_subtracts_gaps() {
+        let theme = Theme::light().with_columns(3).with_column_gap(20.0);
+        let expected = (800.0 - 96.0 - 2.0 * 20.0) / 3.0;
+        assert!((theme.column_width() - expected).abs() < 1e-4);
     }
 }

@@ -166,6 +166,34 @@ pub struct Scene {
     pub draws: Vec<Draw>,
 }
 
+impl Draw {
+    /// Returns a copy of this primitive translated by `(dx, dy)`.
+    ///
+    /// Used by pagination and multi-column flow to move whole blocks
+    /// without re-laying them out.
+    pub fn translated(&self, dx: f32, dy: f32) -> Draw {
+        match self {
+            Draw::Text(t) => Draw::Text(TextDraw {
+                x: t.x + dx,
+                y: t.y + dy,
+                ..t.clone()
+            }),
+            Draw::Rect(r) => Draw::Rect(RectDraw {
+                x: r.x + dx,
+                y: r.y + dy,
+                ..r.clone()
+            }),
+            Draw::Line(l) => Draw::Line(LineDraw {
+                x1: l.x1 + dx,
+                y1: l.y1 + dy,
+                x2: l.x2 + dx,
+                y2: l.y2 + dy,
+                ..l.clone()
+            }),
+        }
+    }
+}
+
 impl Scene {
     /// Creates an empty scene with the given canvas size.
     pub fn new(width: f32, height: f32) -> Scene {
@@ -265,5 +293,33 @@ mod tests {
         let t = sample_text(0.0, 0.0);
         assert_eq!(t.ascent(), 12.8);
         assert_eq!(t.descent(), 3.2);
+    }
+
+    #[test]
+    fn draws_can_be_translated() {
+        let text = Draw::Text(sample_text(10.0, 20.0));
+        match text.translated(5.0, -3.0) {
+            Draw::Text(t) => assert_eq!((t.x, t.y), (15.0, 17.0)),
+            _ => panic!("expected text"),
+        }
+        let line = Draw::Line(LineDraw {
+            x1: 1.0,
+            y1: 2.0,
+            x2: 3.0,
+            y2: 4.0,
+            color: Color::BLACK,
+            width: 1.0,
+        });
+        match line.translated(10.0, 20.0) {
+            Draw::Line(l) => {
+                assert_eq!((l.x1, l.y1, l.x2, l.y2), (11.0, 22.0, 13.0, 24.0))
+            }
+            _ => panic!("expected line"),
+        }
+        let rect = Draw::Rect(RectDraw::new(1.0, 2.0, 3.0, 4.0));
+        match rect.translated(-1.0, -2.0) {
+            Draw::Rect(r) => assert_eq!((r.x, r.y), (0.0, 0.0)),
+            _ => panic!("expected rect"),
+        }
     }
 }
