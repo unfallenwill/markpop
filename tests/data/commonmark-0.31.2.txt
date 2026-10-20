@@ -1,0 +1,5233 @@
+# CommonMark 0.31.2 conformance corpus (generated from spec.json)
+== 1 Tabs
+markdown 14
+	foo	baz		bim
+html 38
+<pre><code>foo	baz		bim
+</code></pre>
+== 2 Tabs
+markdown 16
+  	foo	baz		bim
+html 38
+<pre><code>foo	baz		bim
+</code></pre>
+== 3 Tabs
+markdown 18
+    a	a
+    ὐ	a
+html 35
+<pre><code>a	a
+ὐ	a
+</code></pre>
+== 4 Tabs
+markdown 14
+  - foo
+
+	bar
+html 44
+<ul>
+<li>
+<p>foo</p>
+<p>bar</p>
+</li>
+</ul>
+== 5 Tabs
+markdown 13
+- foo
+
+		bar
+html 64
+<ul>
+<li>
+<p>foo</p>
+<pre><code>  bar
+</code></pre>
+</li>
+</ul>
+== 6 Tabs
+markdown 7
+>		foo
+html 58
+<blockquote>
+<pre><code>  foo
+</code></pre>
+</blockquote>
+== 7 Tabs
+markdown 7
+-		foo
+html 53
+<ul>
+<li>
+<pre><code>  foo
+</code></pre>
+</li>
+</ul>
+== 8 Tabs
+markdown 13
+    foo
+	bar
+html 33
+<pre><code>foo
+bar
+</code></pre>
+== 9 Tabs
+markdown 24
+ - foo
+   - bar
+	 - baz
+html 74
+<ul>
+<li>foo
+<ul>
+<li>bar
+<ul>
+<li>baz</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+== 10 Tabs
+markdown 6
+#	Foo
+html 13
+<h1>Foo</h1>
+== 11 Tabs
+markdown 7
+*	*	*	
+html 7
+<hr />
+== 12 Backslash escapes
+markdown 65
+\!\"\#\$\%\&\'\(\)\*\+\,\-\.\/\:\;\<\=\>\?\@\[\\\]\^\_\`\{\|\}\~
+html 55
+<p>!&quot;#$%&amp;'()*+,-./:;&lt;=&gt;?@[\]^_`{|}~</p>
+== 13 Backslash escapes
+markdown 17
+\	\A\a\ \3\φ\«
+html 24
+<p>\	\A\a\ \3\φ\«</p>
+== 14 Backslash escapes
+markdown 175
+\*not emphasized*
+\<br/> not a tag
+\[not a link](/foo)
+\`not code`
+1\. not a list
+\* not a list
+\# not a heading
+\[foo]: /url "not a reference"
+\&ouml; not a character entity
+html 193
+<p>*not emphasized*
+&lt;br/&gt; not a tag
+[not a link](/foo)
+`not code`
+1. not a list
+* not a list
+# not a heading
+[foo]: /url &quot;not a reference&quot;
+&amp;ouml; not a character entity</p>
+== 15 Backslash escapes
+markdown 13
+\\*emphasis*
+html 26
+<p>\<em>emphasis</em></p>
+== 16 Backslash escapes
+markdown 9
+foo\
+bar
+html 21
+<p>foo<br />
+bar</p>
+== 17 Backslash escapes
+markdown 11
+`` \[\` ``
+html 25
+<p><code>\[\`</code></p>
+== 18 Backslash escapes
+markdown 9
+    \[\]
+html 30
+<pre><code>\[\]
+</code></pre>
+== 19 Backslash escapes
+markdown 13
+~~~
+\[\]
+~~~
+html 30
+<pre><code>\[\]
+</code></pre>
+== 20 Backslash escapes
+markdown 30
+<https://example.com?find=\*>
+html 79
+<p><a href="https://example.com?find=%5C*">https://example.com?find=\*</a></p>
+== 21 Backslash escapes
+markdown 19
+<a href="/bar\/)">
+html 19
+<a href="/bar\/)">
+== 22 Backslash escapes
+markdown 24
+[foo](/bar\* "ti\*tle")
+html 46
+<p><a href="/bar*" title="ti*tle">foo</a></p>
+== 23 Backslash escapes
+markdown 31
+[foo]
+
+[foo]: /bar\* "ti\*tle"
+html 46
+<p><a href="/bar*" title="ti*tle">foo</a></p>
+== 24 Backslash escapes
+markdown 21
+``` foo\+bar
+foo
+```
+html 54
+<pre><code class="language-foo+bar">foo
+</code></pre>
+== 25 Entity and numeric character references
+markdown 110
+&nbsp; &amp; &copy; &AElig; &Dcaron;
+&frac34; &HilbertSpace; &DifferentialD;
+&ClockwiseContourIntegral; &ngE;
+html 46
+<p>  &amp; © Æ Ď
+¾ ℋ ⅆ
+∲ ≧̸</p>
+== 26 Entity and numeric character references
+markdown 26
+&#35; &#1234; &#992; &#0;
+html 19
+<p># Ӓ Ϡ �</p>
+== 27 Entity and numeric character references
+markdown 23
+&#X22; &#XD06; &#xcab;
+html 22
+<p>&quot; ആ ಫ</p>
+== 28 Entity and numeric character references
+markdown 67
+&nbsp &x; &#; &#x;
+&#87654321;
+&#abcdef0;
+&ThisIsNotDefined; &hi?;
+html 106
+<p>&amp;nbsp &amp;x; &amp;#; &amp;#x;
+&amp;#87654321;
+&amp;#abcdef0;
+&amp;ThisIsNotDefined; &amp;hi?;</p>
+== 29 Entity and numeric character references
+markdown 6
+&copy
+html 17
+<p>&amp;copy</p>
+== 30 Entity and numeric character references
+markdown 15
+&MadeUpEntity;
+html 26
+<p>&amp;MadeUpEntity;</p>
+== 31 Entity and numeric character references
+markdown 29
+<a href="&ouml;&ouml;.html">
+html 29
+<a href="&ouml;&ouml;.html">
+== 32 Entity and numeric character references
+markdown 38
+[foo](/f&ouml;&ouml; "f&ouml;&ouml;")
+html 54
+<p><a href="/f%C3%B6%C3%B6" title="föö">foo</a></p>
+== 33 Entity and numeric character references
+markdown 45
+[foo]
+
+[foo]: /f&ouml;&ouml; "f&ouml;&ouml;"
+html 54
+<p><a href="/f%C3%B6%C3%B6" title="föö">foo</a></p>
+== 34 Entity and numeric character references
+markdown 26
+``` f&ouml;&ouml;
+foo
+```
+html 52
+<pre><code class="language-föö">foo
+</code></pre>
+== 35 Entity and numeric character references
+markdown 16
+`f&ouml;&ouml;`
+html 42
+<p><code>f&amp;ouml;&amp;ouml;</code></p>
+== 36 Entity and numeric character references
+markdown 19
+    f&ouml;f&ouml;
+html 48
+<pre><code>f&amp;ouml;f&amp;ouml;
+</code></pre>
+== 37 Entity and numeric character references
+markdown 20
+&#42;foo&#42;
+*foo*
+html 26
+<p>*foo*
+<em>foo</em></p>
+== 38 Entity and numeric character references
+markdown 17
+&#42; foo
+
+* foo
+html 37
+<p>* foo</p>
+<ul>
+<li>foo</li>
+</ul>
+== 39 Entity and numeric character references
+markdown 17
+foo&#10;&#10;bar
+html 16
+<p>foo
+
+bar</p>
+== 40 Entity and numeric character references
+markdown 8
+&#9;foo
+html 12
+<p>	foo</p>
+== 41 Entity and numeric character references
+markdown 25
+[a](url &quot;tit&quot;)
+html 32
+<p>[a](url &quot;tit&quot;)</p>
+== 42 Precedence
+markdown 14
+- `one
+- two`
+html 39
+<ul>
+<li>`one</li>
+<li>two`</li>
+</ul>
+== 43 Thematic breaks
+markdown 12
+***
+---
+___
+html 21
+<hr />
+<hr />
+<hr />
+== 44 Thematic breaks
+markdown 4
++++
+html 11
+<p>+++</p>
+== 45 Thematic breaks
+markdown 4
+===
+html 11
+<p>===</p>
+== 46 Thematic breaks
+markdown 9
+--
+**
+__
+html 16
+<p>--
+**
+__</p>
+== 47 Thematic breaks
+markdown 18
+ ***
+  ***
+   ***
+html 21
+<hr />
+<hr />
+<hr />
+== 48 Thematic breaks
+markdown 8
+    ***
+html 29
+<pre><code>***
+</code></pre>
+== 49 Thematic breaks
+markdown 12
+Foo
+    ***
+html 15
+<p>Foo
+***</p>
+== 50 Thematic breaks
+markdown 38
+_____________________________________
+html 7
+<hr />
+== 51 Thematic breaks
+markdown 7
+ - - -
+html 7
+<hr />
+== 52 Thematic breaks
+markdown 20
+ **  * ** * ** * **
+html 7
+<hr />
+== 53 Thematic breaks
+markdown 22
+-     -      -      -
+html 7
+<hr />
+== 54 Thematic breaks
+markdown 12
+- - - -    
+html 7
+<hr />
+== 55 Thematic breaks
+markdown 28
+_ _ _ _ a
+
+a------
+
+---a---
+html 47
+<p>_ _ _ _ a</p>
+<p>a------</p>
+<p>---a---</p>
+== 56 Thematic breaks
+markdown 5
+ *-*
+html 18
+<p><em>-</em></p>
+== 57 Thematic breaks
+markdown 16
+- foo
+***
+- bar
+html 55
+<ul>
+<li>foo</li>
+</ul>
+<hr />
+<ul>
+<li>bar</li>
+</ul>
+== 58 Thematic breaks
+markdown 12
+Foo
+***
+bar
+html 29
+<p>Foo</p>
+<hr />
+<p>bar</p>
+== 59 Thematic breaks
+markdown 12
+Foo
+---
+bar
+html 24
+<h2>Foo</h2>
+<p>bar</p>
+== 60 Thematic breaks
+markdown 18
+* Foo
+* * *
+* Bar
+html 55
+<ul>
+<li>Foo</li>
+</ul>
+<hr />
+<ul>
+<li>Bar</li>
+</ul>
+== 61 Thematic breaks
+markdown 14
+- Foo
+- * * *
+html 42
+<ul>
+<li>Foo</li>
+<li>
+<hr />
+</li>
+</ul>
+== 62 ATX headings
+markdown 51
+# foo
+## foo
+### foo
+#### foo
+##### foo
+###### foo
+html 78
+<h1>foo</h1>
+<h2>foo</h2>
+<h3>foo</h3>
+<h4>foo</h4>
+<h5>foo</h5>
+<h6>foo</h6>
+== 63 ATX headings
+markdown 12
+####### foo
+html 19
+<p>####### foo</p>
+== 64 ATX headings
+markdown 18
+#5 bolt
+
+#hashtag
+html 31
+<p>#5 bolt</p>
+<p>#hashtag</p>
+== 65 ATX headings
+markdown 8
+\## foo
+html 14
+<p>## foo</p>
+== 66 ATX headings
+markdown 20
+# foo *bar* \*baz\*
+html 32
+<h1>foo <em>bar</em> *baz*</h1>
+== 67 ATX headings
+markdown 44
+#                  foo                     
+html 13
+<h1>foo</h1>
+== 68 ATX headings
+markdown 27
+ ### foo
+  ## foo
+   # foo
+html 39
+<h3>foo</h3>
+<h2>foo</h2>
+<h1>foo</h1>
+== 69 ATX headings
+markdown 10
+    # foo
+html 31
+<pre><code># foo
+</code></pre>
+== 70 ATX headings
+markdown 14
+foo
+    # bar
+html 17
+<p>foo
+# bar</p>
+== 71 ATX headings
+markdown 29
+## foo ##
+  ###   bar    ###
+html 26
+<h2>foo</h2>
+<h3>bar</h3>
+== 72 ATX headings
+markdown 54
+# foo ##################################
+##### foo ##
+html 26
+<h1>foo</h1>
+<h5>foo</h5>
+== 73 ATX headings
+markdown 17
+### foo ###     
+html 13
+<h3>foo</h3>
+== 74 ATX headings
+markdown 14
+### foo ### b
+html 19
+<h3>foo ### b</h3>
+== 75 ATX headings
+markdown 7
+# foo#
+html 14
+<h1>foo#</h1>
+== 76 ATX headings
+markdown 34
+### foo \###
+## foo #\##
+# foo \#
+html 49
+<h3>foo ###</h3>
+<h2>foo ###</h2>
+<h1>foo #</h1>
+== 77 ATX headings
+markdown 17
+****
+## foo
+****
+html 27
+<hr />
+<h2>foo</h2>
+<hr />
+== 78 ATX headings
+markdown 22
+Foo bar
+# baz
+Bar foo
+html 43
+<p>Foo bar</p>
+<h1>baz</h1>
+<p>Bar foo</p>
+== 79 ATX headings
+markdown 14
+## 
+#
+### ###
+html 30
+<h2></h2>
+<h1></h1>
+<h3></h3>
+== 80 Setext headings
+markdown 41
+Foo *bar*
+=========
+
+Foo *bar*
+---------
+html 52
+<h1>Foo <em>bar</em></h1>
+<h2>Foo <em>bar</em></h2>
+== 81 Setext headings
+markdown 19
+Foo *bar
+baz*
+====
+html 30
+<h1>Foo <em>bar
+baz</em></h1>
+== 82 Setext headings
+markdown 22
+  Foo *bar
+baz*	
+====
+html 30
+<h1>Foo <em>bar
+baz</em></h1>
+== 83 Setext headings
+markdown 37
+Foo
+-------------------------
+
+Foo
+=
+html 26
+<h2>Foo</h2>
+<h1>Foo</h1>
+== 84 Setext headings
+markdown 37
+   Foo
+---
+
+  Foo
+-----
+
+  Foo
+  ===
+html 39
+<h2>Foo</h2>
+<h2>Foo</h2>
+<h1>Foo</h1>
+== 85 Setext headings
+markdown 29
+    Foo
+    ---
+
+    Foo
+---
+html 45
+<pre><code>Foo
+---
+
+Foo
+</code></pre>
+<hr />
+== 86 Setext headings
+markdown 18
+Foo
+   ----      
+html 13
+<h2>Foo</h2>
+== 87 Setext headings
+markdown 12
+Foo
+    ---
+html 15
+<p>Foo
+---</p>
+== 88 Setext headings
+markdown 19
+Foo
+= =
+
+Foo
+--- -
+html 33
+<p>Foo
+= =</p>
+<p>Foo</p>
+<hr />
+== 89 Setext headings
+markdown 12
+Foo  
+-----
+html 13
+<h2>Foo</h2>
+== 90 Setext headings
+markdown 10
+Foo\
+----
+html 14
+<h2>Foo\</h2>
+== 91 Setext headings
+markdown 46
+`Foo
+----
+`
+
+<a title="a lot
+---
+of dashes"/>
+html 84
+<h2>`Foo</h2>
+<p>`</p>
+<h2>&lt;a title=&quot;a lot</h2>
+<p>of dashes&quot;/&gt;</p>
+== 92 Setext headings
+markdown 10
+> Foo
+---
+html 45
+<blockquote>
+<p>Foo</p>
+</blockquote>
+<hr />
+== 93 Setext headings
+markdown 14
+> foo
+bar
+===
+html 46
+<blockquote>
+<p>foo
+bar
+===</p>
+</blockquote>
+== 94 Setext headings
+markdown 10
+- Foo
+---
+html 31
+<ul>
+<li>Foo</li>
+</ul>
+<hr />
+== 95 Setext headings
+markdown 12
+Foo
+Bar
+---
+html 17
+<h2>Foo
+Bar</h2>
+== 96 Setext headings
+markdown 24
+---
+Foo
+---
+Bar
+---
+Baz
+html 44
+<hr />
+<h2>Foo</h2>
+<h2>Bar</h2>
+<p>Baz</p>
+== 97 Setext headings
+markdown 6
+
+====
+html 12
+<p>====</p>
+== 98 Setext headings
+markdown 8
+---
+---
+html 14
+<hr />
+<hr />
+== 99 Setext headings
+markdown 12
+- foo
+-----
+html 31
+<ul>
+<li>foo</li>
+</ul>
+<hr />
+== 100 Setext headings
+markdown 12
+    foo
+---
+html 36
+<pre><code>foo
+</code></pre>
+<hr />
+== 101 Setext headings
+markdown 12
+> foo
+-----
+html 45
+<blockquote>
+<p>foo</p>
+</blockquote>
+<hr />
+== 102 Setext headings
+markdown 14
+\> foo
+------
+html 18
+<h2>&gt; foo</h2>
+== 103 Setext headings
+markdown 17
+Foo
+
+bar
+---
+baz
+html 35
+<p>Foo</p>
+<h2>bar</h2>
+<p>baz</p>
+== 104 Setext headings
+markdown 18
+Foo
+bar
+
+---
+
+baz
+html 33
+<p>Foo
+bar</p>
+<hr />
+<p>baz</p>
+== 105 Setext headings
+markdown 18
+Foo
+bar
+* * *
+baz
+html 33
+<p>Foo
+bar</p>
+<hr />
+<p>baz</p>
+== 106 Setext headings
+markdown 17
+Foo
+bar
+\---
+baz
+html 23
+<p>Foo
+bar
+---
+baz</p>
+== 107 Indented code blocks
+markdown 39
+    a simple
+      indented code block
+html 56
+<pre><code>a simple
+  indented code block
+</code></pre>
+== 108 Indented code blocks
+markdown 17
+  - foo
+
+    bar
+html 44
+<ul>
+<li>
+<p>foo</p>
+<p>bar</p>
+</li>
+</ul>
+== 109 Indented code blocks
+markdown 19
+1.  foo
+
+    - bar
+html 57
+<ol>
+<li>
+<p>foo</p>
+<ul>
+<li>bar</li>
+</ul>
+</li>
+</ol>
+== 110 Indented code blocks
+markdown 29
+    <a/>
+    *hi*
+
+    - one
+html 48
+<pre><code>&lt;a/&gt;
+*hi*
+
+- one
+</code></pre>
+== 111 Indented code blocks
+markdown 41
+    chunk1
+
+    chunk2
+  
+ 
+ 
+    chunk3
+html 50
+<pre><code>chunk1
+
+chunk2
+
+
+
+chunk3
+</code></pre>
+== 112 Indented code blocks
+markdown 31
+    chunk1
+      
+      chunk2
+html 44
+<pre><code>chunk1
+  
+  chunk2
+</code></pre>
+== 113 Indented code blocks
+markdown 13
+Foo
+    bar
+
+html 15
+<p>Foo
+bar</p>
+== 114 Indented code blocks
+markdown 12
+    foo
+bar
+html 40
+<pre><code>foo
+</code></pre>
+<p>bar</p>
+== 115 Indented code blocks
+markdown 46
+# Heading
+    foo
+Heading
+------
+    foo
+----
+html 99
+<h1>Heading</h1>
+<pre><code>foo
+</code></pre>
+<h2>Heading</h2>
+<pre><code>foo
+</code></pre>
+<hr />
+== 116 Indented code blocks
+markdown 20
+        foo
+    bar
+html 37
+<pre><code>    foo
+bar
+</code></pre>
+== 117 Indented code blocks
+markdown 20
+
+    
+    foo
+    
+
+html 29
+<pre><code>foo
+</code></pre>
+== 118 Indented code blocks
+markdown 10
+    foo  
+html 31
+<pre><code>foo  
+</code></pre>
+== 119 Fenced code blocks
+markdown 13
+```
+<
+ >
+```
+html 36
+<pre><code>&lt;
+ &gt;
+</code></pre>
+== 120 Fenced code blocks
+markdown 13
+~~~
+<
+ >
+~~~
+html 36
+<pre><code>&lt;
+ &gt;
+</code></pre>
+== 121 Fenced code blocks
+markdown 10
+``
+foo
+``
+html 24
+<p><code>foo</code></p>
+== 122 Fenced code blocks
+markdown 16
+```
+aaa
+~~~
+```
+html 33
+<pre><code>aaa
+~~~
+</code></pre>
+== 123 Fenced code blocks
+markdown 16
+~~~
+aaa
+```
+~~~
+html 33
+<pre><code>aaa
+```
+</code></pre>
+== 124 Fenced code blocks
+markdown 20
+````
+aaa
+```
+``````
+html 33
+<pre><code>aaa
+```
+</code></pre>
+== 125 Fenced code blocks
+markdown 18
+~~~~
+aaa
+~~~
+~~~~
+html 33
+<pre><code>aaa
+~~~
+</code></pre>
+== 126 Fenced code blocks
+markdown 4
+```
+html 25
+<pre><code></code></pre>
+== 127 Fenced code blocks
+markdown 15
+`````
+
+```
+aaa
+html 34
+<pre><code>
+```
+aaa
+</code></pre>
+== 128 Fenced code blocks
+markdown 17
+> ```
+> aaa
+
+bbb
+html 67
+<blockquote>
+<pre><code>aaa
+</code></pre>
+</blockquote>
+<p>bbb</p>
+== 129 Fenced code blocks
+markdown 12
+```
+
+  
+```
+html 29
+<pre><code>
+  
+</code></pre>
+== 130 Fenced code blocks
+markdown 8
+```
+```
+html 25
+<pre><code></code></pre>
+== 131 Fenced code blocks
+markdown 18
+ ```
+ aaa
+aaa
+```
+html 33
+<pre><code>aaa
+aaa
+</code></pre>
+== 132 Fenced code blocks
+markdown 26
+  ```
+aaa
+  aaa
+aaa
+  ```
+html 37
+<pre><code>aaa
+aaa
+aaa
+</code></pre>
+== 133 Fenced code blocks
+markdown 35
+   ```
+   aaa
+    aaa
+  aaa
+   ```
+html 38
+<pre><code>aaa
+ aaa
+aaa
+</code></pre>
+== 134 Fenced code blocks
+markdown 24
+    ```
+    aaa
+    ```
+html 37
+<pre><code>```
+aaa
+```
+</code></pre>
+== 135 Fenced code blocks
+markdown 14
+```
+aaa
+  ```
+html 29
+<pre><code>aaa
+</code></pre>
+== 136 Fenced code blocks
+markdown 17
+   ```
+aaa
+  ```
+html 29
+<pre><code>aaa
+</code></pre>
+== 137 Fenced code blocks
+markdown 16
+```
+aaa
+    ```
+html 37
+<pre><code>aaa
+    ```
+</code></pre>
+== 138 Fenced code blocks
+markdown 12
+``` ```
+aaa
+html 26
+<p><code> </code>
+aaa</p>
+== 139 Fenced code blocks
+markdown 18
+~~~~~~
+aaa
+~~~ ~~
+html 36
+<pre><code>aaa
+~~~ ~~
+</code></pre>
+== 140 Fenced code blocks
+markdown 20
+foo
+```
+bar
+```
+baz
+html 51
+<p>foo</p>
+<pre><code>bar
+</code></pre>
+<p>baz</p>
+== 141 Fenced code blocks
+markdown 26
+foo
+---
+~~~
+bar
+~~~
+# baz
+html 55
+<h2>foo</h2>
+<pre><code>bar
+</code></pre>
+<h1>baz</h1>
+== 142 Fenced code blocks
+markdown 38
+```ruby
+def foo(x)
+  return 3
+end
+```
+html 73
+<pre><code class="language-ruby">def foo(x)
+  return 3
+end
+</code></pre>
+== 143 Fenced code blocks
+markdown 65
+~~~~    ruby startline=3 $%@#$
+def foo(x)
+  return 3
+end
+~~~~~~~
+html 73
+<pre><code class="language-ruby">def foo(x)
+  return 3
+end
+</code></pre>
+== 144 Fenced code blocks
+markdown 11
+````;
+````
+html 44
+<pre><code class="language-;"></code></pre>
+== 145 Fenced code blocks
+markdown 15
+``` aa ```
+foo
+html 27
+<p><code>aa</code>
+foo</p>
+== 146 Fenced code blocks
+markdown 23
+~~~ aa ``` ~~~
+foo
+~~~
+html 49
+<pre><code class="language-aa">foo
+</code></pre>
+== 147 Fenced code blocks
+markdown 16
+```
+``` aaa
+```
+html 33
+<pre><code>``` aaa
+</code></pre>
+== 148 HTML blocks
+markdown 69
+<table><tr><td>
+<pre>
+**Hello**,
+
+_world_.
+</pre>
+</td></tr></table>
+html 82
+<table><tr><td>
+<pre>
+**Hello**,
+<p><em>world</em>.
+</pre></p>
+</td></tr></table>
+== 149 HTML blocks
+markdown 72
+<table>
+  <tr>
+    <td>
+           hi
+    </td>
+  </tr>
+</table>
+
+okay.
+html 78
+<table>
+  <tr>
+    <td>
+           hi
+    </td>
+  </tr>
+</table>
+<p>okay.</p>
+== 150 HTML blocks
+markdown 35
+ <div>
+  *hello*
+         <foo><a>
+html 35
+ <div>
+  *hello*
+         <foo><a>
+== 151 HTML blocks
+markdown 13
+</div>
+*foo*
+html 13
+</div>
+*foo*
+== 152 HTML blocks
+markdown 38
+<DIV CLASS="foo">
+
+*Markdown*
+
+</DIV>
+html 50
+<DIV CLASS="foo">
+<p><em>Markdown</em></p>
+</DIV>
+== 153 HTML blocks
+markdown 36
+<div id="foo"
+  class="bar">
+</div>
+html 36
+<div id="foo"
+  class="bar">
+</div>
+== 154 HTML blocks
+markdown 40
+<div id="foo" class="bar
+  baz">
+</div>
+html 40
+<div id="foo" class="bar
+  baz">
+</div>
+== 155 HTML blocks
+markdown 19
+<div>
+*foo*
+
+*bar*
+html 32
+<div>
+*foo*
+<p><em>bar</em></p>
+== 156 HTML blocks
+markdown 19
+<div id="foo"
+*hi*
+html 19
+<div id="foo"
+*hi*
+== 157 HTML blocks
+markdown 15
+<div class
+foo
+html 15
+<div class
+foo
+== 158 HTML blocks
+markdown 25
+<div *???-&&&-<---
+*foo*
+html 25
+<div *???-&&&-<---
+*foo*
+== 159 HTML blocks
+markdown 35
+<div><a href="bar">*foo*</a></div>
+html 35
+<div><a href="bar">*foo*</a></div>
+== 160 HTML blocks
+markdown 39
+<table><tr><td>
+foo
+</td></tr></table>
+html 39
+<table><tr><td>
+foo
+</td></tr></table>
+== 161 HTML blocks
+markdown 34
+<div></div>
+``` c
+int x = 33;
+```
+html 34
+<div></div>
+``` c
+int x = 33;
+```
+== 162 HTML blocks
+markdown 26
+<a href="foo">
+*bar*
+</a>
+html 26
+<a href="foo">
+*bar*
+</a>
+== 163 HTML blocks
+markdown 27
+<Warning>
+*bar*
+</Warning>
+html 27
+<Warning>
+*bar*
+</Warning>
+== 164 HTML blocks
+markdown 27
+<i class="foo">
+*bar*
+</i>
+html 27
+<i class="foo">
+*bar*
+</i>
+== 165 HTML blocks
+markdown 13
+</ins>
+*bar*
+html 13
+</ins>
+*bar*
+== 166 HTML blocks
+markdown 19
+<del>
+*foo*
+</del>
+html 19
+<del>
+*foo*
+</del>
+== 167 HTML blocks
+markdown 21
+<del>
+
+*foo*
+
+</del>
+html 33
+<del>
+<p><em>foo</em></p>
+</del>
+== 168 HTML blocks
+markdown 17
+<del>*foo*</del>
+html 31
+<p><del><em>foo</em></del></p>
+== 169 HTML blocks
+markdown 120
+<pre language="haskell"><code>
+import Text.HTML.TagSoup
+
+main :: IO ()
+main = print $ parseTags tags
+</code></pre>
+okay
+html 127
+<pre language="haskell"><code>
+import Text.HTML.TagSoup
+
+main :: IO ()
+main = print $ parseTags tags
+</code></pre>
+<p>okay</p>
+== 170 HTML blocks
+markdown 135
+<script type="text/javascript">
+// JavaScript example
+
+document.getElementById("demo").innerHTML = "Hello JavaScript!";
+</script>
+okay
+html 142
+<script type="text/javascript">
+// JavaScript example
+
+document.getElementById("demo").innerHTML = "Hello JavaScript!";
+</script>
+<p>okay</p>
+== 171 HTML blocks
+markdown 38
+<textarea>
+
+*foo*
+
+_bar_
+
+</textarea>
+html 38
+<textarea>
+
+*foo*
+
+_bar_
+
+</textarea>
+== 172 HTML blocks
+markdown 73
+<style
+  type="text/css">
+h1 {color:red;}
+
+p {color:blue;}
+</style>
+okay
+html 80
+<style
+  type="text/css">
+h1 {color:red;}
+
+p {color:blue;}
+</style>
+<p>okay</p>
+== 173 HTML blocks
+markdown 31
+<style
+  type="text/css">
+
+foo
+html 31
+<style
+  type="text/css">
+
+foo
+== 174 HTML blocks
+markdown 19
+> <div>
+> foo
+
+bar
+html 48
+<blockquote>
+<div>
+foo
+</blockquote>
+<p>bar</p>
+== 175 HTML blocks
+markdown 14
+- <div>
+- foo
+html 41
+<ul>
+<li>
+<div>
+</li>
+<li>foo</li>
+</ul>
+== 176 HTML blocks
+markdown 35
+<style>p{color:red;}</style>
+*foo*
+html 49
+<style>p{color:red;}</style>
+<p><em>foo</em></p>
+== 177 HTML blocks
+markdown 24
+<!-- foo -->*bar*
+*baz*
+html 38
+<!-- foo -->*bar*
+<p><em>baz</em></p>
+== 178 HTML blocks
+markdown 31
+<script>
+foo
+</script>1. *bar*
+html 31
+<script>
+foo
+</script>1. *bar*
+== 179 HTML blocks
+markdown 30
+<!-- Foo
+
+bar
+   baz -->
+okay
+html 37
+<!-- Foo
+
+bar
+   baz -->
+<p>okay</p>
+== 180 HTML blocks
+markdown 28
+<?php
+
+  echo '>';
+
+?>
+okay
+html 35
+<?php
+
+  echo '>';
+
+?>
+<p>okay</p>
+== 181 HTML blocks
+markdown 16
+<!DOCTYPE html>
+html 16
+<!DOCTYPE html>
+== 182 HTML blocks
+markdown 119
+<![CDATA[
+function matchwo(a,b)
+{
+  if (a < b && a < 0) then {
+    return 1;
+
+  } else {
+
+    return 0;
+  }
+}
+]]>
+okay
+html 126
+<![CDATA[
+function matchwo(a,b)
+{
+  if (a < b && a < 0) then {
+    return 1;
+
+  } else {
+
+    return 0;
+  }
+}
+]]>
+<p>okay</p>
+== 183 HTML blocks
+markdown 33
+  <!-- foo -->
+
+    <!-- foo -->
+html 59
+  <!-- foo -->
+<pre><code>&lt;!-- foo --&gt;
+</code></pre>
+== 184 HTML blocks
+markdown 19
+  <div>
+
+    <div>
+html 45
+  <div>
+<pre><code>&lt;div&gt;
+</code></pre>
+== 185 HTML blocks
+markdown 21
+Foo
+<div>
+bar
+</div>
+html 28
+<p>Foo</p>
+<div>
+bar
+</div>
+== 186 HTML blocks
+markdown 23
+<div>
+bar
+</div>
+*foo*
+html 23
+<div>
+bar
+</div>
+*foo*
+== 187 HTML blocks
+markdown 23
+Foo
+<a href="bar">
+baz
+html 30
+<p>Foo
+<a href="bar">
+baz</p>
+== 188 HTML blocks
+markdown 34
+<div>
+
+*Emphasized* text.
+
+</div>
+html 46
+<div>
+<p><em>Emphasized</em> text.</p>
+</div>
+== 189 HTML blocks
+markdown 32
+<div>
+*Emphasized* text.
+</div>
+html 32
+<div>
+*Emphasized* text.
+</div>
+== 190 HTML blocks
+markdown 46
+<table>
+
+<tr>
+
+<td>
+Hi
+</td>
+
+</tr>
+
+</table>
+html 42
+<table>
+<tr>
+<td>
+Hi
+</td>
+</tr>
+</table>
+== 191 HTML blocks
+markdown 64
+<table>
+
+  <tr>
+
+    <td>
+      Hi
+    </td>
+
+  </tr>
+
+</table>
+html 85
+<table>
+  <tr>
+<pre><code>&lt;td&gt;
+  Hi
+&lt;/td&gt;
+</code></pre>
+  </tr>
+</table>
+== 192 Link reference definitions
+markdown 27
+[foo]: /url "title"
+
+[foo]
+html 44
+<p><a href="/url" title="title">foo</a></p>
+== 193 Link reference definitions
+markdown 56
+   [foo]: 
+      /url  
+           'the title'  
+
+[foo]
+html 48
+<p><a href="/url" title="the title">foo</a></p>
+== 194 Link reference definitions
+markdown 56
+[Foo*bar\]]:my_(url) 'title (with parens)'
+
+[Foo*bar\]]
+html 67
+<p><a href="my_(url)" title="title (with parens)">Foo*bar]</a></p>
+== 195 Link reference definitions
+markdown 39
+[Foo bar]:
+<my url>
+'title'
+
+[Foo bar]
+html 52
+<p><a href="my%20url" title="title">Foo bar</a></p>
+== 196 Link reference definitions
+markdown 41
+[foo]: /url '
+title
+line1
+line2
+'
+
+[foo]
+html 58
+<p><a href="/url" title="
+title
+line1
+line2
+">foo</a></p>
+== 197 Link reference definitions
+markdown 44
+[foo]: /url 'title
+
+with blank line'
+
+[foo]
+html 63
+<p>[foo]: /url 'title</p>
+<p>with blank line'</p>
+<p>[foo]</p>
+== 198 Link reference definitions
+markdown 19
+[foo]:
+/url
+
+[foo]
+html 30
+<p><a href="/url">foo</a></p>
+== 199 Link reference definitions
+markdown 14
+[foo]:
+
+[foo]
+html 27
+<p>[foo]:</p>
+<p>[foo]</p>
+== 200 Link reference definitions
+markdown 17
+[foo]: <>
+
+[foo]
+html 26
+<p><a href="">foo</a></p>
+== 201 Link reference definitions
+markdown 25
+[foo]: <bar>(baz)
+
+[foo]
+html 38
+<p>[foo]: <bar>(baz)</p>
+<p>[foo]</p>
+== 202 Link reference definitions
+markdown 43
+[foo]: /url\bar\*baz "foo\"bar\baz"
+
+[foo]
+html 65
+<p><a href="/url%5Cbar*baz" title="foo&quot;bar\baz">foo</a></p>
+== 203 Link reference definitions
+markdown 18
+[foo]
+
+[foo]: url
+html 29
+<p><a href="url">foo</a></p>
+== 204 Link reference definitions
+markdown 34
+[foo]
+
+[foo]: first
+[foo]: second
+html 31
+<p><a href="first">foo</a></p>
+== 205 Link reference definitions
+markdown 19
+[FOO]: /url
+
+[Foo]
+html 30
+<p><a href="/url">Foo</a></p>
+== 206 Link reference definitions
+markdown 28
+[ΑΓΩ]: /φου
+
+[αγω]
+html 48
+<p><a href="/%CF%86%CE%BF%CF%85">αγω</a></p>
+== 207 Link reference definitions
+markdown 12
+[foo]: /url
+html 0
+== 208 Link reference definitions
+markdown 18
+[
+foo
+]: /url
+bar
+html 11
+<p>bar</p>
+== 209 Link reference definitions
+markdown 23
+[foo]: /url "title" ok
+html 40
+<p>[foo]: /url &quot;title&quot; ok</p>
+== 210 Link reference definitions
+markdown 23
+[foo]: /url
+"title" ok
+html 28
+<p>&quot;title&quot; ok</p>
+== 211 Link reference definitions
+markdown 31
+    [foo]: /url "title"
+
+[foo]
+html 68
+<pre><code>[foo]: /url &quot;title&quot;
+</code></pre>
+<p>[foo]</p>
+== 212 Link reference definitions
+markdown 27
+```
+[foo]: /url
+```
+
+[foo]
+html 50
+<pre><code>[foo]: /url
+</code></pre>
+<p>[foo]</p>
+== 213 Link reference definitions
+markdown 23
+Foo
+[bar]: /baz
+
+[bar]
+html 36
+<p>Foo
+[bar]: /baz</p>
+<p>[bar]</p>
+== 214 Link reference definitions
+markdown 26
+# [Foo]
+[foo]: /url
+> bar
+html 70
+<h1><a href="/url">Foo</a></h1>
+<blockquote>
+<p>bar</p>
+</blockquote>
+== 215 Link reference definitions
+markdown 26
+[foo]: /url
+bar
+===
+[foo]
+html 43
+<h1>bar</h1>
+<p><a href="/url">foo</a></p>
+== 216 Link reference definitions
+markdown 22
+[foo]: /url
+===
+[foo]
+html 34
+<p>===
+<a href="/url">foo</a></p>
+== 217 Link reference definitions
+markdown 83
+[foo]: /foo-url "foo"
+[bar]: /bar-url
+  "bar"
+[baz]: /baz-url
+
+[foo],
+[bar],
+[baz]
+html 114
+<p><a href="/foo-url" title="foo">foo</a>,
+<a href="/bar-url" title="bar">bar</a>,
+<a href="/baz-url">baz</a></p>
+== 218 Link reference definitions
+markdown 21
+[foo]
+
+> [foo]: /url
+html 57
+<p><a href="/url">foo</a></p>
+<blockquote>
+</blockquote>
+== 219 Paragraphs
+markdown 9
+aaa
+
+bbb
+html 22
+<p>aaa</p>
+<p>bbb</p>
+== 220 Paragraphs
+markdown 17
+aaa
+bbb
+
+ccc
+ddd
+html 30
+<p>aaa
+bbb</p>
+<p>ccc
+ddd</p>
+== 221 Paragraphs
+markdown 10
+aaa
+
+
+bbb
+html 22
+<p>aaa</p>
+<p>bbb</p>
+== 222 Paragraphs
+markdown 11
+  aaa
+ bbb
+html 15
+<p>aaa
+bbb</p>
+== 223 Paragraphs
+markdown 64
+aaa
+             bbb
+                                       ccc
+html 19
+<p>aaa
+bbb
+ccc</p>
+== 224 Paragraphs
+markdown 11
+   aaa
+bbb
+html 15
+<p>aaa
+bbb</p>
+== 225 Paragraphs
+markdown 12
+    aaa
+bbb
+html 40
+<pre><code>aaa
+</code></pre>
+<p>bbb</p>
+== 226 Paragraphs
+markdown 18
+aaa     
+bbb     
+html 21
+<p>aaa<br />
+bbb</p>
+== 227 Blank lines
+markdown 22
+  
+
+aaa
+  
+
+# aaa
+
+  
+html 24
+<p>aaa</p>
+<h1>aaa</h1>
+== 228 Block quotes
+markdown 20
+> # Foo
+> bar
+> baz
+html 55
+<blockquote>
+<h1>Foo</h1>
+<p>bar
+baz</p>
+</blockquote>
+== 229 Block quotes
+markdown 18
+># Foo
+>bar
+> baz
+html 55
+<blockquote>
+<h1>Foo</h1>
+<p>bar
+baz</p>
+</blockquote>
+== 230 Block quotes
+markdown 27
+   > # Foo
+   > bar
+ > baz
+html 55
+<blockquote>
+<h1>Foo</h1>
+<p>bar
+baz</p>
+</blockquote>
+== 231 Block quotes
+markdown 32
+    > # Foo
+    > bar
+    > baz
+html 54
+<pre><code>&gt; # Foo
+&gt; bar
+&gt; baz
+</code></pre>
+== 232 Block quotes
+markdown 18
+> # Foo
+> bar
+baz
+html 55
+<blockquote>
+<h1>Foo</h1>
+<p>bar
+baz</p>
+</blockquote>
+== 233 Block quotes
+markdown 16
+> bar
+baz
+> foo
+html 46
+<blockquote>
+<p>bar
+baz
+foo</p>
+</blockquote>
+== 234 Block quotes
+markdown 10
+> foo
+---
+html 45
+<blockquote>
+<p>foo</p>
+</blockquote>
+<hr />
+== 235 Block quotes
+markdown 14
+> - foo
+- bar
+html 75
+<blockquote>
+<ul>
+<li>foo</li>
+</ul>
+</blockquote>
+<ul>
+<li>bar</li>
+</ul>
+== 236 Block quotes
+markdown 18
+>     foo
+    bar
+html 85
+<blockquote>
+<pre><code>foo
+</code></pre>
+</blockquote>
+<pre><code>bar
+</code></pre>
+== 237 Block quotes
+markdown 14
+> ```
+foo
+```
+html 88
+<blockquote>
+<pre><code></code></pre>
+</blockquote>
+<p>foo</p>
+<pre><code></code></pre>
+== 238 Block quotes
+markdown 16
+> foo
+    - bar
+html 44
+<blockquote>
+<p>foo
+- bar</p>
+</blockquote>
+== 239 Block quotes
+markdown 2
+>
+html 27
+<blockquote>
+</blockquote>
+== 240 Block quotes
+markdown 9
+>
+>  
+> 
+html 27
+<blockquote>
+</blockquote>
+== 241 Block quotes
+markdown 12
+>
+> foo
+>  
+html 38
+<blockquote>
+<p>foo</p>
+</blockquote>
+== 242 Block quotes
+markdown 13
+> foo
+
+> bar
+html 76
+<blockquote>
+<p>foo</p>
+</blockquote>
+<blockquote>
+<p>bar</p>
+</blockquote>
+== 243 Block quotes
+markdown 12
+> foo
+> bar
+html 42
+<blockquote>
+<p>foo
+bar</p>
+</blockquote>
+== 244 Block quotes
+markdown 14
+> foo
+>
+> bar
+html 49
+<blockquote>
+<p>foo</p>
+<p>bar</p>
+</blockquote>
+== 245 Block quotes
+markdown 10
+foo
+> bar
+html 49
+<p>foo</p>
+<blockquote>
+<p>bar</p>
+</blockquote>
+== 246 Block quotes
+markdown 16
+> aaa
+***
+> bbb
+html 83
+<blockquote>
+<p>aaa</p>
+</blockquote>
+<hr />
+<blockquote>
+<p>bbb</p>
+</blockquote>
+== 247 Block quotes
+markdown 10
+> bar
+baz
+html 42
+<blockquote>
+<p>bar
+baz</p>
+</blockquote>
+== 248 Block quotes
+markdown 11
+> bar
+
+baz
+html 49
+<blockquote>
+<p>bar</p>
+</blockquote>
+<p>baz</p>
+== 249 Block quotes
+markdown 12
+> bar
+>
+baz
+html 49
+<blockquote>
+<p>bar</p>
+</blockquote>
+<p>baz</p>
+== 250 Block quotes
+markdown 14
+> > > foo
+bar
+html 96
+<blockquote>
+<blockquote>
+<blockquote>
+<p>foo
+bar</p>
+</blockquote>
+</blockquote>
+</blockquote>
+== 251 Block quotes
+markdown 20
+>>> foo
+> bar
+>>baz
+html 100
+<blockquote>
+<blockquote>
+<blockquote>
+<p>foo
+bar
+baz</p>
+</blockquote>
+</blockquote>
+</blockquote>
+== 252 Block quotes
+markdown 26
+>     code
+
+>    not code
+html 100
+<blockquote>
+<pre><code>code
+</code></pre>
+</blockquote>
+<blockquote>
+<p>not code</p>
+</blockquote>
+== 253 List items
+markdown 65
+A paragraph
+with two lines.
+
+    indented code
+
+> A block quote.
+html 123
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+== 254 List items
+markdown 81
+1.  A paragraph
+    with two lines.
+
+        indented code
+
+    > A block quote.
+html 145
+<ol>
+<li>
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+</li>
+</ol>
+== 255 List items
+markdown 12
+- one
+
+ two
+html 35
+<ul>
+<li>one</li>
+</ul>
+<p>two</p>
+== 256 List items
+markdown 13
+- one
+
+  two
+html 44
+<ul>
+<li>
+<p>one</p>
+<p>two</p>
+</li>
+</ul>
+== 257 List items
+markdown 20
+ -    one
+
+     two
+html 54
+<ul>
+<li>one</li>
+</ul>
+<pre><code> two
+</code></pre>
+== 258 List items
+markdown 21
+ -    one
+
+      two
+html 44
+<ul>
+<li>
+<p>one</p>
+<p>two</p>
+</li>
+</ul>
+== 259 List items
+markdown 29
+   > > 1.  one
+>>
+>>     two
+html 98
+<blockquote>
+<blockquote>
+<ol>
+<li>
+<p>one</p>
+<p>two</p>
+</li>
+</ol>
+</blockquote>
+</blockquote>
+== 260 List items
+markdown 22
+>>- one
+>>
+  >  > two
+html 89
+<blockquote>
+<blockquote>
+<ul>
+<li>one</li>
+</ul>
+<p>two</p>
+</blockquote>
+</blockquote>
+== 261 List items
+markdown 12
+-one
+
+2.two
+html 25
+<p>-one</p>
+<p>2.two</p>
+== 262 List items
+markdown 14
+- foo
+
+
+  bar
+html 44
+<ul>
+<li>
+<p>foo</p>
+<p>bar</p>
+</li>
+</ul>
+== 263 List items
+markdown 53
+1.  foo
+
+    ```
+    bar
+    ```
+
+    baz
+
+    > bam
+html 111
+<ol>
+<li>
+<p>foo</p>
+<pre><code>bar
+</code></pre>
+<p>baz</p>
+<blockquote>
+<p>bam</p>
+</blockquote>
+</li>
+</ol>
+== 264 List items
+markdown 29
+- Foo
+
+      bar
+
+
+      baz
+html 68
+<ul>
+<li>
+<p>Foo</p>
+<pre><code>bar
+
+
+baz
+</code></pre>
+</li>
+</ul>
+== 265 List items
+markdown 14
+123456789. ok
+html 41
+<ol start="123456789">
+<li>ok</li>
+</ol>
+== 266 List items
+markdown 19
+1234567890. not ok
+html 26
+<p>1234567890. not ok</p>
+== 267 List items
+markdown 6
+0. ok
+html 33
+<ol start="0">
+<li>ok</li>
+</ol>
+== 268 List items
+markdown 8
+003. ok
+html 33
+<ol start="3">
+<li>ok</li>
+</ol>
+== 269 List items
+markdown 11
+-1. not ok
+html 18
+<p>-1. not ok</p>
+== 270 List items
+markdown 17
+- foo
+
+      bar
+html 62
+<ul>
+<li>
+<p>foo</p>
+<pre><code>bar
+</code></pre>
+</li>
+</ul>
+== 271 List items
+markdown 27
+  10.  foo
+
+           bar
+html 73
+<ol start="10">
+<li>
+<p>foo</p>
+<pre><code>bar
+</code></pre>
+</li>
+</ol>
+== 272 List items
+markdown 44
+    indented code
+
+paragraph
+
+    more code
+html 91
+<pre><code>indented code
+</code></pre>
+<p>paragraph</p>
+<pre><code>more code
+</code></pre>
+== 273 List items
+markdown 53
+1.     indented code
+
+   paragraph
+
+       more code
+html 113
+<ol>
+<li>
+<pre><code>indented code
+</code></pre>
+<p>paragraph</p>
+<pre><code>more code
+</code></pre>
+</li>
+</ol>
+== 274 List items
+markdown 54
+1.      indented code
+
+   paragraph
+
+       more code
+html 114
+<ol>
+<li>
+<pre><code> indented code
+</code></pre>
+<p>paragraph</p>
+<pre><code>more code
+</code></pre>
+</li>
+</ol>
+== 275 List items
+markdown 12
+   foo
+
+bar
+html 22
+<p>foo</p>
+<p>bar</p>
+== 276 List items
+markdown 16
+-    foo
+
+  bar
+html 35
+<ul>
+<li>foo</li>
+</ul>
+<p>bar</p>
+== 277 List items
+markdown 15
+-  foo
+
+   bar
+html 44
+<ul>
+<li>
+<p>foo</p>
+<p>bar</p>
+</li>
+</ul>
+== 278 List items
+markdown 40
+-
+  foo
+-
+  ```
+  bar
+  ```
+-
+      baz
+html 104
+<ul>
+<li>foo</li>
+<li>
+<pre><code>bar
+</code></pre>
+</li>
+<li>
+<pre><code>baz
+</code></pre>
+</li>
+</ul>
+== 279 List items
+markdown 11
+-   
+  foo
+html 24
+<ul>
+<li>foo</li>
+</ul>
+== 280 List items
+markdown 9
+-
+
+  foo
+html 32
+<ul>
+<li></li>
+</ul>
+<p>foo</p>
+== 281 List items
+markdown 14
+- foo
+-
+- bar
+html 47
+<ul>
+<li>foo</li>
+<li></li>
+<li>bar</li>
+</ul>
+== 282 List items
+markdown 17
+- foo
+-   
+- bar
+html 47
+<ul>
+<li>foo</li>
+<li></li>
+<li>bar</li>
+</ul>
+== 283 List items
+markdown 17
+1. foo
+2.
+3. bar
+html 47
+<ol>
+<li>foo</li>
+<li></li>
+<li>bar</li>
+</ol>
+== 284 List items
+markdown 2
+*
+html 21
+<ul>
+<li></li>
+</ul>
+== 285 List items
+markdown 14
+foo
+*
+
+foo
+1.
+html 27
+<p>foo
+*</p>
+<p>foo
+1.</p>
+== 286 List items
+markdown 85
+ 1.  A paragraph
+     with two lines.
+
+         indented code
+
+     > A block quote.
+html 145
+<ol>
+<li>
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+</li>
+</ol>
+== 287 List items
+markdown 89
+  1.  A paragraph
+      with two lines.
+
+          indented code
+
+      > A block quote.
+html 145
+<ol>
+<li>
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+</li>
+</ol>
+== 288 List items
+markdown 93
+   1.  A paragraph
+       with two lines.
+
+           indented code
+
+       > A block quote.
+html 145
+<ol>
+<li>
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+</li>
+</ol>
+== 289 List items
+markdown 97
+    1.  A paragraph
+        with two lines.
+
+            indented code
+
+        > A block quote.
+html 109
+<pre><code>1.  A paragraph
+    with two lines.
+
+        indented code
+
+    &gt; A block quote.
+</code></pre>
+== 290 List items
+markdown 83
+  1.  A paragraph
+with two lines.
+
+          indented code
+
+      > A block quote.
+html 145
+<ol>
+<li>
+<p>A paragraph
+with two lines.</p>
+<pre><code>indented code
+</code></pre>
+<blockquote>
+<p>A block quote.</p>
+</blockquote>
+</li>
+</ol>
+== 291 List items
+markdown 38
+  1.  A paragraph
+    with two lines.
+html 48
+<ol>
+<li>A paragraph
+with two lines.</li>
+</ol>
+== 292 List items
+markdown 34
+> 1. > Blockquote
+continued here.
+html 110
+<blockquote>
+<ol>
+<li>
+<blockquote>
+<p>Blockquote
+continued here.</p>
+</blockquote>
+</li>
+</ol>
+</blockquote>
+== 293 List items
+markdown 36
+> 1. > Blockquote
+> continued here.
+html 110
+<blockquote>
+<ol>
+<li>
+<blockquote>
+<p>Blockquote
+continued here.</p>
+</blockquote>
+</li>
+</ol>
+</blockquote>
+== 294 List items
+markdown 36
+- foo
+  - bar
+    - baz
+      - boo
+html 99
+<ul>
+<li>foo
+<ul>
+<li>bar
+<ul>
+<li>baz
+<ul>
+<li>boo</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+== 295 List items
+markdown 30
+- foo
+ - bar
+  - baz
+   - boo
+html 63
+<ul>
+<li>foo</li>
+<li>bar</li>
+<li>baz</li>
+<li>boo</li>
+</ul>
+== 296 List items
+markdown 18
+10) foo
+    - bar
+html 60
+<ol start="10">
+<li>foo
+<ul>
+<li>bar</li>
+</ul>
+</li>
+</ol>
+== 297 List items
+markdown 17
+10) foo
+   - bar
+html 59
+<ol start="10">
+<li>foo</li>
+</ol>
+<ul>
+<li>bar</li>
+</ul>
+== 298 List items
+markdown 8
+- - foo
+html 46
+<ul>
+<li>
+<ul>
+<li>foo</li>
+</ul>
+</li>
+</ul>
+== 299 List items
+markdown 12
+1. - 2. foo
+html 78
+<ol>
+<li>
+<ul>
+<li>
+<ol start="2">
+<li>foo</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+== 300 List items
+markdown 26
+- # Foo
+- Bar
+  ---
+  baz
+html 62
+<ul>
+<li>
+<h1>Foo</h1>
+</li>
+<li>
+<h2>Bar</h2>
+baz</li>
+</ul>
+== 301 Lists
+markdown 18
+- foo
+- bar
++ baz
+html 61
+<ul>
+<li>foo</li>
+<li>bar</li>
+</ul>
+<ul>
+<li>baz</li>
+</ul>
+== 302 Lists
+markdown 21
+1. foo
+2. bar
+3) baz
+html 71
+<ol>
+<li>foo</li>
+<li>bar</li>
+</ol>
+<ol start="3">
+<li>baz</li>
+</ol>
+== 303 Lists
+markdown 16
+Foo
+- bar
+- baz
+html 48
+<p>Foo</p>
+<ul>
+<li>bar</li>
+<li>baz</li>
+</ul>
+== 304 Lists
+markdown 68
+The number of windows in my house is
+14.  The number of doors is 6.
+html 75
+<p>The number of windows in my house is
+14.  The number of doors is 6.</p>
+== 305 Lists
+markdown 67
+The number of windows in my house is
+1.  The number of doors is 6.
+html 90
+<p>The number of windows in my house is</p>
+<ol>
+<li>The number of doors is 6.</li>
+</ol>
+== 306 Lists
+markdown 21
+- foo
+
+- bar
+
+
+- baz
+html 77
+<ul>
+<li>
+<p>foo</p>
+</li>
+<li>
+<p>bar</p>
+</li>
+<li>
+<p>baz</p>
+</li>
+</ul>
+== 307 Lists
+markdown 36
+- foo
+  - bar
+    - baz
+
+
+      bim
+html 94
+<ul>
+<li>foo
+<ul>
+<li>bar
+<ul>
+<li>
+<p>baz</p>
+<p>bim</p>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+== 308 Lists
+markdown 35
+- foo
+- bar
+
+<!-- -->
+
+- baz
+- bim
+html 83
+<ul>
+<li>foo</li>
+<li>bar</li>
+</ul>
+<!-- -->
+<ul>
+<li>baz</li>
+<li>bim</li>
+</ul>
+== 309 Lists
+markdown 50
+-   foo
+
+    notcode
+
+-   foo
+
+<!-- -->
+
+    code
+html 109
+<ul>
+<li>
+<p>foo</p>
+<p>notcode</p>
+</li>
+<li>
+<p>foo</p>
+</li>
+</ul>
+<!-- -->
+<pre><code>code
+</code></pre>
+== 310 Lists
+markdown 37
+- a
+ - b
+  - c
+   - d
+  - e
+ - f
+- g
+html 88
+<ul>
+<li>a</li>
+<li>b</li>
+<li>c</li>
+<li>d</li>
+<li>e</li>
+<li>f</li>
+<li>g</li>
+</ul>
+== 311 Lists
+markdown 22
+1. a
+
+  2. b
+
+   3. c
+html 71
+<ol>
+<li>
+<p>a</p>
+</li>
+<li>
+<p>b</p>
+</li>
+<li>
+<p>c</p>
+</li>
+</ol>
+== 312 Lists
+markdown 30
+- a
+ - b
+  - c
+   - d
+    - e
+html 59
+<ul>
+<li>a</li>
+<li>b</li>
+<li>c</li>
+<li>d
+- e</li>
+</ul>
+== 313 Lists
+markdown 23
+1. a
+
+  2. b
+
+    3. c
+html 81
+<ol>
+<li>
+<p>a</p>
+</li>
+<li>
+<p>b</p>
+</li>
+</ol>
+<pre><code>3. c
+</code></pre>
+== 314 Lists
+markdown 13
+- a
+- b
+
+- c
+html 71
+<ul>
+<li>
+<p>a</p>
+</li>
+<li>
+<p>b</p>
+</li>
+<li>
+<p>c</p>
+</li>
+</ul>
+== 315 Lists
+markdown 11
+* a
+*
+
+* c
+html 61
+<ul>
+<li>
+<p>a</p>
+</li>
+<li></li>
+<li>
+<p>c</p>
+</li>
+</ul>
+== 316 Lists
+markdown 17
+- a
+- b
+
+  c
+- d
+html 80
+<ul>
+<li>
+<p>a</p>
+</li>
+<li>
+<p>b</p>
+<p>c</p>
+</li>
+<li>
+<p>d</p>
+</li>
+</ul>
+== 317 Lists
+markdown 27
+- a
+- b
+
+  [ref]: /url
+- d
+html 71
+<ul>
+<li>
+<p>a</p>
+</li>
+<li>
+<p>b</p>
+</li>
+<li>
+<p>d</p>
+</li>
+</ul>
+== 318 Lists
+markdown 26
+- a
+- ```
+  b
+
+
+  ```
+- c
+html 73
+<ul>
+<li>a</li>
+<li>
+<pre><code>b
+
+
+</code></pre>
+</li>
+<li>c</li>
+</ul>
+== 319 Lists
+markdown 21
+- a
+  - b
+
+    c
+- d
+html 74
+<ul>
+<li>a
+<ul>
+<li>
+<p>b</p>
+<p>c</p>
+</li>
+</ul>
+</li>
+<li>d</li>
+</ul>
+== 320 Lists
+markdown 18
+* a
+  > b
+  >
+* c
+html 70
+<ul>
+<li>a
+<blockquote>
+<p>b</p>
+</blockquote>
+</li>
+<li>c</li>
+</ul>
+== 321 Lists
+markdown 30
+- a
+  > b
+  ```
+  c
+  ```
+- d
+html 97
+<ul>
+<li>a
+<blockquote>
+<p>b</p>
+</blockquote>
+<pre><code>c
+</code></pre>
+</li>
+<li>d</li>
+</ul>
+== 322 Lists
+markdown 4
+- a
+html 22
+<ul>
+<li>a</li>
+</ul>
+== 323 Lists
+markdown 10
+- a
+  - b
+html 45
+<ul>
+<li>a
+<ul>
+<li>b</li>
+</ul>
+</li>
+</ul>
+== 324 Lists
+markdown 29
+1. ```
+   foo
+   ```
+
+   bar
+html 62
+<ol>
+<li>
+<pre><code>foo
+</code></pre>
+<p>bar</p>
+</li>
+</ol>
+== 325 Lists
+markdown 21
+* foo
+  * bar
+
+  baz
+html 68
+<ul>
+<li>
+<p>foo</p>
+<ul>
+<li>bar</li>
+</ul>
+<p>baz</p>
+</li>
+</ul>
+== 326 Lists
+markdown 33
+- a
+  - b
+  - c
+
+- d
+  - e
+  - f
+html 117
+<ul>
+<li>
+<p>a</p>
+<ul>
+<li>b</li>
+<li>c</li>
+</ul>
+</li>
+<li>
+<p>d</p>
+<ul>
+<li>e</li>
+<li>f</li>
+</ul>
+</li>
+</ul>
+== 327 Inlines
+markdown 8
+`hi`lo`
+html 26
+<p><code>hi</code>lo`</p>
+== 328 Code spans
+markdown 6
+`foo`
+html 24
+<p><code>foo</code></p>
+== 329 Code spans
+markdown 16
+`` foo ` bar ``
+html 30
+<p><code>foo ` bar</code></p>
+== 330 Code spans
+markdown 7
+` `` `
+html 23
+<p><code>``</code></p>
+== 331 Code spans
+markdown 9
+`  ``  `
+html 25
+<p><code> `` </code></p>
+== 332 Code spans
+markdown 5
+` a`
+html 23
+<p><code> a</code></p>
+== 333 Code spans
+markdown 8
+` b `
+html 26
+<p><code> b </code></p>
+== 334 Code spans
+markdown 10
+` `
+`  `
+html 39
+<p><code> </code>
+<code>  </code></p>
+== 335 Code spans
+markdown 20
+``
+foo
+bar  
+baz
+``
+html 34
+<p><code>foo bar   baz</code></p>
+== 336 Code spans
+markdown 11
+``
+foo 
+``
+html 25
+<p><code>foo </code></p>
+== 337 Code spans
+markdown 17
+`foo   bar 
+baz`
+html 35
+<p><code>foo   bar  baz</code></p>
+== 338 Code spans
+markdown 11
+`foo\`bar`
+html 29
+<p><code>foo\</code>bar`</p>
+== 339 Code spans
+markdown 12
+``foo`bar``
+html 28
+<p><code>foo`bar</code></p>
+== 340 Code spans
+markdown 15
+` foo `` bar `
+html 31
+<p><code>foo `` bar</code></p>
+== 341 Code spans
+markdown 8
+*foo`*`
+html 26
+<p>*foo<code>*</code></p>
+== 342 Code spans
+markdown 21
+[not a `link](/foo`)
+html 39
+<p>[not a <code>link](/foo</code>)</p>
+== 343 Code spans
+markdown 15
+`<a href="`">`
+html 49
+<p><code>&lt;a href=&quot;</code>&quot;&gt;`</p>
+== 344 Code spans
+markdown 14
+<a href="`">`
+html 21
+<p><a href="`">`</p>
+== 345 Code spans
+markdown 25
+`<https://foo.bar.`baz>`
+html 49
+<p><code>&lt;https://foo.bar.</code>baz&gt;`</p>
+== 346 Code spans
+markdown 24
+<https://foo.bar.`baz>`
+html 66
+<p><a href="https://foo.bar.%60baz">https://foo.bar.`baz</a>`</p>
+== 347 Code spans
+markdown 9
+```foo``
+html 16
+<p>```foo``</p>
+== 348 Code spans
+markdown 5
+`foo
+html 12
+<p>`foo</p>
+== 349 Code spans
+markdown 12
+`foo``bar``
+html 28
+<p>`foo<code>bar</code></p>
+== 350 Emphasis and strong emphasis
+markdown 10
+*foo bar*
+html 24
+<p><em>foo bar</em></p>
+== 351 Emphasis and strong emphasis
+markdown 13
+a * foo bar*
+html 20
+<p>a * foo bar*</p>
+== 352 Emphasis and strong emphasis
+markdown 9
+a*"foo"*
+html 26
+<p>a*&quot;foo&quot;*</p>
+== 353 Emphasis and strong emphasis
+markdown 8
+* a *
+html 15
+<p>* a *</p>
+== 354 Emphasis and strong emphasis
+markdown 37
+*$*alpha.
+
+*£*bravo.
+
+*€*charlie.
+html 56
+<p>*$*alpha.</p>
+<p>*£*bravo.</p>
+<p>*€*charlie.</p>
+== 355 Emphasis and strong emphasis
+markdown 9
+foo*bar*
+html 23
+<p>foo<em>bar</em></p>
+== 356 Emphasis and strong emphasis
+markdown 7
+5*6*78
+html 21
+<p>5<em>6</em>78</p>
+== 357 Emphasis and strong emphasis
+markdown 10
+_foo bar_
+html 24
+<p><em>foo bar</em></p>
+== 358 Emphasis and strong emphasis
+markdown 11
+_ foo bar_
+html 18
+<p>_ foo bar_</p>
+== 359 Emphasis and strong emphasis
+markdown 9
+a_"foo"_
+html 26
+<p>a_&quot;foo&quot;_</p>
+== 360 Emphasis and strong emphasis
+markdown 9
+foo_bar_
+html 16
+<p>foo_bar_</p>
+== 361 Emphasis and strong emphasis
+markdown 7
+5_6_78
+html 14
+<p>5_6_78</p>
+== 362 Emphasis and strong emphasis
+markdown 39
+пристаням_стремятся_
+html 46
+<p>пристаням_стремятся_</p>
+== 363 Emphasis and strong emphasis
+markdown 11
+aa_"bb"_cc
+html 28
+<p>aa_&quot;bb&quot;_cc</p>
+== 364 Emphasis and strong emphasis
+markdown 12
+foo-_(bar)_
+html 26
+<p>foo-<em>(bar)</em></p>
+== 365 Emphasis and strong emphasis
+markdown 6
+_foo*
+html 13
+<p>_foo*</p>
+== 366 Emphasis and strong emphasis
+markdown 11
+*foo bar *
+html 18
+<p>*foo bar *</p>
+== 367 Emphasis and strong emphasis
+markdown 11
+*foo bar
+*
+html 18
+<p>*foo bar
+*</p>
+== 368 Emphasis and strong emphasis
+markdown 8
+*(*foo)
+html 15
+<p>*(*foo)</p>
+== 369 Emphasis and strong emphasis
+markdown 10
+*(*foo*)*
+html 31
+<p><em>(<em>foo</em>)</em></p>
+== 370 Emphasis and strong emphasis
+markdown 9
+*foo*bar
+html 23
+<p><em>foo</em>bar</p>
+== 371 Emphasis and strong emphasis
+markdown 11
+_foo bar _
+html 18
+<p>_foo bar _</p>
+== 372 Emphasis and strong emphasis
+markdown 8
+_(_foo)
+html 15
+<p>_(_foo)</p>
+== 373 Emphasis and strong emphasis
+markdown 10
+_(_foo_)_
+html 31
+<p><em>(<em>foo</em>)</em></p>
+== 374 Emphasis and strong emphasis
+markdown 9
+_foo_bar
+html 16
+<p>_foo_bar</p>
+== 375 Emphasis and strong emphasis
+markdown 39
+_пристаням_стремятся
+html 46
+<p>_пристаням_стремятся</p>
+== 376 Emphasis and strong emphasis
+markdown 14
+_foo_bar_baz_
+html 28
+<p><em>foo_bar_baz</em></p>
+== 377 Emphasis and strong emphasis
+markdown 9
+_(bar)_.
+html 23
+<p><em>(bar)</em>.</p>
+== 378 Emphasis and strong emphasis
+markdown 12
+**foo bar**
+html 32
+<p><strong>foo bar</strong></p>
+== 379 Emphasis and strong emphasis
+markdown 13
+** foo bar**
+html 20
+<p>** foo bar**</p>
+== 380 Emphasis and strong emphasis
+markdown 11
+a**"foo"**
+html 28
+<p>a**&quot;foo&quot;**</p>
+== 381 Emphasis and strong emphasis
+markdown 11
+foo**bar**
+html 31
+<p>foo<strong>bar</strong></p>
+== 382 Emphasis and strong emphasis
+markdown 12
+__foo bar__
+html 32
+<p><strong>foo bar</strong></p>
+== 383 Emphasis and strong emphasis
+markdown 13
+__ foo bar__
+html 20
+<p>__ foo bar__</p>
+== 384 Emphasis and strong emphasis
+markdown 13
+__
+foo bar__
+html 20
+<p>__
+foo bar__</p>
+== 385 Emphasis and strong emphasis
+markdown 11
+a__"foo"__
+html 28
+<p>a__&quot;foo&quot;__</p>
+== 386 Emphasis and strong emphasis
+markdown 11
+foo__bar__
+html 18
+<p>foo__bar__</p>
+== 387 Emphasis and strong emphasis
+markdown 9
+5__6__78
+html 16
+<p>5__6__78</p>
+== 388 Emphasis and strong emphasis
+markdown 41
+пристаням__стремятся__
+html 48
+<p>пристаням__стремятся__</p>
+== 389 Emphasis and strong emphasis
+markdown 22
+__foo, __bar__, baz__
+html 55
+<p><strong>foo, <strong>bar</strong>, baz</strong></p>
+== 390 Emphasis and strong emphasis
+markdown 14
+foo-__(bar)__
+html 34
+<p>foo-<strong>(bar)</strong></p>
+== 391 Emphasis and strong emphasis
+markdown 13
+**foo bar **
+html 20
+<p>**foo bar **</p>
+== 392 Emphasis and strong emphasis
+markdown 10
+**(**foo)
+html 17
+<p>**(**foo)</p>
+== 393 Emphasis and strong emphasis
+markdown 12
+*(**foo**)*
+html 39
+<p><em>(<strong>foo</strong>)</em></p>
+== 394 Emphasis and strong emphasis
+markdown 75
+**Gomphocarpus (*Gomphocarpus physocarpus*, syn.
+*Asclepias physocarpa*)**
+html 109
+<p><strong>Gomphocarpus (<em>Gomphocarpus physocarpus</em>, syn.
+<em>Asclepias physocarpa</em>)</strong></p>
+== 395 Emphasis and strong emphasis
+markdown 20
+**foo "*bar*" foo**
+html 57
+<p><strong>foo &quot;<em>bar</em>&quot; foo</strong></p>
+== 396 Emphasis and strong emphasis
+markdown 11
+**foo**bar
+html 31
+<p><strong>foo</strong>bar</p>
+== 397 Emphasis and strong emphasis
+markdown 13
+__foo bar __
+html 20
+<p>__foo bar __</p>
+== 398 Emphasis and strong emphasis
+markdown 10
+__(__foo)
+html 17
+<p>__(__foo)</p>
+== 399 Emphasis and strong emphasis
+markdown 12
+_(__foo__)_
+html 39
+<p><em>(<strong>foo</strong>)</em></p>
+== 400 Emphasis and strong emphasis
+markdown 11
+__foo__bar
+html 18
+<p>__foo__bar</p>
+== 401 Emphasis and strong emphasis
+markdown 41
+__пристаням__стремятся
+html 48
+<p>__пристаням__стремятся</p>
+== 402 Emphasis and strong emphasis
+markdown 18
+__foo__bar__baz__
+html 38
+<p><strong>foo__bar__baz</strong></p>
+== 403 Emphasis and strong emphasis
+markdown 11
+__(bar)__.
+html 31
+<p><strong>(bar)</strong>.</p>
+== 404 Emphasis and strong emphasis
+markdown 18
+*foo [bar](/url)*
+html 43
+<p><em>foo <a href="/url">bar</a></em></p>
+== 405 Emphasis and strong emphasis
+markdown 10
+*foo
+bar*
+html 24
+<p><em>foo
+bar</em></p>
+== 406 Emphasis and strong emphasis
+markdown 18
+_foo __bar__ baz_
+html 45
+<p><em>foo <strong>bar</strong> baz</em></p>
+== 407 Emphasis and strong emphasis
+markdown 16
+_foo _bar_ baz_
+html 37
+<p><em>foo <em>bar</em> baz</em></p>
+== 408 Emphasis and strong emphasis
+markdown 12
+__foo_ bar_
+html 33
+<p><em><em>foo</em> bar</em></p>
+== 409 Emphasis and strong emphasis
+markdown 12
+*foo *bar**
+html 33
+<p><em>foo <em>bar</em></em></p>
+== 410 Emphasis and strong emphasis
+markdown 18
+*foo **bar** baz*
+html 45
+<p><em>foo <strong>bar</strong> baz</em></p>
+== 411 Emphasis and strong emphasis
+markdown 16
+*foo**bar**baz*
+html 43
+<p><em>foo<strong>bar</strong>baz</em></p>
+== 412 Emphasis and strong emphasis
+markdown 11
+*foo**bar*
+html 25
+<p><em>foo**bar</em></p>
+== 413 Emphasis and strong emphasis
+markdown 14
+***foo** bar*
+html 41
+<p><em><strong>foo</strong> bar</em></p>
+== 414 Emphasis and strong emphasis
+markdown 14
+*foo **bar***
+html 41
+<p><em>foo <strong>bar</strong></em></p>
+== 415 Emphasis and strong emphasis
+markdown 13
+*foo**bar***
+html 40
+<p><em>foo<strong>bar</strong></em></p>
+== 416 Emphasis and strong emphasis
+markdown 16
+foo***bar***baz
+html 43
+<p>foo<em><strong>bar</strong></em>baz</p>
+== 417 Emphasis and strong emphasis
+markdown 25
+foo******bar*********baz
+html 71
+<p>foo<strong><strong><strong>bar</strong></strong></strong>***baz</p>
+== 418 Emphasis and strong emphasis
+markdown 28
+*foo **bar *baz* bim** bop*
+html 62
+<p><em>foo <strong>bar <em>baz</em> bim</strong> bop</em></p>
+== 419 Emphasis and strong emphasis
+markdown 20
+*foo [*bar*](/url)*
+html 52
+<p><em>foo <a href="/url"><em>bar</em></a></em></p>
+== 420 Emphasis and strong emphasis
+markdown 28
+** is not an empty emphasis
+html 35
+<p>** is not an empty emphasis</p>
+== 421 Emphasis and strong emphasis
+markdown 37
+**** is not an empty strong emphasis
+html 44
+<p>**** is not an empty strong emphasis</p>
+== 422 Emphasis and strong emphasis
+markdown 20
+**foo [bar](/url)**
+html 51
+<p><strong>foo <a href="/url">bar</a></strong></p>
+== 423 Emphasis and strong emphasis
+markdown 12
+**foo
+bar**
+html 32
+<p><strong>foo
+bar</strong></p>
+== 424 Emphasis and strong emphasis
+markdown 18
+__foo _bar_ baz__
+html 45
+<p><strong>foo <em>bar</em> baz</strong></p>
+== 425 Emphasis and strong emphasis
+markdown 20
+__foo __bar__ baz__
+html 53
+<p><strong>foo <strong>bar</strong> baz</strong></p>
+== 426 Emphasis and strong emphasis
+markdown 16
+____foo__ bar__
+html 49
+<p><strong><strong>foo</strong> bar</strong></p>
+== 427 Emphasis and strong emphasis
+markdown 16
+**foo **bar****
+html 49
+<p><strong>foo <strong>bar</strong></strong></p>
+== 428 Emphasis and strong emphasis
+markdown 18
+**foo *bar* baz**
+html 45
+<p><strong>foo <em>bar</em> baz</strong></p>
+== 429 Emphasis and strong emphasis
+markdown 16
+**foo*bar*baz**
+html 43
+<p><strong>foo<em>bar</em>baz</strong></p>
+== 430 Emphasis and strong emphasis
+markdown 14
+***foo* bar**
+html 41
+<p><strong><em>foo</em> bar</strong></p>
+== 431 Emphasis and strong emphasis
+markdown 14
+**foo *bar***
+html 41
+<p><strong>foo <em>bar</em></strong></p>
+== 432 Emphasis and strong emphasis
+markdown 30
+**foo *bar **baz**
+bim* bop**
+html 70
+<p><strong>foo <em>bar <strong>baz</strong>
+bim</em> bop</strong></p>
+== 433 Emphasis and strong emphasis
+markdown 22
+**foo [*bar*](/url)**
+html 60
+<p><strong>foo <a href="/url"><em>bar</em></a></strong></p>
+== 434 Emphasis and strong emphasis
+markdown 28
+__ is not an empty emphasis
+html 35
+<p>__ is not an empty emphasis</p>
+== 435 Emphasis and strong emphasis
+markdown 37
+____ is not an empty strong emphasis
+html 44
+<p>____ is not an empty strong emphasis</p>
+== 436 Emphasis and strong emphasis
+markdown 8
+foo ***
+html 15
+<p>foo ***</p>
+== 437 Emphasis and strong emphasis
+markdown 9
+foo *\**
+html 22
+<p>foo <em>*</em></p>
+== 438 Emphasis and strong emphasis
+markdown 8
+foo *_*
+html 22
+<p>foo <em>_</em></p>
+== 439 Emphasis and strong emphasis
+markdown 10
+foo *****
+html 17
+<p>foo *****</p>
+== 440 Emphasis and strong emphasis
+markdown 11
+foo **\***
+html 30
+<p>foo <strong>*</strong></p>
+== 441 Emphasis and strong emphasis
+markdown 10
+foo **_**
+html 30
+<p>foo <strong>_</strong></p>
+== 442 Emphasis and strong emphasis
+markdown 7
+**foo*
+html 21
+<p>*<em>foo</em></p>
+== 443 Emphasis and strong emphasis
+markdown 7
+*foo**
+html 21
+<p><em>foo</em>*</p>
+== 444 Emphasis and strong emphasis
+markdown 9
+***foo**
+html 29
+<p>*<strong>foo</strong></p>
+== 445 Emphasis and strong emphasis
+markdown 9
+****foo*
+html 23
+<p>***<em>foo</em></p>
+== 446 Emphasis and strong emphasis
+markdown 9
+**foo***
+html 29
+<p><strong>foo</strong>*</p>
+== 447 Emphasis and strong emphasis
+markdown 9
+*foo****
+html 23
+<p><em>foo</em>***</p>
+== 448 Emphasis and strong emphasis
+markdown 8
+foo ___
+html 15
+<p>foo ___</p>
+== 449 Emphasis and strong emphasis
+markdown 9
+foo _\__
+html 22
+<p>foo <em>_</em></p>
+== 450 Emphasis and strong emphasis
+markdown 8
+foo _*_
+html 22
+<p>foo <em>*</em></p>
+== 451 Emphasis and strong emphasis
+markdown 10
+foo _____
+html 17
+<p>foo _____</p>
+== 452 Emphasis and strong emphasis
+markdown 11
+foo __\___
+html 30
+<p>foo <strong>_</strong></p>
+== 453 Emphasis and strong emphasis
+markdown 10
+foo __*__
+html 30
+<p>foo <strong>*</strong></p>
+== 454 Emphasis and strong emphasis
+markdown 7
+__foo_
+html 21
+<p>_<em>foo</em></p>
+== 455 Emphasis and strong emphasis
+markdown 7
+_foo__
+html 21
+<p><em>foo</em>_</p>
+== 456 Emphasis and strong emphasis
+markdown 9
+___foo__
+html 29
+<p>_<strong>foo</strong></p>
+== 457 Emphasis and strong emphasis
+markdown 9
+____foo_
+html 23
+<p>___<em>foo</em></p>
+== 458 Emphasis and strong emphasis
+markdown 9
+__foo___
+html 29
+<p><strong>foo</strong>_</p>
+== 459 Emphasis and strong emphasis
+markdown 9
+_foo____
+html 23
+<p><em>foo</em>___</p>
+== 460 Emphasis and strong emphasis
+markdown 8
+**foo**
+html 28
+<p><strong>foo</strong></p>
+== 461 Emphasis and strong emphasis
+markdown 8
+*_foo_*
+html 29
+<p><em><em>foo</em></em></p>
+== 462 Emphasis and strong emphasis
+markdown 8
+__foo__
+html 28
+<p><strong>foo</strong></p>
+== 463 Emphasis and strong emphasis
+markdown 8
+_*foo*_
+html 29
+<p><em><em>foo</em></em></p>
+== 464 Emphasis and strong emphasis
+markdown 12
+****foo****
+html 45
+<p><strong><strong>foo</strong></strong></p>
+== 465 Emphasis and strong emphasis
+markdown 12
+____foo____
+html 45
+<p><strong><strong>foo</strong></strong></p>
+== 466 Emphasis and strong emphasis
+markdown 16
+******foo******
+html 62
+<p><strong><strong><strong>foo</strong></strong></strong></p>
+== 467 Emphasis and strong emphasis
+markdown 10
+***foo***
+html 37
+<p><em><strong>foo</strong></em></p>
+== 468 Emphasis and strong emphasis
+markdown 14
+_____foo_____
+html 54
+<p><em><strong><strong>foo</strong></strong></em></p>
+== 469 Emphasis and strong emphasis
+markdown 16
+*foo _bar* baz_
+html 30
+<p><em>foo _bar</em> baz_</p>
+== 470 Emphasis and strong emphasis
+markdown 27
+*foo __bar *baz bim__ bam*
+html 54
+<p><em>foo <strong>bar *baz bim</strong> bam</em></p>
+== 471 Emphasis and strong emphasis
+markdown 18
+**foo **bar baz**
+html 38
+<p>**foo <strong>bar baz</strong></p>
+== 472 Emphasis and strong emphasis
+markdown 15
+*foo *bar baz*
+html 29
+<p>*foo <em>bar baz</em></p>
+== 473 Emphasis and strong emphasis
+markdown 14
+*[bar*](/url)
+html 32
+<p>*<a href="/url">bar*</a></p>
+== 474 Emphasis and strong emphasis
+markdown 18
+_foo [bar_](/url)
+html 36
+<p>_foo <a href="/url">bar_</a></p>
+== 475 Emphasis and strong emphasis
+markdown 28
+*<img src="foo" title="*"/>
+html 35
+<p>*<img src="foo" title="*"/></p>
+== 476 Emphasis and strong emphasis
+markdown 16
+**<a href="**">
+html 23
+<p>**<a href="**"></p>
+== 477 Emphasis and strong emphasis
+markdown 16
+__<a href="__">
+html 23
+<p>__<a href="__"></p>
+== 478 Emphasis and strong emphasis
+markdown 8
+*a `*`*
+html 33
+<p><em>a <code>*</code></em></p>
+== 479 Emphasis and strong emphasis
+markdown 8
+_a `_`_
+html 33
+<p><em>a <code>_</code></em></p>
+== 480 Emphasis and strong emphasis
+markdown 27
+**a<https://foo.bar/?q=**>
+html 68
+<p>**a<a href="https://foo.bar/?q=**">https://foo.bar/?q=**</a></p>
+== 481 Emphasis and strong emphasis
+markdown 27
+__a<https://foo.bar/?q=__>
+html 68
+<p>__a<a href="https://foo.bar/?q=__">https://foo.bar/?q=__</a></p>
+== 482 Links
+markdown 21
+[link](/uri "title")
+html 45
+<p><a href="/uri" title="title">link</a></p>
+== 483 Links
+markdown 13
+[link](/uri)
+html 31
+<p><a href="/uri">link</a></p>
+== 484 Links
+markdown 16
+[](./target.md)
+html 34
+<p><a href="./target.md"></a></p>
+== 485 Links
+markdown 9
+[link]()
+html 27
+<p><a href="">link</a></p>
+== 486 Links
+markdown 11
+[link](<>)
+html 27
+<p><a href="">link</a></p>
+== 487 Links
+markdown 5
+[]()
+html 23
+<p><a href=""></a></p>
+== 488 Links
+markdown 16
+[link](/my uri)
+html 23
+<p>[link](/my uri)</p>
+== 489 Links
+markdown 18
+[link](</my uri>)
+html 36
+<p><a href="/my%20uri">link</a></p>
+== 490 Links
+markdown 16
+[link](foo
+bar)
+html 23
+<p>[link](foo
+bar)</p>
+== 491 Links
+markdown 18
+[link](<foo
+bar>)
+html 25
+<p>[link](<foo
+bar>)</p>
+== 492 Links
+markdown 11
+[a](<b)c>)
+html 27
+<p><a href="b)c">a</a></p>
+== 493 Links
+markdown 15
+[link](<foo\>)
+html 27
+<p>[link](&lt;foo&gt;)</p>
+== 494 Links
+markdown 29
+[a](<b)c
+[a](<b)c>
+[a](<b>c)
+html 45
+<p>[a](&lt;b)c
+[a](&lt;b)c&gt;
+[a](<b>c)</p>
+== 495 Links
+markdown 16
+[link](\(foo\))
+html 32
+<p><a href="(foo)">link</a></p>
+== 496 Links
+markdown 22
+[link](foo(and(bar)))
+html 40
+<p><a href="foo(and(bar))">link</a></p>
+== 497 Links
+markdown 21
+[link](foo(and(bar))
+html 28
+<p>[link](foo(and(bar))</p>
+== 498 Links
+markdown 24
+[link](foo\(and\(bar\))
+html 39
+<p><a href="foo(and(bar)">link</a></p>
+== 499 Links
+markdown 23
+[link](<foo(and(bar)>)
+html 39
+<p><a href="foo(and(bar)">link</a></p>
+== 500 Links
+markdown 16
+[link](foo\)\:)
+html 32
+<p><a href="foo):">link</a></p>
+== 501 Links
+markdown 96
+[link](#fragment)
+
+[link](https://example.com#fragment)
+
+[link](https://example.com?foo=3#frag)
+html 148
+<p><a href="#fragment">link</a></p>
+<p><a href="https://example.com#fragment">link</a></p>
+<p><a href="https://example.com?foo=3#frag">link</a></p>
+== 502 Links
+markdown 16
+[link](foo\bar)
+html 36
+<p><a href="foo%5Cbar">link</a></p>
+== 503 Links
+markdown 22
+[link](foo%20b&auml;)
+html 40
+<p><a href="foo%20b%C3%A4">link</a></p>
+== 504 Links
+markdown 16
+[link]("title")
+html 38
+<p><a href="%22title%22">link</a></p>
+== 505 Links
+markdown 63
+[link](/url "title")
+[link](/url 'title')
+[link](/url (title))
+html 121
+<p><a href="/url" title="title">link</a>
+<a href="/url" title="title">link</a>
+<a href="/url" title="title">link</a></p>
+== 506 Links
+markdown 30
+[link](/url "title \"&quot;")
+html 58
+<p><a href="/url" title="title &quot;&quot;">link</a></p>
+== 507 Links
+markdown 22
+[link](/url "title")
+html 48
+<p><a href="/url%C2%A0%22title%22">link</a></p>
+== 508 Links
+markdown 33
+[link](/url "title "and" title")
+html 60
+<p>[link](/url &quot;title &quot;and&quot; title&quot;)</p>
+== 509 Links
+markdown 33
+[link](/url 'title "and" title')
+html 67
+<p><a href="/url" title="title &quot;and&quot; title">link</a></p>
+== 510 Links
+markdown 28
+[link](   /uri
+  "title"  )
+html 45
+<p><a href="/uri" title="title">link</a></p>
+== 511 Links
+markdown 14
+[link] (/uri)
+html 21
+<p>[link] (/uri)</p>
+== 512 Links
+markdown 25
+[link [foo [bar]]](/uri)
+html 43
+<p><a href="/uri">link [foo [bar]]</a></p>
+== 513 Links
+markdown 18
+[link] bar](/uri)
+html 25
+<p>[link] bar](/uri)</p>
+== 514 Links
+markdown 18
+[link [bar](/uri)
+html 36
+<p>[link <a href="/uri">bar</a></p>
+== 515 Links
+markdown 19
+[link \[bar](/uri)
+html 36
+<p><a href="/uri">link [bar</a></p>
+== 516 Links
+markdown 31
+[link *foo **bar** `#`*](/uri)
+html 80
+<p><a href="/uri">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>
+== 517 Links
+markdown 26
+[![moon](moon.jpg)](/uri)
+html 60
+<p><a href="/uri"><img src="moon.jpg" alt="moon" /></a></p>
+== 518 Links
+markdown 24
+[foo [bar](/uri)](/uri)
+html 42
+<p>[foo <a href="/uri">bar</a>](/uri)</p>
+== 519 Links
+markdown 38
+[foo *[bar [baz](/uri)](/uri)*](/uri)
+html 63
+<p>[foo <em>[bar <a href="/uri">baz</a>](/uri)</em>](/uri)</p>
+== 520 Links
+markdown 29
+![[[foo](uri1)](uri2)](uri3)
+html 44
+<p><img src="uri3" alt="[foo](uri2)" /></p>
+== 521 Links
+markdown 14
+*[foo*](/uri)
+html 32
+<p>*<a href="/uri">foo*</a></p>
+== 522 Links
+markdown 17
+[foo *bar](baz*)
+html 35
+<p><a href="baz*">foo *bar</a></p>
+== 523 Links
+markdown 16
+*foo [bar* baz]
+html 30
+<p><em>foo [bar</em> baz]</p>
+== 524 Links
+markdown 25
+[foo <bar attr="](baz)">
+html 32
+<p>[foo <bar attr="](baz)"></p>
+== 525 Links
+markdown 14
+[foo`](/uri)`
+html 32
+<p>[foo<code>](/uri)</code></p>
+== 526 Links
+markdown 41
+[foo<https://example.com/?search=](uri)>
+html 97
+<p>[foo<a href="https://example.com/?search=%5D(uri)">https://example.com/?search=](uri)</a></p>
+== 527 Links
+markdown 32
+[foo][bar]
+
+[bar]: /url "title"
+html 44
+<p><a href="/url" title="title">foo</a></p>
+== 528 Links
+markdown 37
+[link [foo [bar]]][ref]
+
+[ref]: /uri
+html 43
+<p><a href="/uri">link [foo [bar]]</a></p>
+== 529 Links
+markdown 31
+[link \[bar][ref]
+
+[ref]: /uri
+html 36
+<p><a href="/uri">link [bar</a></p>
+== 530 Links
+markdown 43
+[link *foo **bar** `#`*][ref]
+
+[ref]: /uri
+html 80
+<p><a href="/uri">link <em>foo <strong>bar</strong> <code>#</code></em></a></p>
+== 531 Links
+markdown 38
+[![moon](moon.jpg)][ref]
+
+[ref]: /uri
+html 60
+<p><a href="/uri"><img src="moon.jpg" alt="moon" /></a></p>
+== 532 Links
+markdown 36
+[foo [bar](/uri)][ref]
+
+[ref]: /uri
+html 58
+<p>[foo <a href="/uri">bar</a>]<a href="/uri">ref</a></p>
+== 533 Links
+markdown 41
+[foo *bar [baz][ref]*][ref]
+
+[ref]: /uri
+html 71
+<p>[foo <em>bar <a href="/uri">baz</a></em>]<a href="/uri">ref</a></p>
+== 534 Links
+markdown 26
+*[foo*][ref]
+
+[ref]: /uri
+html 32
+<p>*<a href="/uri">foo*</a></p>
+== 535 Links
+markdown 30
+[foo *bar][ref]*
+
+[ref]: /uri
+html 36
+<p><a href="/uri">foo *bar</a>*</p>
+== 536 Links
+markdown 38
+[foo <bar attr="][ref]">
+
+[ref]: /uri
+html 32
+<p>[foo <bar attr="][ref]"></p>
+== 537 Links
+markdown 26
+[foo`][ref]`
+
+[ref]: /uri
+html 31
+<p>[foo<code>][ref]</code></p>
+== 538 Links
+markdown 54
+[foo<https://example.com/?search=][ref]>
+
+[ref]: /uri
+html 101
+<p>[foo<a href="https://example.com/?search=%5D%5Bref%5D">https://example.com/?search=][ref]</a></p>
+== 539 Links
+markdown 32
+[foo][BaR]
+
+[bar]: /url "title"
+html 44
+<p><a href="/url" title="title">foo</a></p>
+== 540 Links
+markdown 18
+[ẞ]
+
+[SS]: /url
+html 30
+<p><a href="/url">ẞ</a></p>
+== 541 Links
+markdown 34
+[Foo
+  bar]: /url
+
+[Baz][Foo bar]
+html 30
+<p><a href="/url">Baz</a></p>
+== 542 Links
+markdown 33
+[foo] [bar]
+
+[bar]: /url "title"
+html 50
+<p>[foo] <a href="/url" title="title">bar</a></p>
+== 543 Links
+markdown 33
+[foo]
+[bar]
+
+[bar]: /url "title"
+html 50
+<p>[foo]
+<a href="/url" title="title">bar</a></p>
+== 544 Links
+markdown 39
+[foo]: /url1
+
+[foo]: /url2
+
+[bar][foo]
+html 31
+<p><a href="/url1">bar</a></p>
+== 545 Links
+markdown 27
+[bar][foo\!]
+
+[foo!]: /url
+html 19
+<p>[bar][foo!]</p>
+== 546 Links
+markdown 26
+[foo][ref[]
+
+[ref[]: /uri
+html 39
+<p>[foo][ref[]</p>
+<p>[ref[]: /uri</p>
+== 547 Links
+markdown 34
+[foo][ref[bar]]
+
+[ref[bar]]: /uri
+html 47
+<p>[foo][ref[bar]]</p>
+<p>[ref[bar]]: /uri</p>
+== 548 Links
+markdown 27
+[[[foo]]]
+
+[[[foo]]]: /url
+html 40
+<p>[[[foo]]]</p>
+<p>[[[foo]]]: /url</p>
+== 549 Links
+markdown 28
+[foo][ref\[]
+
+[ref\[]: /uri
+html 30
+<p><a href="/uri">foo</a></p>
+== 550 Links
+markdown 23
+[bar\\]: /uri
+
+[bar\\]
+html 31
+<p><a href="/uri">bar\</a></p>
+== 551 Links
+markdown 13
+[]
+
+[]: /uri
+html 26
+<p>[]</p>
+<p>[]: /uri</p>
+== 552 Links
+markdown 17
+[
+ ]
+
+[
+ ]: /uri
+html 28
+<p>[
+]</p>
+<p>[
+]: /uri</p>
+== 553 Links
+markdown 29
+[foo][]
+
+[foo]: /url "title"
+html 44
+<p><a href="/url" title="title">foo</a></p>
+== 554 Links
+markdown 41
+[*foo* bar][]
+
+[*foo* bar]: /url "title"
+html 57
+<p><a href="/url" title="title"><em>foo</em> bar</a></p>
+== 555 Links
+markdown 29
+[Foo][]
+
+[foo]: /url "title"
+html 44
+<p><a href="/url" title="title">Foo</a></p>
+== 556 Links
+markdown 31
+[foo] 
+[]
+
+[foo]: /url "title"
+html 47
+<p><a href="/url" title="title">foo</a>
+[]</p>
+== 557 Links
+markdown 27
+[foo]
+
+[foo]: /url "title"
+html 44
+<p><a href="/url" title="title">foo</a></p>
+== 558 Links
+markdown 39
+[*foo* bar]
+
+[*foo* bar]: /url "title"
+html 57
+<p><a href="/url" title="title"><em>foo</em> bar</a></p>
+== 559 Links
+markdown 41
+[[*foo* bar]]
+
+[*foo* bar]: /url "title"
+html 59
+<p>[<a href="/url" title="title"><em>foo</em> bar</a>]</p>
+== 560 Links
+markdown 25
+[[bar [foo]
+
+[foo]: /url
+html 36
+<p>[[bar <a href="/url">foo</a></p>
+== 561 Links
+markdown 27
+[Foo]
+
+[foo]: /url "title"
+html 44
+<p><a href="/url" title="title">Foo</a></p>
+== 562 Links
+markdown 23
+[foo] bar
+
+[foo]: /url
+html 34
+<p><a href="/url">foo</a> bar</p>
+== 563 Links
+markdown 28
+\[foo]
+
+[foo]: /url "title"
+html 13
+<p>[foo]</p>
+== 564 Links
+markdown 22
+[foo*]: /url
+
+*[foo*]
+html 32
+<p>*<a href="/url">foo*</a></p>
+== 565 Links
+markdown 38
+[foo][bar]
+
+[foo]: /url1
+[bar]: /url2
+html 31
+<p><a href="/url2">foo</a></p>
+== 566 Links
+markdown 22
+[foo][]
+
+[foo]: /url1
+html 31
+<p><a href="/url1">foo</a></p>
+== 567 Links
+markdown 22
+[foo]()
+
+[foo]: /url1
+html 26
+<p><a href="">foo</a></p>
+== 568 Links
+markdown 32
+[foo](not a link)
+
+[foo]: /url1
+html 43
+<p><a href="/url1">foo</a>(not a link)</p>
+== 569 Links
+markdown 29
+[foo][bar][baz]
+
+[baz]: /url
+html 35
+<p>[foo]<a href="/url">bar</a></p>
+== 570 Links
+markdown 43
+[foo][bar][baz]
+
+[baz]: /url1
+[bar]: /url2
+html 54
+<p><a href="/url2">foo</a><a href="/url1">baz</a></p>
+== 571 Links
+markdown 43
+[foo][bar][baz]
+
+[baz]: /url1
+[foo]: /url2
+html 36
+<p>[foo]<a href="/url1">bar</a></p>
+== 572 Images
+markdown 21
+![foo](/url "title")
+html 50
+<p><img src="/url" alt="foo" title="title" /></p>
+== 573 Images
+markdown 54
+![foo *bar*]
+
+[foo *bar*]: train.jpg "train & tracks"
+html 72
+<p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
+== 574 Images
+markdown 27
+![foo ![bar](/url)](/url2)
+html 41
+<p><img src="/url2" alt="foo bar" /></p>
+== 575 Images
+markdown 26
+![foo [bar](/url)](/url2)
+html 41
+<p><img src="/url2" alt="foo bar" /></p>
+== 576 Images
+markdown 56
+![foo *bar*][]
+
+[foo *bar*]: train.jpg "train & tracks"
+html 72
+<p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
+== 577 Images
+markdown 59
+![foo *bar*][foobar]
+
+[FOOBAR]: train.jpg "train & tracks"
+html 72
+<p><img src="train.jpg" alt="foo bar" title="train &amp; tracks" /></p>
+== 578 Images
+markdown 18
+![foo](train.jpg)
+html 41
+<p><img src="train.jpg" alt="foo" /></p>
+== 579 Images
+markdown 46
+My ![foo bar](/path/to/train.jpg  "title"   )
+html 71
+<p>My <img src="/path/to/train.jpg" alt="foo bar" title="title" /></p>
+== 580 Images
+markdown 14
+![foo](<url>)
+html 35
+<p><img src="url" alt="foo" /></p>
+== 581 Images
+markdown 10
+![](/url)
+html 33
+<p><img src="/url" alt="" /></p>
+== 582 Images
+markdown 25
+![foo][bar]
+
+[bar]: /url
+html 36
+<p><img src="/url" alt="foo" /></p>
+== 583 Images
+markdown 25
+![foo][bar]
+
+[BAR]: /url
+html 36
+<p><img src="/url" alt="foo" /></p>
+== 584 Images
+markdown 30
+![foo][]
+
+[foo]: /url "title"
+html 50
+<p><img src="/url" alt="foo" title="title" /></p>
+== 585 Images
+markdown 42
+![*foo* bar][]
+
+[*foo* bar]: /url "title"
+html 54
+<p><img src="/url" alt="foo bar" title="title" /></p>
+== 586 Images
+markdown 30
+![Foo][]
+
+[foo]: /url "title"
+html 50
+<p><img src="/url" alt="Foo" title="title" /></p>
+== 587 Images
+markdown 32
+![foo] 
+[]
+
+[foo]: /url "title"
+html 53
+<p><img src="/url" alt="foo" title="title" />
+[]</p>
+== 588 Images
+markdown 28
+![foo]
+
+[foo]: /url "title"
+html 50
+<p><img src="/url" alt="foo" title="title" /></p>
+== 589 Images
+markdown 40
+![*foo* bar]
+
+[*foo* bar]: /url "title"
+html 54
+<p><img src="/url" alt="foo bar" title="title" /></p>
+== 590 Images
+markdown 32
+![[foo]]
+
+[[foo]]: /url "title"
+html 55
+<p>![[foo]]</p>
+<p>[[foo]]: /url &quot;title&quot;</p>
+== 591 Images
+markdown 28
+![Foo]
+
+[foo]: /url "title"
+html 50
+<p><img src="/url" alt="Foo" title="title" /></p>
+== 592 Images
+markdown 29
+!\[foo]
+
+[foo]: /url "title"
+html 14
+<p>![foo]</p>
+== 593 Images
+markdown 29
+\![foo]
+
+[foo]: /url "title"
+html 45
+<p>!<a href="/url" title="title">foo</a></p>
+== 594 Autolinks
+markdown 21
+<http://foo.bar.baz>
+html 59
+<p><a href="http://foo.bar.baz">http://foo.bar.baz</a></p>
+== 595 Autolinks
+markdown 49
+<https://foo.bar.baz/test?q=hello&id=22&boolean>
+html 131
+<p><a href="https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean">https://foo.bar.baz/test?q=hello&amp;id=22&amp;boolean</a></p>
+== 596 Autolinks
+markdown 25
+<irc://foo.bar:2233/baz>
+html 67
+<p><a href="irc://foo.bar:2233/baz">irc://foo.bar:2233/baz</a></p>
+== 597 Autolinks
+markdown 21
+<MAILTO:FOO@BAR.BAZ>
+html 59
+<p><a href="MAILTO:FOO@BAR.BAZ">MAILTO:FOO@BAR.BAZ</a></p>
+== 598 Autolinks
+markdown 10
+<a+b+c:d>
+html 37
+<p><a href="a+b+c:d">a+b+c:d</a></p>
+== 599 Autolinks
+markdown 27
+<made-up-scheme://foo,bar>
+html 71
+<p><a href="made-up-scheme://foo,bar">made-up-scheme://foo,bar</a></p>
+== 600 Autolinks
+markdown 14
+<https://../>
+html 45
+<p><a href="https://../">https://../</a></p>
+== 601 Autolinks
+markdown 21
+<localhost:5001/foo>
+html 59
+<p><a href="localhost:5001/foo">localhost:5001/foo</a></p>
+== 602 Autolinks
+markdown 26
+<https://foo.bar/baz bim>
+html 39
+<p>&lt;https://foo.bar/baz bim&gt;</p>
+== 603 Autolinks
+markdown 26
+<https://example.com/\[\>
+html 75
+<p><a href="https://example.com/%5C%5B%5C">https://example.com/\[\</a></p>
+== 604 Autolinks
+markdown 22
+<foo@bar.example.com>
+html 68
+<p><a href="mailto:foo@bar.example.com">foo@bar.example.com</a></p>
+== 605 Autolinks
+markdown 31
+<foo+special@Bar.baz-bar0.com>
+html 86
+<p><a href="mailto:foo+special@Bar.baz-bar0.com">foo+special@Bar.baz-bar0.com</a></p>
+== 606 Autolinks
+markdown 24
+<foo\+@bar.example.com>
+html 36
+<p>&lt;foo+@bar.example.com&gt;</p>
+== 607 Autolinks
+markdown 3
+<>
+html 16
+<p>&lt;&gt;</p>
+== 608 Autolinks
+markdown 20
+< https://foo.bar >
+html 33
+<p>&lt; https://foo.bar &gt;</p>
+== 609 Autolinks
+markdown 8
+<m:abc>
+html 21
+<p>&lt;m:abc&gt;</p>
+== 610 Autolinks
+markdown 14
+<foo.bar.baz>
+html 27
+<p>&lt;foo.bar.baz&gt;</p>
+== 611 Autolinks
+markdown 20
+https://example.com
+html 27
+<p>https://example.com</p>
+== 612 Autolinks
+markdown 20
+foo@bar.example.com
+html 27
+<p>foo@bar.example.com</p>
+== 613 Raw HTML
+markdown 14
+<a><bab><c2c>
+html 21
+<p><a><bab><c2c></p>
+== 614 Raw HTML
+markdown 10
+<a/><b2/>
+html 17
+<p><a/><b2/></p>
+== 615 Raw HTML
+markdown 23
+<a  /><b2
+data="foo" >
+html 30
+<p><a  /><b2
+data="foo" ></p>
+== 616 Raw HTML
+markdown 64
+<a foo="bar" bam = 'baz <em>"</em>'
+_boolean zoop:33=zoop:33 />
+html 71
+<p><a foo="bar" bam = 'baz <em>"</em>'
+_boolean zoop:33=zoop:33 /></p>
+== 617 Raw HTML
+markdown 39
+Foo <responsive-image src="foo.jpg" />
+html 46
+<p>Foo <responsive-image src="foo.jpg" /></p>
+== 618 Raw HTML
+markdown 10
+<33> <__>
+html 29
+<p>&lt;33&gt; &lt;__&gt;</p>
+== 619 Raw HTML
+markdown 16
+<a h*#ref="hi">
+html 39
+<p>&lt;a h*#ref=&quot;hi&quot;&gt;</p>
+== 620 Raw HTML
+markdown 27
+<a href="hi'> <a href=hi'>
+html 51
+<p>&lt;a href=&quot;hi'&gt; &lt;a href=hi'&gt;</p>
+== 621 Raw HTML
+markdown 42
+< a><
+foo><bar/ >
+<foo bar=baz
+bim!bop />
+html 73
+<p>&lt; a&gt;&lt;
+foo&gt;&lt;bar/ &gt;
+&lt;foo bar=baz
+bim!bop /&gt;</p>
+== 622 Raw HTML
+markdown 26
+<a href='bar'title=title>
+html 39
+<p>&lt;a href='bar'title=title&gt;</p>
+== 623 Raw HTML
+markdown 12
+</a></foo >
+html 19
+<p></a></foo ></p>
+== 624 Raw HTML
+markdown 16
+</a href="foo">
+html 39
+<p>&lt;/a href=&quot;foo&quot;&gt;</p>
+== 625 Raw HTML
+markdown 49
+foo <!-- this is a --
+comment - with hyphens -->
+html 56
+<p>foo <!-- this is a --
+comment - with hyphens --></p>
+== 626 Raw HTML
+markdown 38
+foo <!--> foo -->
+
+foo <!---> foo -->
+html 57
+<p>foo <!--> foo --&gt;</p>
+<p>foo <!---> foo --&gt;</p>
+== 627 Raw HTML
+markdown 22
+foo <?php echo $a; ?>
+html 29
+<p>foo <?php echo $a; ?></p>
+== 628 Raw HTML
+markdown 24
+foo <!ELEMENT br EMPTY>
+html 31
+<p>foo <!ELEMENT br EMPTY></p>
+== 629 Raw HTML
+markdown 20
+foo <![CDATA[>&<]]>
+html 27
+<p>foo <![CDATA[>&<]]></p>
+== 630 Raw HTML
+markdown 22
+foo <a href="&ouml;">
+html 29
+<p>foo <a href="&ouml;"></p>
+== 631 Raw HTML
+markdown 18
+foo <a href="\*">
+html 25
+<p>foo <a href="\*"></p>
+== 632 Raw HTML
+markdown 14
+<a href="\"">
+html 41
+<p>&lt;a href=&quot;&quot;&quot;&gt;</p>
+== 633 Hard line breaks
+markdown 10
+foo  
+baz
+html 21
+<p>foo<br />
+baz</p>
+== 634 Hard line breaks
+markdown 9
+foo\
+baz
+html 21
+<p>foo<br />
+baz</p>
+== 635 Hard line breaks
+markdown 15
+foo       
+baz
+html 21
+<p>foo<br />
+baz</p>
+== 636 Hard line breaks
+markdown 15
+foo  
+     bar
+html 21
+<p>foo<br />
+bar</p>
+== 637 Hard line breaks
+markdown 14
+foo\
+     bar
+html 21
+<p>foo<br />
+bar</p>
+== 638 Hard line breaks
+markdown 12
+*foo  
+bar*
+html 30
+<p><em>foo<br />
+bar</em></p>
+== 639 Hard line breaks
+markdown 11
+*foo\
+bar*
+html 30
+<p><em>foo<br />
+bar</em></p>
+== 640 Hard line breaks
+markdown 14
+`code  
+span`
+html 32
+<p><code>code   span</code></p>
+== 641 Hard line breaks
+markdown 13
+`code\
+span`
+html 31
+<p><code>code\ span</code></p>
+== 642 Hard line breaks
+markdown 21
+<a href="foo  
+bar">
+html 28
+<p><a href="foo  
+bar"></p>
+== 643 Hard line breaks
+markdown 20
+<a href="foo\
+bar">
+html 27
+<p><a href="foo\
+bar"></p>
+== 644 Hard line breaks
+markdown 5
+foo\
+html 12
+<p>foo\</p>
+== 645 Hard line breaks
+markdown 6
+foo  
+html 11
+<p>foo</p>
+== 646 Hard line breaks
+markdown 9
+### foo\
+html 14
+<h3>foo\</h3>
+== 647 Hard line breaks
+markdown 10
+### foo  
+html 13
+<h3>foo</h3>
+== 648 Soft line breaks
+markdown 8
+foo
+baz
+html 15
+<p>foo
+baz</p>
+== 649 Soft line breaks
+markdown 10
+foo 
+ baz
+html 15
+<p>foo
+baz</p>
+== 650 Textual content
+markdown 16
+hello $.;'there
+html 23
+<p>hello $.;'there</p>
+== 651 Textual content
+markdown 14
+Foo χρῆν
+html 21
+<p>Foo χρῆν</p>
+== 652 Textual content
+markdown 20
+Multiple     spaces
+html 27
+<p>Multiple     spaces</p>

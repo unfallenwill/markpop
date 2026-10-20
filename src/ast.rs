@@ -36,6 +36,8 @@ pub enum Block {
     Figure(ImageData),
     /// A thematic break (`---`, `***`, `___`).
     ThematicBreak,
+    /// A raw HTML block, kept verbatim as text (never executed).
+    Html(String),
 }
 
 /// A code block: raw lines plus the info string from the opening fence.
@@ -66,6 +68,8 @@ pub struct ListData {
 pub struct ListItem {
     /// Block content of the item.
     pub blocks: Vec<Block>,
+    /// GFM task state: `Some(true)` when checked, `Some(false)` when not.
+    pub task: Option<bool>,
 }
 
 /// Column alignment for table columns.
@@ -101,6 +105,8 @@ pub struct ImageData {
     pub alt: String,
     /// Source URL, shown in the figure caption.
     pub url: String,
+    /// Optional title from `![alt](url "title")` or a definition.
+    pub title: Option<String>,
 }
 
 /// An inline (text-level) element.
@@ -122,11 +128,17 @@ pub enum Inline {
         text: Vec<Inline>,
         /// Target URL.
         url: String,
+        /// Optional title from `[text](url "title")` or a definition.
+        title: Option<String>,
     },
     /// An inline image; renders as a compact chip.
     Image(ImageData),
     /// A hard line break (two trailing spaces or a trailing backslash).
     Break,
+    /// A soft line break; layout renders it as a space.
+    SoftBreak,
+    /// Raw inline HTML, kept verbatim as text (never executed).
+    Html(String),
 }
 
 impl Inline {
@@ -140,6 +152,8 @@ impl Inline {
             Inline::Link { text, .. } => plain_text_of(text),
             Inline::Image(img) => img.alt.clone(),
             Inline::Break => String::new(),
+            Inline::SoftBreak => " ".to_string(),
+            Inline::Html(raw) => raw.clone(),
         }
     }
 }
@@ -183,6 +197,8 @@ pub struct BlockCounts {
     pub figures: usize,
     /// Number of [`Block::ThematicBreak`] nodes.
     pub thematic_breaks: usize,
+    /// Number of [`Block::Html`] nodes.
+    pub html_blocks: usize,
 }
 
 fn count_blocks(blocks: &[Block]) -> BlockCounts {
@@ -205,6 +221,7 @@ fn count_blocks(blocks: &[Block]) -> BlockCounts {
             Block::Table(_) => c.tables += 1,
             Block::Figure(_) => c.figures += 1,
             Block::ThematicBreak => c.thematic_breaks += 1,
+            Block::Html(_) => c.html_blocks += 1,
         }
     }
     c
@@ -239,6 +256,7 @@ mod tests {
             Inline::Link {
                 text: vec![Inline::Text(" world".into())],
                 url: "https://example.com".into(),
+                title: None,
             },
         ];
         assert_eq!(plain_text_of(&inlines), "hello bigcode world");
@@ -259,6 +277,7 @@ mod tests {
                         start: 1,
                         tight: true,
                         items: vec![ListItem {
+                            task: None,
                             blocks: vec![Block::Paragraph(vec![Inline::Text("i".into())])],
                         }],
                     }),
@@ -290,6 +309,7 @@ mod tests {
                 Block::Figure(ImageData {
                     alt: "a".into(),
                     url: "u".into(),
+                    title: None,
                 }),
                 Block::Paragraph(vec![Inline::Break]),
             ],
@@ -307,7 +327,8 @@ mod tests {
         assert_eq!(
             Inline::Image(ImageData {
                 alt: "pic".into(),
-                url: "u".into()
+                url: "u".into(),
+                title: None
             })
             .plain_text(),
             "pic"

@@ -33,6 +33,9 @@ Consequences:
   built-in table instead of a system font, so a document cannot reflow because of a missing font
   (and CJK is exact: one em per glyph).
 - **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
+- **Complete Markdown.** CommonMark 0.31.2 in full (all 652 specification examples) plus the
+  GitHub Flavored Markdown extensions (tables, strikethrough, autolink literals, task lists).
+  Raw HTML is kept as data and never executed.
 
 ## Output formats
 
@@ -49,7 +52,6 @@ pixel-identical images.
 
 The `Engine` trait (`src/engine.rs`) is the extension point: a new format only needs a
 serializer over `Scene`, or an encoder over the raster `Bitmap`.
-- **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
 
 ## Install
 
@@ -269,23 +271,29 @@ page and may overflow. Split such tables in the source or raise `--page-height`.
 | Construct | Notes |
 |---|---|
 | Headings | ATX (`#`) and Setext (`===`, `---`); h1/h2 get a rule |
-| Emphasis | `*em*`, `**strong**`, `***both***`, `_em_`, `__strong__` |
-| Strikethrough | GFM `~~text~~` |
-| Inline code | Background chip, monospace, unbreakable when it fits |
-| Code blocks | Fenced (with language label) and indented; wrapped, indentation preserved |
-| Links | Inline `[text](url "title")`, `<autolinks>`, angle destinations |
-| Images | Rendered as a placeholder figure with the URL as caption |
-| Blockquotes | Arbitrarily nested; deeper levels fade and tighten |
-| Lists | Ordered/unordered, tight/loose, nested, lazy continuation |
-| Tables | GFM pipe tables with `:---`, `:---:`, `---:` alignment; columns auto-fit |
+| Emphasis | Full CommonMark delimiter algorithm (`*em*`, `**strong**`, `***both***`, `_em_`) |
+| Strikethrough | GFM `~~text~~` (one or two tildes) |
+| Inline code | Background chip, monospace, backtick runs of any length |
+| Code blocks | Fenced (with language label, any info string) and indented; wrapped |
+| Links | Inline `[text](url "title")`, reference `[text][label]` / collapsed / shortcut |
+| Link definitions | `[label]: url "title"` anywhere in the document, matched case-insensitively |
+| Autolinks | `<https://…>`, `<user@host>`, plus GFM literals (`www.`, `http://`, bare emails) |
+| Images | Inline and reference images, rendered as a placeholder figure with the URL |
+| Raw HTML | Block and inline HTML kept verbatim as data, rendered literally, never executed |
+| Blockquotes | Arbitrarily nested, lazy continuation, fences inside |
+| Lists | Ordered/unordered, any start number, tight/loose, nested, lazy continuation |
+| Task lists | GFM `- [ ]` / `- [x]`, drawn as real checkboxes |
+| Tables | GFM pipe tables with `:---`, `:---:`, `---:`; escaped and code-span pipes |
 | Thematic breaks | `---`, `***`, `___` |
-| Escapes & entities | `\*`, `&amp;`, `&#65;`, `&#x41;` |
+| Escapes & entities | `\*` and the complete HTML5 named/numeric character reference table |
+| Tabs | Four-column tab stops for indentation, preserved inside code and text |
 | CJK | Full-width glyphs, per-character wrapping, mixed CJK/Latin |
 | Pagination | Opt-in fixed-height pages, block-aligned cuts |
 | Table of contents | Opt-in nested outline from headings |
 
-Not supported (by design, for now): reference links, raw HTML, task lists, footnotes, syntax
-highlighting. Unrecognized input degrades to text rather than erroring — parsing is total.
+Not supported (by design): remote image fetching, executing HTML (including scripts and
+styles), and syntax highlighting. Unrecognized input degrades to text rather than erroring —
+parsing is total.
 
 ### Fitting and overflow
 
@@ -316,9 +324,10 @@ Every stage is a pure function with its own tests:
 src/
   ast.rs          document model (blocks, inlines) + flattening helpers
   parse/
-    mod.rs        entry point, line normalization, tab expansion
-    block.rs      containers: headings, lists, quotes, tables, fences
-    inline.rs     emphasis resolution, links, code spans, escapes
+    mod.rs        entry point, dialect selection, line normalization
+    block.rs      containers, HTML blocks, definitions, GFM tables/tasks
+    inline.rs     delimiter algorithm, links, autolinks, entities, code spans
+    entities.rs   generated HTML5 character reference table
   text.rs         deterministic advance table + greedy line breaking
   layout.rs       flow engine: margins, atoms, wrapping, decorations
   columns.rs      multi-column flow (balanced or paginated)
@@ -377,8 +386,31 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
 - PNG vs WebP decode to **pixel-identical** images (verified in Chromium: 8,092,800 bytes
   compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
+- Markdown conformance: every one of the **652 CommonMark 0.31.2 examples** and all **24 GFM
+  extension examples** parse to the structure the specifications prescribe (see below)
+- task lists draw real checkboxes, autolink literals become links, HTML is shown literally
 
-Current coverage: **94% of lines** across 497 tests (`cargo llvm-cov`).
+Current coverage: **94% of lines** across 429 tests (`cargo llvm-cov`), including the two
+specification corpora.
+
+## Markdown conformance
+
+`tests/commonmark.rs` and `tests/gfm.rs` replay the official example corpora: each Markdown
+snippet is parsed, serialized back to HTML by a test-only serializer, and compared with the
+HTML the specification expects. Per-section floors fail the build on any regression.
+
+| Corpus | Examples | Passing |
+|---|---|---|
+| CommonMark 0.31.2 | 652 | 652 (100%) |
+| GFM 0.29 extensions | 24 | 24 (100%) |
+
+The GFM dialect is the default. Strict CommonMark is available as `parse::parse_commonmark`
+(no autolink literals, no task lists), and `parse::parse_with` takes an `Extensions` value
+for anything in between.
+
+Two deliberate differences from an HTML renderer: raw HTML is preserved as data but rendered
+literally (SVG output never executes it or loads its resources), and images become labelled
+placeholders instead of remote fetches.
 
 ## SVG compatibility
 

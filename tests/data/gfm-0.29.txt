@@ -1,0 +1,297 @@
+# GFM 0.29 extension examples (generated from cmark-gfm spec.txt)
+== 1 Tables (extension)
+markdown 42
+| foo | bar |
+| --- | --- |
+| baz | bim |
+html 125
+<table>
+<thead>
+<tr>
+<th>foo</th>
+<th>bar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>baz</td>
+<td>bim</td>
+</tr>
+</tbody>
+</table>
+== 2 Tables (extension)
+markdown 46
+| abc | defghi |
+:-: | -----------:
+bar | baz
+html 186
+<table>
+<thead>
+<tr>
+<th align="center">abc</th>
+<th align="right">defghi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">bar</td>
+<td align="right">baz</td>
+</tr>
+</tbody>
+</table>
+== 3 Tables (extension)
+markdown 52
+| f\|oo  |
+| ------ |
+| b `\|` az |
+| b **\|** im |
+html 160
+<table>
+<thead>
+<tr>
+<th>f|oo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>b <code>|</code> az</td>
+</tr>
+<tr>
+<td>b <strong>|</strong> im</td>
+</tr>
+</tbody>
+</table>
+== 4 Tables (extension)
+markdown 48
+| abc | def |
+| --- | --- |
+| bar | baz |
+> bar
+html 163
+<table>
+<thead>
+<tr>
+<th>abc</th>
+<th>def</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bar</td>
+<td>baz</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>bar</p>
+</blockquote>
+== 5 Tables (extension)
+markdown 51
+| abc | def |
+| --- | --- |
+| bar | baz |
+bar
+
+bar
+html 170
+<table>
+<thead>
+<tr>
+<th>abc</th>
+<th>def</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bar</td>
+<td>baz</td>
+</tr>
+<tr>
+<td>bar</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>bar</p>
+== 6 Tables (extension)
+markdown 30
+| abc | def |
+| --- |
+| bar |
+html 37
+<p>| abc | def |
+| --- |
+| bar |</p>
+== 7 Tables (extension)
+markdown 56
+| abc | def |
+| --- | --- |
+| bar |
+| bar | baz | boo |
+html 159
+<table>
+<thead>
+<tr>
+<th>abc</th>
+<th>def</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bar</td>
+<td></td>
+</tr>
+<tr>
+<td>bar</td>
+<td>baz</td>
+</tr>
+</tbody>
+</table>
+== 8 Tables (extension)
+markdown 28
+| abc | def |
+| --- | --- |
+html 71
+<table>
+<thead>
+<tr>
+<th>abc</th>
+<th>def</th>
+</tr>
+</thead>
+</table>
+== 9 Task list items (extension)
+markdown 20
+- [ ] foo
+- [x] bar
+html 120
+<ul>
+<li><input disabled="" type="checkbox"> foo</li>
+<li><input checked="" disabled="" type="checkbox"> bar</li>
+</ul>
+== 10 Task list items (extension)
+markdown 44
+- [x] foo
+  - [ ] bar
+  - [x] baz
+- [ ] bim
+html 241
+<ul>
+<li><input checked="" disabled="" type="checkbox"> foo
+<ul>
+<li><input disabled="" type="checkbox"> bar</li>
+<li><input checked="" disabled="" type="checkbox"> baz</li>
+</ul>
+</li>
+<li><input disabled="" type="checkbox"> bim</li>
+</ul>
+== 11 Strikethrough (extension)
+markdown 21
+~~Hi~~ Hello, world!
+html 35
+<p><del>Hi</del> Hello, world!</p>
+== 12 Strikethrough (extension)
+markdown 31
+This ~~has a
+
+new paragraph~~.
+html 44
+<p>This ~~has a</p>
+<p>new paragraph~~.</p>
+== 13 Autolinks (extension)
+markdown 19
+www.commonmark.org
+html 66
+<p><a href="http://www.commonmark.org">www.commonmark.org</a></p>
+== 14 Autolinks (extension)
+markdown 52
+Visit www.commonmark.org/help for more information.
+html 104
+<p>Visit <a href="http://www.commonmark.org/help">www.commonmark.org/help</a> for more information.</p>
+== 15 Autolinks (extension)
+markdown 57
+Visit www.commonmark.org.
+
+Visit www.commonmark.org/a.b.
+html 154
+<p>Visit <a href="http://www.commonmark.org">www.commonmark.org</a>.</p>
+<p>Visit <a href="http://www.commonmark.org/a.b">www.commonmark.org/a.b</a>.</p>
+== 16 Autolinks (extension)
+markdown 176
+www.google.com/search?q=Markup+(business)
+
+www.google.com/search?q=Markup+(business)))
+
+(www.google.com/search?q=Markup+(business))
+
+(www.google.com/search?q=Markup+(business)
+html 453
+<p><a href="http://www.google.com/search?q=Markup+(business)">www.google.com/search?q=Markup+(business)</a></p>
+<p><a href="http://www.google.com/search?q=Markup+(business)">www.google.com/search?q=Markup+(business)</a>))</p>
+<p>(<a href="http://www.google.com/search?q=Markup+(business)">www.google.com/search?q=Markup+(business)</a>)</p>
+<p>(<a href="http://www.google.com/search?q=Markup+(business)">www.google.com/search?q=Markup+(business)</a></p>
+== 17 Autolinks (extension)
+markdown 39
+www.google.com/search?q=(business))+ok
+html 106
+<p><a href="http://www.google.com/search?q=(business))+ok">www.google.com/search?q=(business))+ok</a></p>
+== 18 Autolinks (extension)
+markdown 81
+www.google.com/search?q=commonmark&hl=en
+
+www.google.com/search?q=commonmark&hl;
+html 224
+<p><a href="http://www.google.com/search?q=commonmark&amp;hl=en">www.google.com/search?q=commonmark&amp;hl=en</a></p>
+<p><a href="http://www.google.com/search?q=commonmark">www.google.com/search?q=commonmark</a>&amp;hl;</p>
+== 19 Autolinks (extension)
+markdown 25
+www.commonmark.org/he<lp
+html 78
+<p><a href="http://www.commonmark.org/he">www.commonmark.org/he</a>&lt;lp</p>
+== 20 Autolinks (extension)
+markdown 137
+http://commonmark.org
+
+(Visit https://encrypted.google.com/search?q=Markup+(business))
+
+Anonymous FTP is available at ftp://foo.bar.baz.
+html 294
+<p><a href="http://commonmark.org">http://commonmark.org</a></p>
+<p>(Visit <a href="https://encrypted.google.com/search?q=Markup+(business)">https://encrypted.google.com/search?q=Markup+(business)</a>)</p>
+<p>Anonymous FTP is available at <a href="ftp://foo.bar.baz">ftp://foo.bar.baz</a>.</p>
+== 21 Autolinks (extension)
+markdown 12
+foo@bar.baz
+html 52
+<p><a href="mailto:foo@bar.baz">foo@bar.baz</a></p>
+== 22 Autolinks (extension)
+markdown 67
+hello@mail+xyz.example isn't valid, but hello+xyz@mail.example is.
+html 118
+<p>hello@mail+xyz.example isn't valid, but <a href="mailto:hello+xyz@mail.example">hello+xyz@mail.example</a> is.</p>
+== 23 Autolinks (extension)
+markdown 54
+a.b-c_d@a.b
+
+a.b-c_d@a.b.
+
+a.b-c_d@a.b-
+
+a.b-c_d@a.b_
+html 145
+<p><a href="mailto:a.b-c_d@a.b">a.b-c_d@a.b</a></p>
+<p><a href="mailto:a.b-c_d@a.b">a.b-c_d@a.b</a>.</p>
+<p>a.b-c_d@a.b-</p>
+<p>a.b-c_d@a.b_</p>
+== 24 Disallowed Raw HTML (extension)
+markdown 108
+<strong> <title> <style> <em>
+
+<blockquote>
+  <xmp> is disallowed.  <XMP> is also disallowed.
+</blockquote>
+html 126
+<p><strong> &lt;title> &lt;style> <em></p>
+<blockquote>
+  &lt;xmp> is disallowed.  &lt;XMP> is also disallowed.
+</blockquote>

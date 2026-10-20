@@ -331,6 +331,15 @@ impl<'a> Layout<'a> {
             Block::Table(t) => self.table(t, x, width),
             Block::Figure(img) => self.figure(img, x, width),
             Block::ThematicBreak => self.rule(x, width),
+            // HTML blocks are shown as literal text, never executed.
+            Block::Html(raw) => self.code_block(
+                &CodeBlock {
+                    info: String::new(),
+                    lines: raw.lines().map(str::to_string).collect(),
+                },
+                x,
+                width,
+            ),
         }
     }
 
@@ -560,21 +569,59 @@ impl<'a> Layout<'a> {
                         letter_spacing: self.theme.letter_spacing * marker_size,
                     }));
                 }
-                false => {
-                    let r = (size * 0.16).max(2.0);
-                    let cx = x + marker_w * 0.5 - r;
-                    let cy = marker_baseline - size * 0.3 - r;
-                    self.draws.push(Draw::Rect(
-                        RectDraw::new(cx, cy, r * 2.0, r * 2.0)
-                            .with_fill(self.theme.bullet)
-                            .with_radius(r),
-                    ));
-                }
+                false => match item.task {
+                    Some(checked) => {
+                        self.task_box(x + marker_w * 0.5, marker_baseline, size, checked)
+                    }
+                    None => {
+                        let r = (size * 0.16).max(2.0);
+                        let cx = x + marker_w * 0.5 - r;
+                        let cy = marker_baseline - size * 0.3 - r;
+                        self.draws.push(Draw::Rect(
+                            RectDraw::new(cx, cy, r * 2.0, r * 2.0)
+                                .with_fill(self.theme.bullet)
+                                .with_radius(r),
+                        ));
+                    }
+                },
             }
 
             self.blocks(&item.blocks, content_x, content_w, list.tight);
             if !list.tight && i + 1 < list.items.len() {
                 self.y += size * space::LOOSE_ITEM;
+            }
+        }
+    }
+
+    /// Draws a GFM task checkbox centred on `cx`, sitting on `baseline`.
+    fn task_box(&mut self, cx: f32, baseline: f32, size: f32, checked: bool) {
+        let side = (size * 0.86).round();
+        let left = cx - side * 0.5;
+        let top = (baseline - size * 0.78).round();
+        let mut rect = RectDraw::new(left, top, side, side).with_radius(size * 0.18);
+        rect = if checked {
+            rect.with_fill(self.theme.link)
+        } else {
+            rect.with_stroke(self.theme.muted, (size * 0.09).max(1.0))
+        };
+        self.draws.push(Draw::Rect(rect));
+        if checked {
+            let color = self.theme.background.unwrap_or(self.theme.text);
+            let width = (size * 0.1).max(1.2);
+            let points = [
+                (left + side * 0.24, top + side * 0.55),
+                (left + side * 0.44, top + side * 0.75),
+                (left + side * 0.78, top + side * 0.28),
+            ];
+            for pair in points.windows(2) {
+                self.draws.push(Draw::Line(LineDraw {
+                    x1: pair[0].0,
+                    y1: pair[0].1,
+                    x2: pair[1].0,
+                    y2: pair[1].1,
+                    color,
+                    width,
+                }));
             }
         }
     }
@@ -898,6 +945,17 @@ impl<'a> Layout<'a> {
                     "\n",
                     self.text_style(style.size, FontKind::Sans),
                     style.color,
+                )),
+                Inline::SoftBreak => out.push(Frag::new(
+                    " ",
+                    self.text_style(style.size, FontKind::Sans),
+                    style.color,
+                )),
+                // Raw HTML is shown literally: SVG output never executes it.
+                Inline::Html(raw) => out.push(Frag::new(
+                    raw.clone(),
+                    self.text_style(self.theme.code_size(), FontKind::Mono),
+                    self.theme.muted,
                 )),
             }
         }
@@ -1784,5 +1842,72 @@ mod tests {
         let t = s.find_text("spaced").expect("text");
         assert!(t.letter_spacing > 0.0);
         assert!((t.letter_spacing - 0.1 * t.size).abs() < 1e-4);
+    }
+
+    #[test]
+    fn task_items_draw_checkboxes_and_drop_the_marker() {
+        let s = scene("- [ ] todo\n- [x] done");
+        assert!(s.find_text("todo").is_some(), "{:?}", texts(&s));
+        assert!(s.find_text("done").is_some(), "{:?}", texts(&s));
+        // The `[ ]` / `[x]` markers are not part of the text.
+        assert!(
+            !texts(&s).iter().any(|t| t.contains('[')),
+            "{:?}",
+            texts(&s)
+        );
+        // One outline box per item, plus a check mark for the done one.
+        let boxes = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Rect(_)))
+            .count();
+        assert!(boxes >= 2, "expected two checkboxes, got {boxes}");
+        assert!(
+            s.draws.iter().any(|d| matches!(d, Draw::Line(_))),
+            "the checked item needs a check mark"
+        );
+    }
+
+    #[test]
+    fn task_marker_only_counts_at_the_start() {
+        let s = scene("- [ ] not at the end [x]");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("[x]"), "a later marker stays text: {all}");
+    }
+
+    #[test]
+    fn gfm_autolinks_become_link_text() {
+        let s = scene("see www.example.com and mail me@example.com");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("www.example.com"), "{all}");
+        assert!(all.contains("me@example.com"), "{all}");
+        let links = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Text(t) if t.underline))
+            .count();
+        assert!(links >= 2, "both literals should be links: {all}");
+    }
+
+    #[test]
+    fn inline_html_is_shown_literally() {
+        let s = scene("press <kbd>Ctrl</kbd> now");
+        let all = texts(&s).join("");
+        assert!(all.contains("<kbd>"), "{all}");
+        assert!(all.contains("Ctrl"), "{all}");
+    }
+
+    #[test]
+    fn html_blocks_render_as_literal_code() {
+        let s = scene("<div class=\"x\">\n  <p>hi</p>\n</div>");
+        let all = texts(&s).join("\n");
+        assert!(all.contains("<div class=\"x\">"), "{all}");
+        // Nothing is executed, so no drawing carries the tag name in a fill.
+        assert!(
+            s.draws
+                .iter()
+                .all(|d| !matches!(d, Draw::Rect(r) if r.w < 1.0)),
+            "unexpected tiny rects"
+        );
     }
 }

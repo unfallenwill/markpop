@@ -81,7 +81,7 @@ fn toc_list(entries: &[Heading]) -> Option<Block> {
         {
             blocks.push(child);
         }
-        items.push(ListItem { blocks });
+        items.push(ListItem { blocks, task: None });
     }
     debug_assert!(!items.is_empty());
     Some(Block::List(ListData {
