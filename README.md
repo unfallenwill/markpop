@@ -1,32 +1,54 @@
 # markdown2svg
 
-Render Markdown **directly to SVG** — no HTML, no headless browser, no screenshots, no font
-files, no dependencies.
+Render Markdown **directly to SVG, PNG or lossless WebP** — no HTML, no headless browser, no
+screenshots, no image libraries. Pure Rust, zero dependencies.
 
 ```bash
-cat README.md | markdown2svg > README.svg
-markdown2svg doc.md --theme dark --zoom 150 -o doc.svg
+cat README.md | markdown2svg > README.svg          # vector (default)
+markdown2svg doc.md --format png  -o doc.png       # bitmap, wide compatibility
+markdown2svg doc.md --format webp -o doc.webp      # bitmap, smaller files
 ```
 
 ## Why
 
 The usual pipeline is `Markdown → HTML → headless Chrome → screenshot`. It is slow, heavy and
-produces a raster image. This crate replaces it with a single-pass native pipeline:
+produces a raster image you cannot restyle. This crate replaces it with a single-pass native
+pipeline plus a pluggable output engine:
 
 ```
 Markdown text
   → parse      (src/parse)   → Document  (src/ast.rs)
   → layout     (src/layout)  → Scene     (src/scene.rs)
-  → serialize  (src/svg)     → SVG string
+  → engine     (src/engine)  → SVG | PNG | WebP
 ```
 
 Consequences:
 
+- **Three engines, one layout.** SVG is serialized directly; PNG and WebP are produced by a
+  built-in software rasterizer (TrueType parser + anti-aliased scanline filler) and our own
+  deflate/VP8L encoders. No browser, no system APIs, no C libraries.
 - **Fast and tiny.** One binary, zero dependencies, no JS runtime.
-- **Vector output.** Text stays text — selectable, searchable, crisp at any zoom.
-- **Deterministic.** Same input ⇒ same bytes, on every platform. Glyph advances come from a
-  built-in table instead of a system font, so a document cannot reflow because of a missing
-  font (and CJK is exact: one em per glyph).
+- **Vector by default.** Text stays text — selectable, searchable, crisp at any zoom.
+- **Deterministic.** Same input ⇒ same bytes, on every platform. Layout advances come from a
+  built-in table instead of a system font, so a document cannot reflow because of a missing font
+  (and CJK is exact: one em per glyph).
+- **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
+
+## Output formats
+
+| Format | Engine | Use when |
+|---|---|---|
+| `svg` (default) | `SvgEngine` — direct serializer | You want vectors: crisp at any zoom, selectable text, tiny files |
+| `png` | `BitmapEngine` + PNG encoder | You need the widest compatibility (docs, chat, office tools) |
+| `webp` | `BitmapEngine` + VP8L lossless encoder | You need a bitmap with the smallest size |
+
+Bitmap engines parse a TrueType font at runtime (discovered from the system, or supplied with
+`--font <FILE>`); SVG needs no font because the viewer resolves the family stack. For the
+sample document, WebP lossless is ~38% smaller than the equivalent PNG, and both decode to
+pixel-identical images.
+
+The `Engine` trait (`src/engine.rs`) is the extension point: a new format only needs a
+serializer over `Scene`, or an encoder over the raster `Bitmap`.
 - **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
 
 ## Install
@@ -45,7 +67,8 @@ ARGS:
     <INPUT>    Markdown file to render. Omit or use `-` to read stdin.
 
 OPTIONS:
-    -o, --output <FILE>       Write SVG to FILE instead of stdout
+    -o, --output <FILE>       Write the output to FILE instead of stdout
+    -f, --format <NAME>       Output format: svg (default), png or webp
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
         --width <PX>          Canvas width in pixels (default: 800)
@@ -54,6 +77,7 @@ OPTIONS:
         --letter-spacing <EM> Extra tracking in em units (default: 0)
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
+        --font <FILE>         TrueType font used for png/webp output
         --toc                 Prepend a table of contents
     -h, --help                Print this help
     -V, --version             Print version information
@@ -64,6 +88,7 @@ Examples:
 ```bash
 markdown2svg doc.md -o doc.svg
 markdown2svg doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
+markdown2svg doc.md --format webp --font myfont.ttf -o doc.webp
 markdown2svg doc.md --font-size 17 --line-height 1.75 --toc -o doc.svg
 cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
 ```
@@ -83,6 +108,11 @@ let svg = markdown2svg::render_with("# Hi", &opts)?;
 // Geometry without serialization: useful for tests or other output formats.
 let scene = markdown2svg::to_scene("# Hi", &markdown2svg::Theme::light());
 assert!(scene.find_text("Hi").is_some());
+
+// Bitmap engines: PNG or lossless WebP, from the same layout.
+use markdown2svg::OutputFormat;
+let opts = markdown2svg::Options::default().with_format(OutputFormat::Webp);
+let bytes: Vec<u8> = markdown2svg::render_bytes("# Hi", &opts)?;
 
 // Long documents: pagination + table of contents.
 let opts = markdown2svg::Options::default()
@@ -185,6 +215,9 @@ Every stage is a pure function with its own tests:
 | `layout` | `Document` + `Theme` → `Scene` | primitives and coordinates |
 | `paginate` | `Scene` + block marks → `Vec<Scene>` | pages, no block cuts |
 | `svg` | `Scene` + zoom → `String` | markup |
+| `raster` | `Scene` + fonts + zoom → `Bitmap` | pixels, glyph ink, clipping |
+| `encode` | `Bitmap` → PNG / WebP bytes | headers, CRCs, pixel round-trip |
+| `engine` | `Scene` → bytes | format dispatch |
 
 ```
 src/
@@ -199,8 +232,15 @@ src/
   outline.rs      headings → table of contents
   scene.rs        geometry primitives (text/rect/line) + Scene
   svg.rs          XML serialization, escaping, zoom
+  engine.rs       Engine trait + SvgEngine / BitmapEngine factory
+  font.rs         TrueType reader: cmap, loca/glyf, composite glyphs
+  raster.rs       anti-aliased scanline filler + glyph compositing
+  encode/
+    deflate.rs    LZ77 + fixed-Huffman deflate, zlib, CRC/Adler
+    png.rs        adaptive filtering + chunk writer
+    webp.rs       VP8L: Huffman codes, LZ77 tokens, RIFF container
   theme.rs        all visual constants, as plain data
-  options.rs      zoom, pagination, TOC, validation, error type
+  options.rs      zoom, format, pagination, TOC, validation, errors
 ```
 
 ### Extending
@@ -208,7 +248,8 @@ src/
 - **New look** — `Theme` is plain data: start from `light()`/`dark()`/`print()` and override.
 - **New syntax** — add a variant to `ast::Block`/`ast::Inline`, emit it from `parse`, and handle
   it in `layout`. Both matches are exhaustive, so the compiler lists the work.
-- **New output format** — `Scene` is pure geometry; write another serializer beside `svg`.
+- **New output format** — implement `engine::Engine`; it only needs `Scene` (vector) or
+  `raster::Bitmap` (bitmap).
 - **Better metrics** — `text::Metrics` is the only place that decides how wide a character is.
 
 ## Testing
@@ -219,16 +260,21 @@ cargo clippy --all-targets
 cargo llvm-cov --summary-only
 ```
 
-The suite covers each stage in isolation (parser fixtures, layout coordinates, serializer markup)
-plus end-to-end properties:
+The suite covers each stage in isolation (parser fixtures, layout coordinates, serializer markup,
+font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
 
 - SVG well-formedness (also validated with an external XML parser)
 - zoom invariance of geometry, byte-for-byte determinism (golden file)
 - no-overflow guarantees for CJK, emoji, deep nesting and unbreakable tokens
 - pagination: fixed page heights, whole-block placement, no stranded headings, no lost code lines
+- PNG: chunk CRCs, adaptive-filter round-trip, exact pixel recovery (own inflater)
+- WebP: RIFF/VP8L headers, canonical prefix codes, full-tree Kraft check, LZ77 token replay,
+  distance-range invariants, and a built-in VP8L decoder that round-trips a full rendered page
+- PNG vs WebP decode to **pixel-identical** images (verified in Chromium: 8,092,800 bytes
+  compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
 
-Current coverage: **97% of lines** across 311 tests (`cargo llvm-cov`).
+Current coverage: **96% of lines** across 400 tests (`cargo llvm-cov`).
 
 ## SVG compatibility
 
@@ -245,17 +291,31 @@ Underlines and strikethroughs are drawn as explicit `<line>` primitives instead 
 `text-decoration`, so every renderer places them identically.
 
 ```bash
-# Rasterize with a browser, if you need a PNG:
+# Rasterize with a browser, if you need a PNG from SVG:
 msedge --headless --screenshot=out.png --window-size=800,1200 out.svg
 ```
 
+## Raster output notes
+
+- PNG uses truecolor+alpha with adaptive per-row filters and our own fixed-Huffman deflate.
+- WebP is **lossless** (VP8L): literal + LZ77 tokens, length-limited canonical Huffman codes,
+  no transforms and no color cache (the simplest valid encoder).
+- Both come from the same inline rasterizer, so their decoders agree byte for byte.
+- Bitmap output needs a TrueType font. Discovery covers common Windows/macOS/Linux locations;
+  pass `--font <FILE>` to pin one. Faux bold (a sub-pixel second pass) and faux italic (a shear)
+  are used, so a single regular face is enough.
+- Text in bitmaps is placed with the font's own advances (like a browser does for SVG); line
+  breaking still uses the deterministic metric table, which is what keeps output stable.
+
 ## Sample
 
-`demo.md` is rendered by the crate itself:
+`demo.md` is rendered by the crate itself with every engine:
 
 - `demo.svg` — light theme, 100%
 - `demo-dark.svg` — dark theme, 150%
 - `demo-print.svg` — print theme (serif, paper tone)
+- `demo.png` — same document rasterized (800 × 2648, RGBA)
+- `demo.webp` — lossless WebP of the same pixels, ~38% smaller
 
 ## License
 

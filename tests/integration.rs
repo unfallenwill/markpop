@@ -759,3 +759,181 @@ fn cjk_and_latin_mix_wraps_within_the_column() {
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Output engines: SVG / PNG / lossless WebP
+// ---------------------------------------------------------------------------
+
+use markdown2svg::{OutputFormat, render_bytes, render_bytes_pages};
+
+/// Reads width/height from a PNG `IHDR` chunk.
+fn png_size(data: &[u8]) -> (u32, u32) {
+    assert_eq!(
+        &data[..8],
+        &[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A]
+    );
+    let len = u32::from_be_bytes([data[8], data[9], data[10], data[11]]);
+    assert_eq!(&data[12..16], b"IHDR");
+    assert_eq!(len, 13);
+    let w = u32::from_be_bytes([data[16], data[17], data[18], data[19]]);
+    let h = u32::from_be_bytes([data[20], data[21], data[22], data[23]]);
+    (w, h)
+}
+
+/// Reads width/height from a WebP `VP8L` header.
+fn webp_size(data: &[u8]) -> (u32, u32) {
+    assert_eq!(&data[0..4], b"RIFF");
+    assert_eq!(&data[8..12], b"WEBP");
+    assert_eq!(&data[12..16], b"VP8L");
+    let size = u32::from_le_bytes([data[16], data[17], data[18], data[19]]) as usize;
+    // RIFF pads odd chunks to an even length.
+    assert_eq!(20 + size + (size & 1), data.len(), "VP8L chunk length");
+    assert_eq!(data[20], 0x2F, "VP8L signature");
+    // 14-bit width-1, 14-bit height-1, LSB-first across 4 bytes.
+    let bits = u32::from_le_bytes([data[21], data[22], data[23], data[24]]);
+    ((bits & 0x3FFF) + 1, ((bits >> 14) & 0x3FFF) + 1)
+}
+
+#[test]
+fn svg_engine_matches_the_string_api() {
+    let opts = Options::default();
+    let bytes = render_bytes(KITCHEN_SINK, &opts).unwrap();
+    let text = String::from_utf8(bytes).unwrap();
+    assert_eq!(text, render_with(KITCHEN_SINK, &opts).unwrap());
+}
+
+#[test]
+fn png_output_has_raster_dimensions() {
+    let opts = Options::default().with_format(OutputFormat::Png);
+    let bytes = render_bytes(KITCHEN_SINK, &opts).unwrap();
+    let (w, h) = png_size(&bytes);
+    let scene = to_scene(KITCHEN_SINK, &opts.theme);
+    assert_eq!(w, scene.width as u32);
+    assert_eq!(h, scene.height.round() as u32);
+}
+
+#[test]
+fn webp_output_has_lossless_dimensions() {
+    let opts = Options::default().with_format(OutputFormat::Webp);
+    let bytes = render_bytes(KITCHEN_SINK, &opts).unwrap();
+    let (w, h) = webp_size(&bytes);
+    let scene = to_scene(KITCHEN_SINK, &opts.theme);
+    assert_eq!(w, scene.width as u32);
+    assert_eq!(h, scene.height.round() as u32);
+}
+
+#[test]
+fn raster_zoom_scales_the_bitmap() {
+    for (format, read) in [
+        (OutputFormat::Png, png_size as fn(&[u8]) -> (u32, u32)),
+        (OutputFormat::Webp, webp_size as fn(&[u8]) -> (u32, u32)),
+    ] {
+        let scene = to_scene("# Hi\n\nBody", &Theme::light());
+        let base = render_bytes("# Hi\n\nBody", &Options::default().with_format(format)).unwrap();
+        let (w1, h1) = read(&base);
+        assert_eq!((w1, h1), (scene.width as u32, scene.height.round() as u32));
+
+        let zoomed = render_bytes(
+            "# Hi\n\nBody",
+            &Options::default().with_format(format).with_zoom(2.0),
+        )
+        .unwrap();
+        let (w2, h2) = read(&zoomed);
+        // Both dimensions come from rounding the scaled scene, so the zoomed
+        // bitmap is not necessarily exactly twice the rounded first one.
+        assert_eq!(
+            (w2, h2),
+            (
+                (scene.width * 2.0).round() as u32,
+                (scene.height * 2.0).round() as u32
+            )
+        );
+    }
+}
+
+#[test]
+fn webp_lossless_is_smaller_than_png() {
+    let png = render_bytes(
+        KITCHEN_SINK,
+        &Options::default().with_format(OutputFormat::Png),
+    )
+    .unwrap();
+    let webp = render_bytes(
+        KITCHEN_SINK,
+        &Options::default().with_format(OutputFormat::Webp),
+    )
+    .unwrap();
+    assert!(
+        webp.len() < png.len(),
+        "webp {} bytes should beat png {} bytes",
+        webp.len(),
+        png.len()
+    );
+}
+
+#[test]
+fn raster_pages_follow_pagination() {
+    for format in [OutputFormat::Png, OutputFormat::Webp] {
+        let opts = Options::default()
+            .with_format(format)
+            .with_page_height(420.0);
+        let pages = render_bytes_pages(KITCHEN_SINK, &opts).unwrap();
+        assert!(pages.len() > 1);
+        for page in &pages {
+            let (w, h) = match format {
+                OutputFormat::Png => png_size(page),
+                _ => webp_size(page),
+            };
+            assert_eq!(w, 800);
+            assert_eq!(h, 420);
+        }
+    }
+}
+
+#[test]
+fn raster_output_respects_themes() {
+    let light = render_bytes("x", &Options::default().with_format(OutputFormat::Png)).unwrap();
+    let dark = render_bytes(
+        "x",
+        &Options::default()
+            .with_format(OutputFormat::Png)
+            .with_theme(Theme::dark()),
+    )
+    .unwrap();
+    assert_ne!(light, dark);
+    assert_eq!(png_size(&light), png_size(&dark));
+}
+
+#[test]
+fn explicit_font_file_is_used() {
+    let set = markdown2svg::font::discover();
+    let Some(path) = set.sans.first().or_else(|| set.fallback.first()) else {
+        eprintln!("skipping: no system fonts");
+        return;
+    };
+    let opts = Options::default()
+        .with_format(OutputFormat::Png)
+        .with_font_file(path.to_string_lossy().to_string());
+    let bytes = render_bytes("# Font\n\nText", &opts).unwrap();
+    assert_eq!(&bytes[..4], &[0x89, b'P', b'N', b'G']);
+}
+
+#[test]
+fn missing_font_file_is_an_error() {
+    let opts = Options::default()
+        .with_format(OutputFormat::Png)
+        .with_font_file("definitely-not-a-font.ttf");
+    assert_eq!(
+        render_bytes("x", &opts),
+        Err(markdown2svg::RenderError::FontUnavailable)
+    );
+}
+
+#[test]
+fn svg_never_needs_a_font_file() {
+    let opts = Options::default().with_font_file("definitely-not-a-font.ttf");
+    assert!(
+        render_bytes("x", &opts).is_ok(),
+        "SVG must ignore font_file"
+    );
+}

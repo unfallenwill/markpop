@@ -1,5 +1,6 @@
 //! Render options and error type for the public API.
 
+use crate::engine::OutputFormat;
 use crate::theme::Theme;
 
 /// Tunable inputs for a render, beyond the Markdown itself.
@@ -46,6 +47,11 @@ pub struct Options {
     pub toc: bool,
     /// Heading text used for the table of contents.
     pub toc_title: String,
+    /// Output format: SVG (default), PNG or lossless WebP.
+    pub format: OutputFormat,
+    /// Optional `.ttf`/`.ttc` file used for bitmap output. When `None`, a
+    /// font is discovered from the system font directories.
+    pub font_file: Option<String>,
 }
 
 impl Options {
@@ -80,6 +86,18 @@ impl Options {
         self
     }
 
+    /// Selects the output format (builder style).
+    pub fn with_format(mut self, format: OutputFormat) -> Options {
+        self.format = format;
+        self
+    }
+
+    /// Uses a specific font file for bitmap output (builder style).
+    pub fn with_font_file(mut self, path: impl Into<String>) -> Options {
+        self.font_file = Some(path.into());
+        self
+    }
+
     /// Checks that the options describe a renderable picture.
     ///
     /// Zoom must be a finite, positive number; the canvas must be wide
@@ -111,6 +129,8 @@ impl Default for Options {
             page_height: None,
             toc: false,
             toc_title: "Contents".to_string(),
+            format: OutputFormat::Svg,
+            font_file: None,
         }
     }
 }
@@ -127,6 +147,8 @@ pub enum RenderError {
     InvalidCanvasWidth(f32),
     /// Page height was NaN/infinite or too small for its padding.
     InvalidPageHeight(f32),
+    /// Bitmap output was requested but no usable TrueType font was found.
+    FontUnavailable,
 }
 
 impl std::fmt::Display for RenderError {
@@ -147,6 +169,10 @@ impl std::fmt::Display for RenderError {
                     "invalid page height `{h}`: too small for the theme padding"
                 )
             }
+            RenderError::FontUnavailable => write!(
+                f,
+                "no TrueType font available for bitmap output: install a system font or pass one explicitly"
+            ),
         }
     }
 }

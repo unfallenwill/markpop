@@ -7,10 +7,10 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use markdown2svg::{Options, RenderError, Theme};
+use markdown2svg::{Options, OutputFormat, RenderError, Theme};
 
 const USAGE: &str = "\
-markdown2svg — render Markdown directly to SVG
+markdown2svg — render Markdown directly to SVG, PNG or WebP
 
 USAGE:
     markdown2svg [OPTIONS] [INPUT]
@@ -19,7 +19,8 @@ ARGS:
     <INPUT>    Markdown file to render. Omit or use `-` to read stdin.
 
 OPTIONS:
-    -o, --output <FILE>       Write SVG to FILE instead of stdout
+    -o, --output <FILE>       Write the output to FILE instead of stdout
+    -f, --format <NAME>       Output format: svg (default), png or webp
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
         --width <PX>          Canvas width in pixels (default: 800)
@@ -28,12 +29,15 @@ OPTIONS:
         --letter-spacing <EM> Extra tracking in em units (default: 0)
         --page-height <PX>    Split into pages of this height; writes one
                               file per page (requires --output)
+        --font <FILE>         TrueType font used for png/webp output
         --toc                 Prepend a table of contents
     -h, --help                Print this help
     -V, --version             Print version information
 
 EXAMPLES:
     markdown2svg README.md -o README.svg
+    markdown2svg README.md --format png -o README.png
+    markdown2svg README.md --format webp -o README.webp
     markdown2svg doc.md --theme print --page-height 1123 -o page.svg
     cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
 ";
@@ -50,6 +54,8 @@ struct Cli {
     line_height: Option<f32>,
     letter_spacing: Option<f32>,
     page_height: Option<f32>,
+    format: OutputFormat,
+    font: Option<String>,
     toc: bool,
     help: bool,
     version: bool,
@@ -67,6 +73,8 @@ impl Default for Cli {
             line_height: None,
             letter_spacing: None,
             page_height: None,
+            format: OutputFormat::Svg,
+            font: None,
             toc: false,
             help: false,
             version: false,
@@ -96,6 +104,8 @@ impl Cli {
             page_height: self.page_height,
             toc: self.toc,
             toc_title: "Contents".to_string(),
+            format: self.format,
+            font_file: self.font.clone(),
         }
     }
 }
@@ -132,8 +142,9 @@ fn main() -> ExitCode {
 /// Executes a parsed command line.
 fn run(cli: &Cli) -> Result<(), String> {
     let markdown = read_input(cli.input.as_deref())?;
-    let pages = markdown2svg::render_pages(&markdown, &cli.options()).map_err(render_message)?;
-    write_pages(cli.output.as_deref(), &pages)
+    let pages =
+        markdown2svg::render_bytes_pages(&markdown, &cli.options()).map_err(render_message)?;
+    write_pages(cli.output.as_deref(), &pages, cli.format.extension())
 }
 
 fn read_input(path: Option<&str>) -> Result<String, String> {
@@ -152,7 +163,7 @@ fn read_input(path: Option<&str>) -> Result<String, String> {
 }
 
 /// Writes one or more pages, numbering them when paginated.
-fn write_pages(path: Option<&str>, pages: &[String]) -> Result<(), String> {
+fn write_pages(path: Option<&str>, pages: &[Vec<u8>], ext: &str) -> Result<(), String> {
     match path {
         None | Some("-") => {
             if pages.len() > 1 {
@@ -168,7 +179,7 @@ fn write_pages(path: Option<&str>, pages: &[String]) -> Result<(), String> {
                 return write_output(Some(path), &pages[0]);
             }
             for (i, page) in pages.iter().enumerate() {
-                let target = numbered_path(path, i + 1);
+                let target = numbered_path(path, i + 1, ext);
                 write_output(Some(&target), page)?;
             }
             Ok(())
@@ -176,18 +187,14 @@ fn write_pages(path: Option<&str>, pages: &[String]) -> Result<(), String> {
     }
 }
 
-/// `dir/name.svg` + page 2 → `dir/name-2.svg`.
-fn numbered_path(base: &str, index: usize) -> String {
+/// `dir/name.svg` + page 2 → `dir/name-2.svg` (or `-2.png` for PNG output).
+fn numbered_path(base: &str, index: usize, ext: &str) -> String {
     let path = Path::new(base);
     let stem = path
         .file_stem()
         .map(|s| s.to_string_lossy().to_string())
         .filter(|s| !s.is_empty())
         .unwrap_or_else(|| "page".to_string());
-    let ext = path
-        .extension()
-        .map(|e| e.to_string_lossy().to_string())
-        .unwrap_or_else(|| "svg".to_string());
     let name = format!("{stem}-{index}.{ext}");
     match path.parent() {
         Some(dir) if !dir.as_os_str().is_empty() => dir.join(name).to_string_lossy().to_string(),
@@ -195,16 +202,16 @@ fn numbered_path(base: &str, index: usize) -> String {
     }
 }
 
-fn write_output(path: Option<&str>, svg: &str) -> Result<(), String> {
+fn write_output(path: Option<&str>, data: &[u8]) -> Result<(), String> {
     match path {
         None | Some("-") => {
             let stdout = io::stdout();
             let mut lock = stdout.lock();
-            lock.write_all(svg.as_bytes())
+            lock.write_all(data)
                 .and_then(|()| lock.flush())
                 .map_err(|e| format!("cannot write to stdout: {e}"))
         }
-        Some(path) => std::fs::write(path, svg).map_err(|e| format!("cannot write `{path}`: {e}")),
+        Some(path) => std::fs::write(path, data).map_err(|e| format!("cannot write `{path}`: {e}")),
     }
 }
 
@@ -219,6 +226,9 @@ fn render_message(err: RenderError) -> String {
         }
         RenderError::InvalidPageHeight(_) => {
             format!("{err}\n      hint: --page-height must be at least 176 pixels")
+        }
+        RenderError::FontUnavailable => {
+            format!("{err}\n      hint: install a system font, or pass one with --font <FILE.ttf>")
         }
     }
 }
@@ -281,6 +291,14 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
                     return Err("invalid page height: must be greater than 0".into());
                 }
                 cli.page_height = Some(v);
+            }
+            "-f" | "--format" => {
+                let raw = take_value(args, &mut i, arg)?;
+                cli.format = OutputFormat::by_name(&raw)
+                    .ok_or_else(|| format!("unknown format `{raw}` (expected svg, png or webp)"))?;
+            }
+            "--font" => {
+                cli.font = Some(take_value(args, &mut i, arg)?);
             }
             "--toc" => {
                 cli.toc = true;
@@ -507,10 +525,16 @@ mod tests {
     fn numbered_paths_keep_directory_and_extension() {
         // Normalize separators so the assertion is platform independent.
         let norm = |p: &str| Path::new(p).to_string_lossy().replace('\\', "/");
-        assert_eq!(norm(&numbered_path("out.svg", 2)), "out-2.svg");
-        assert_eq!(norm(&numbered_path("docs/out.svg", 3)), "docs/out-3.svg");
-        assert_eq!(norm(&numbered_path("out", 1)), "out-1.svg");
-        assert_eq!(norm(&numbered_path("/tmp/x.html", 4)), "/tmp/x-4.html");
+        assert_eq!(norm(&numbered_path("out.svg", 2, "svg")), "out-2.svg");
+        assert_eq!(
+            norm(&numbered_path("docs/out.svg", 3, "svg")),
+            "docs/out-3.svg"
+        );
+        assert_eq!(norm(&numbered_path("out", 1, "svg")), "out-1.svg");
+        assert_eq!(
+            norm(&numbered_path("/tmp/x.html", 4, "html")),
+            "/tmp/x-4.html"
+        );
     }
 
     // --- end-to-end through files -------------------------------------
@@ -565,7 +589,7 @@ mod tests {
         run(&cli).unwrap();
 
         for i in 1..=3 {
-            let path = numbered_path(output.to_str().unwrap(), i);
+            let path = numbered_path(output.to_str().unwrap(), i, "svg");
             let svg =
                 std::fs::read_to_string(&path).unwrap_or_else(|e| panic!("missing page {i}: {e}"));
             assert!(svg.contains(r#"height="400""#));
@@ -576,8 +600,8 @@ mod tests {
 
     #[test]
     fn multi_page_output_to_stdout_is_refused() {
-        let pages = vec!["<svg/>".to_string(), "<svg/>".to_string()];
-        let err = write_pages(None, &pages).unwrap_err();
+        let pages = vec![b"<svg/>".to_vec(), b"<svg/>".to_vec()];
+        let err = write_pages(None, &pages, "svg").unwrap_err();
         assert!(err.contains("--output"), "{err}");
     }
 
@@ -649,5 +673,104 @@ mod tests {
     fn tiny_page_height_is_reported_with_a_hint() {
         let msg = render_message(RenderError::InvalidPageHeight(10.0));
         assert!(msg.contains("page-height") && msg.contains("hint"), "{msg}");
+    }
+
+    // --- output formats -------------------------------------------------
+
+    #[test]
+    fn format_flag_selects_the_engine() {
+        assert_eq!(
+            parse_args(&args(&["--format", "png"])).unwrap().format,
+            OutputFormat::Png
+        );
+        assert_eq!(
+            parse_args(&args(&["-f", "webp"])).unwrap().format,
+            OutputFormat::Webp
+        );
+        assert_eq!(
+            parse_args(&args(&["--format", "SVG"])).unwrap().format,
+            OutputFormat::Svg
+        );
+        let err = parse_args(&args(&["--format", "gif"])).unwrap_err();
+        assert!(err.contains("unknown format"), "{err}");
+    }
+
+    #[test]
+    fn format_reaches_the_options() {
+        let cli = parse_args(&args(&["--format", "png"])).unwrap();
+        assert_eq!(cli.options().format, OutputFormat::Png);
+        let cli = parse_args(&args(&["--format", "webp", "--font", "x.ttf"])).unwrap();
+        assert_eq!(cli.options().font_file.as_deref(), Some("x.ttf"));
+    }
+
+    #[test]
+    fn run_writes_png_and_webp() {
+        let input = scratch("fmt.md");
+        std::fs::write(&input, "# Hi\n\nBody text").unwrap();
+        for (format, magic) in [
+            ("png", &[0x89u8, b'P', b'N', b'G'][..]),
+            ("webp", &b"RIFF"[..]),
+        ] {
+            let output = scratch(&format!("fmt.{format}"));
+            let cli = parse_args(&args(&[
+                input.to_str().unwrap(),
+                "--format",
+                format,
+                "-o",
+                output.to_str().unwrap(),
+            ]))
+            .unwrap();
+            match run(&cli) {
+                Ok(()) => {
+                    let bytes = std::fs::read(&output).unwrap();
+                    assert_eq!(&bytes[..magic.len()], magic, "{format} magic");
+                    assert!(bytes.len() > 100);
+                }
+                Err(e) if e.contains("font") => {
+                    eprintln!("skipping {format}: no system fonts ({e})");
+                }
+                Err(e) => panic!("{format} failed: {e}"),
+            }
+            let _ = std::fs::remove_file(&output);
+        }
+        let _ = std::fs::remove_file(&input);
+    }
+
+    #[test]
+    fn multi_page_raster_output_uses_the_format_extension() {
+        let input = scratch("paged-png.md");
+        let output = scratch("pages.svg");
+        let body = (0..40)
+            .map(|i| format!("paragraph {i} with some words\n\n"))
+            .collect::<String>();
+        std::fs::write(&input, body).unwrap();
+        let cli = parse_args(&args(&[
+            input.to_str().unwrap(),
+            "--format",
+            "png",
+            "--page-height",
+            "400",
+            "-o",
+            output.to_str().unwrap(),
+        ]))
+        .unwrap();
+        match run(&cli) {
+            Ok(()) => {
+                let first = numbered_path(output.to_str().unwrap(), 1, "png");
+                assert!(first.ends_with("-1.png"), "{first}");
+                let bytes = std::fs::read(&first).unwrap();
+                assert_eq!(&bytes[..4], &[0x89, b'P', b'N', b'G']);
+                let _ = std::fs::remove_file(first);
+            }
+            Err(e) if e.contains("font") => eprintln!("skipping: no system fonts"),
+            Err(e) => panic!("{e}"),
+        }
+        let _ = std::fs::remove_file(&input);
+    }
+
+    #[test]
+    fn font_unavailable_is_reported_with_a_hint() {
+        let msg = render_message(RenderError::FontUnavailable);
+        assert!(msg.contains("font") && msg.contains("--font"), "{msg}");
     }
 }

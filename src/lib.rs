@@ -1,19 +1,25 @@
-//! Render Markdown directly to SVG — no HTML, no headless browser.
+//! Render Markdown directly to SVG, PNG or lossless WebP — no HTML, no
+//! headless browser.
 //!
-//! The pipeline is a straight line of pure stages:
+//! The pipeline is a straight line of pure stages followed by a pluggable
+//! output engine:
 //!
 //! ```text
 //! Markdown text
 //!   → parse      (src/parse)   → Document  (src/ast.rs)
 //!   → layout     (src/layout)  → Scene     (src/scene.rs)
-//!   → serialize  (src/svg)     → SVG string
+//!   → engine     (src/engine)  → SVG | PNG | WebP bytes
 //! ```
 //!
+//! SVG is serialized directly. Bitmap formats go through a software
+//! rasterizer (`src/raster.rs`) fed by our own TrueType parser
+//! (`src/font.rs`), and are compressed by our own PNG and VP8L encoders —
+//! nothing shells out, nothing fetches the network, and the layout is always
+//! computed by this crate rather than by a browser.
+//!
 //! Every stage is independently testable: parsing is asserted on the AST,
-//! layout on coordinates and primitives, serialization on markup. Nothing
-//! shells out, nothing fetches the network, and the only "font" is a
-//! deterministic advance table — so the same Markdown always produces the
-//! same bytes.
+//! layout on coordinates and primitives, serialization on markup, and the
+//! encoders round-trip their pixel buffers.
 //!
 //! # Example
 //!
@@ -47,24 +53,39 @@
 //! assert_eq!(pages.len(), 1);
 //! ```
 //!
+//! Bitmap output selects a different engine on the same scene:
+//!
+//! ```no_run
+//! use markdown2svg::{Options, OutputFormat};
+//!
+//! let opts = Options::default().with_format(OutputFormat::Webp);
+//! let bytes = markdown2svg::render_bytes("# Hi", &opts).unwrap();
+//! assert_eq!(&bytes[..4], b"RIFF");
+//! ```
+//!
 //! # Extending
 //!
 //! * **Looks** — [`Theme`] is plain data; start from [`Theme::light`],
 //!   [`Theme::dark`] or [`Theme::print`] and override fields.
 //! * **Syntax** — add a variant to [`ast::Block`] or [`ast::Inline`], handle
 //!   it in `parse`, then handle it in `layout`.
-//! * **Output formats** — [`scene::Scene`] is geometry only; write another
-//!   serializer next to [`svg`].
+//! * **Output formats** — implement [`engine::Engine`]; a new encoder only
+//!   needs [`scene::Scene`], which is pure geometry.
 //! * **Font metrics** — [`text::Metrics`] is the single place that decides
-//!   how wide a character is.
+//!   how wide a character is (used for layout; bitmap glyph placement uses
+//!   the font's own advances, like a browser does for SVG).
 //! * **Pagination** — `paginate` cuts only between top-level blocks; any new
 //!   block type automatically participates.
 
 pub mod ast;
 pub mod color;
+pub mod encode;
+pub mod engine;
+pub mod font;
 pub mod options;
 pub mod outline;
 pub mod parse;
+pub mod raster;
 pub mod scene;
 pub mod svg;
 pub mod text;
@@ -75,6 +96,7 @@ mod paginate;
 
 pub use ast::Document;
 pub use color::Color;
+pub use engine::{BitmapEngine, Engine, OutputFormat, SvgEngine};
 pub use options::{Options, RenderError};
 pub use outline::Heading;
 pub use parse::parse;
@@ -96,9 +118,9 @@ pub fn render(markdown: &str) -> String {
 /// Returns an error only if the options themselves are unusable (e.g. a
 /// non-positive zoom); malformed Markdown never fails.
 ///
-/// This always produces a single image, even when
-/// [`Options::page_height`] is set. Use [`render_pages`] for paginated
-/// output.
+/// This always produces a single SVG image: [`Options::format`] is ignored
+/// here (use [`render_bytes`]) and [`Options::page_height`] is ignored too
+/// (use [`render_pages`]).
 pub fn render_with(markdown: &str, options: &Options) -> Result<String, RenderError> {
     options.validate()?;
     let scene = to_scene_with_options(markdown, options);
@@ -111,11 +133,35 @@ pub fn render_with(markdown: &str, options: &Options) -> Result<String, RenderEr
 /// cuts happen only between blocks; code blocks taller than a page are
 /// split between lines.
 ///
+/// This is the SVG-text variant; [`render_bytes_pages`] honours
+/// [`Options::format`] as well.
 pub fn render_pages(markdown: &str, options: &Options) -> Result<Vec<String>, RenderError> {
     options.validate()?;
     Ok(to_pages_inner(markdown, options)
         .iter()
         .map(|scene| svg::render(scene, &options.theme, options.zoom))
+        .collect())
+}
+
+/// Renders Markdown to bytes in the format selected by [`Options::format`].
+///
+/// SVG is produced by the vector engine; PNG and WebP are produced by the
+/// software rasterizer and need a TrueType font (discovered automatically
+/// or supplied via [`Options::font_file`]).
+pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, RenderError> {
+    options.validate()?;
+    let scene = to_scene_with_options(markdown, options);
+    let engine = engine::engine_for(options.format, options.font_file.as_deref())?;
+    Ok(engine.encode(&scene, &options.theme, options.zoom))
+}
+
+/// Renders one image per page, in the format selected by [`Options::format`].
+pub fn render_bytes_pages(markdown: &str, options: &Options) -> Result<Vec<Vec<u8>>, RenderError> {
+    options.validate()?;
+    let engine = engine::engine_for(options.format, options.font_file.as_deref())?;
+    Ok(to_pages_inner(markdown, options)
+        .iter()
+        .map(|scene| engine.encode(scene, &options.theme, options.zoom))
         .collect())
 }
 
@@ -211,5 +257,44 @@ mod tests {
         let scene = to_scene("hello", &Theme::light());
         assert!(scene.find_text("hello").is_some());
         assert_eq!(scene.width, 800.0);
+    }
+
+    #[test]
+    fn format_is_only_honoured_by_the_byte_api() {
+        // `render_with` is the SVG-text API and ignores the format field.
+        let opts = Options::default().with_format(OutputFormat::Png);
+        assert!(render_with("x", &opts).unwrap().starts_with("<svg"));
+    }
+
+    #[test]
+    fn svg_bytes_are_utf8() {
+        let bytes = render_bytes("x", &Options::default()).unwrap();
+        assert_eq!(
+            String::from_utf8(bytes).unwrap(),
+            render_with("x", &Options::default()).unwrap()
+        );
+    }
+
+    #[test]
+    fn pages_api_returns_one_image_per_page() {
+        let opts = Options::default()
+            .with_format(OutputFormat::Png)
+            .with_page_height(400.0);
+        match render_bytes_pages(&"paragraph\n\n".repeat(40), &opts) {
+            Ok(pages) => assert!(pages.len() > 1),
+            Err(RenderError::FontUnavailable) => eprintln!("skipping: no system fonts"),
+            Err(e) => panic!("{e}"),
+        }
+    }
+
+    #[test]
+    fn invalid_options_are_rejected_before_encoding() {
+        let opts = Options::default()
+            .with_format(OutputFormat::Png)
+            .with_zoom(-2.0);
+        assert_eq!(
+            render_bytes("x", &opts),
+            Err(RenderError::InvalidZoom(-2.0))
+        );
     }
 }
