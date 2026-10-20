@@ -65,8 +65,70 @@ struct ColorGlyphs {
     layer_records: usize,
     /// Palette 0, as RGBA colours.
     palette: Vec<Color>,
+    /// Absolute offset of the COLR v1 BaseGlyphList, when present.
+    base_list: Option<usize>,
+    /// Absolute offset of the COLR v1 LayerList, when present.
+    layer_list: Option<usize>,
 }
 
+/// Gradient extension mode for coordinates outside `0..=1`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Extend {
+    /// Clamp to the first/last stop.
+    Pad,
+    /// Repeat the gradient.
+    Repeat,
+    /// Mirror the gradient.
+    Reflect,
+}
+
+/// One colour stop of a gradient.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct GradientStop {
+    /// Position along the gradient, `0.0..=1.0`.
+    pub offset: f32,
+    /// Stop colour.
+    pub color: Color,
+}
+
+/// A COLR paint graph, in font units with the y axis pointing up.
+///
+/// This is the font's own description of a colour glyph: nested layers,
+/// affine transforms, solid fills and gradients, applied to glyph outlines.
+#[derive(Debug, Clone, PartialEq)]
+pub enum Paint {
+    /// Fill the parent outline with the palette colour.
+    Solid { color: Color },
+    /// Fill the parent outline with the text's foreground colour.
+    Foreground,
+    /// A stack of paints, painted bottom to top.
+    Layers(Vec<Paint>),
+    /// Fill `glyph`'s outline with `paint`.
+    Glyph { glyph: u16, paint: Box<Paint> },
+    /// Apply an affine transform to everything below.
+    Transform { matrix: [f32; 6], paint: Box<Paint> },
+    /// Linear gradient from `p0` to `p1`.
+    Linear {
+        p0: [f32; 2],
+        p1: [f32; 2],
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
+    /// Radial gradient between two circles.
+    Radial {
+        c0: [f32; 2],
+        r0: f32,
+        c1: [f32; 2],
+        r1: f32,
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
+    /// Source painted over backdrop.
+    Composite {
+        source: Box<Paint>,
+        backdrop: Box<Paint>,
+    },
+}
 /// One layer of a colour glyph: a reusable outline plus a palette colour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct ColorLayer {
@@ -208,7 +270,9 @@ impl Face {
 
     /// Whether the face contains colour (layered) glyphs at all.
     pub fn has_color_glyphs(&self) -> bool {
-        self.colors.as_ref().is_some_and(|c| c.num_base > 0)
+        self.colors
+            .as_ref()
+            .is_some_and(|c| c.num_base > 0 || c.base_list.is_some())
     }
 
     /// Colour layers for a glyph, in painting order.
@@ -247,6 +311,302 @@ impl Face {
             layers.push(ColorLayer { glyph, color });
         }
         Some(layers)
+    }
+
+    /// The font's own paint graph for a colour glyph.
+    ///
+    /// Prefers the COLR v1 paint graph (layers, transforms, gradients) and
+    /// falls back to the v0 layer list for older fonts.
+    pub fn color_paint(&self, gid: u16) -> Option<Paint> {
+        if let Some(colors) = self.colors.as_ref()
+            && let Some(list) = colors.base_list
+            && let Some(offset) = self.paint_offset(gid, list)
+            && let Some(paint) = self.parse_paint(offset, 0)
+        {
+            return Some(paint);
+        }
+        let layers = self.color_layers(gid)?;
+        Some(Paint::Layers(
+            layers
+                .into_iter()
+                .map(|layer| Paint::Glyph {
+                    glyph: layer.glyph,
+                    paint: Box::new(Paint::Solid { color: layer.color }),
+                })
+                .collect(),
+        ))
+    }
+
+    /// Finds the paint offset for `gid` in a COLR v1 BaseGlyphList.
+    fn paint_offset(&self, gid: u16, list: usize) -> Option<usize> {
+        let count = u32_at(&self.data, list) as usize;
+        let (mut lo, mut hi) = (0usize, count);
+        while lo < hi {
+            let mid = (lo + hi) / 2;
+            if u16_at(&self.data, list + 4 + mid * 6) < gid {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if lo >= count {
+            return None;
+        }
+        let record = list + 4 + lo * 6;
+        if u16_at(&self.data, record) != gid {
+            return None;
+        }
+        Some(list + u32_at(&self.data, record + 2) as usize)
+    }
+
+    /// Parses one COLR v1 paint table. `depth` bounds graph recursion.
+    fn parse_paint(&self, offset: usize, depth: u32) -> Option<Paint> {
+        if depth > 16 {
+            return None;
+        }
+        let data = &self.data;
+        match u8_at(data, offset) {
+            // PaintColrLayers
+            1 => {
+                let count = u8_at(data, offset + 1) as usize;
+                let first = u32_at(data, offset + 2) as usize;
+                let list = self.colors.as_ref()?.layer_list?;
+                let total = u32_at(data, list) as usize;
+                let mut layers = Vec::with_capacity(count);
+                for k in 0..count {
+                    let index = first + k;
+                    if index >= total {
+                        break;
+                    }
+                    let paint_offset = list + u32_at(data, list + 4 + index * 4) as usize;
+                    if let Some(paint) = self.parse_paint(paint_offset, depth + 1) {
+                        layers.push(paint);
+                    }
+                }
+                Some(Paint::Layers(layers))
+            }
+            // PaintSolid / PaintVarSolid
+            2 | 3 => {
+                let index = u16_at(data, offset + 1);
+                let alpha = f2dot14(data, offset + 3);
+                self.palette_paint(index, alpha)
+            }
+            // PaintLinearGradient / PaintVarLinearGradient
+            4 | 5 => {
+                let (extend, stops) =
+                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize)?;
+                Some(Paint::Linear {
+                    p0: [fword(data, offset + 4), fword(data, offset + 6)],
+                    p1: [fword(data, offset + 8), fword(data, offset + 10)],
+                    stops,
+                    extend,
+                })
+            }
+            // PaintRadialGradient / PaintVarRadialGradient
+            6 | 7 => {
+                let (extend, stops) =
+                    self.parse_color_line(offset + u24_at(data, offset + 1) as usize)?;
+                Some(Paint::Radial {
+                    c0: [fword(data, offset + 4), fword(data, offset + 6)],
+                    r0: u16_at(data, offset + 8) as f32,
+                    c1: [fword(data, offset + 10), fword(data, offset + 12)],
+                    r1: u16_at(data, offset + 14) as f32,
+                    stops,
+                    extend,
+                })
+            }
+            // PaintGlyph
+            10 => {
+                let paint_offset = offset + u24_at(data, offset + 1) as usize;
+                let glyph = u16_at(data, offset + 4);
+                Some(Paint::Glyph {
+                    glyph,
+                    paint: Box::new(self.parse_paint(paint_offset, depth + 1)?),
+                })
+            }
+            // PaintColrGlyph: reuse another base glyph's paint graph.
+            11 => {
+                let glyph = u16_at(data, offset + 1);
+                let list = self.colors.as_ref()?.base_list?;
+                let paint_offset = self.paint_offset(glyph, list)?;
+                self.parse_paint(paint_offset, depth + 1)
+            }
+            // PaintTransform / PaintVarTransform
+            12 | 13 => {
+                let paint_offset = offset + u24_at(data, offset + 1) as usize;
+                let affine = offset + u24_at(data, offset + 4) as usize;
+                let matrix = [
+                    fixed(data, affine),
+                    fixed(data, affine + 4),
+                    fixed(data, affine + 8),
+                    fixed(data, affine + 12),
+                    fixed(data, affine + 16),
+                    fixed(data, affine + 20),
+                ];
+                Some(Paint::Transform {
+                    matrix,
+                    paint: Box::new(self.parse_paint(paint_offset, depth + 1)?),
+                })
+            }
+            // Translate / Scale / Rotate / Skew, with and without a centre.
+            14..=31 => {
+                let paint_offset = offset + u24_at(data, offset + 1) as usize;
+                let matrix = self.simple_transform(offset)?;
+                Some(Paint::Transform {
+                    matrix,
+                    paint: Box::new(self.parse_paint(paint_offset, depth + 1)?),
+                })
+            }
+            // PaintComposite
+            32 => {
+                let source = offset + u24_at(data, offset + 1) as usize;
+                let backdrop = offset + u24_at(data, offset + 5) as usize;
+                Some(Paint::Composite {
+                    source: Box::new(self.parse_paint(source, depth + 1)?),
+                    backdrop: Box::new(self.parse_paint(backdrop, depth + 1)?),
+                })
+            }
+            _ => None,
+        }
+    }
+
+    /// Builds the affine matrix of a simple transform paint table.
+    fn simple_transform(&self, offset: usize) -> Option<[f32; 6]> {
+        let data = &self.data;
+        let format = u8_at(data, offset);
+        let angle = |o: usize| f2dot14(data, o).to_radians();
+        Some(match format {
+            // Translate
+            14 | 15 => [
+                1.0,
+                0.0,
+                0.0,
+                1.0,
+                fword(data, offset + 4),
+                fword(data, offset + 6),
+            ],
+            // Scale
+            16 | 17 => [
+                f2dot14(data, offset + 4),
+                0.0,
+                0.0,
+                f2dot14(data, offset + 6),
+                0.0,
+                0.0,
+            ],
+            // ScaleAroundCenter
+            18 | 19 => {
+                let sx = f2dot14(data, offset + 8);
+                let sy = f2dot14(data, offset + 10);
+                around_center(
+                    [sx, 0.0, 0.0, sy, 0.0, 0.0],
+                    fword(data, offset + 4),
+                    fword(data, offset + 6),
+                )
+            }
+            // ScaleUniform
+            20 | 21 => {
+                let s = f2dot14(data, offset + 4);
+                [s, 0.0, 0.0, s, 0.0, 0.0]
+            }
+            // ScaleUniformAroundCenter
+            22 | 23 => {
+                let s = f2dot14(data, offset + 4);
+                around_center(
+                    [s, 0.0, 0.0, s, 0.0, 0.0],
+                    fword(data, offset + 6),
+                    fword(data, offset + 8),
+                )
+            }
+            // Rotate
+            24 | 25 => {
+                let a = angle(offset + 4);
+                let (sin, cos) = a.sin_cos();
+                [cos, sin, -sin, cos, 0.0, 0.0]
+            }
+            // RotateAroundCenter
+            26 | 27 => {
+                let a = angle(offset + 4);
+                let (sin, cos) = a.sin_cos();
+                around_center(
+                    [cos, sin, -sin, cos, 0.0, 0.0],
+                    fword(data, offset + 6),
+                    fword(data, offset + 8),
+                )
+            }
+            // Skew
+            28 | 29 => {
+                let x = f2dot14(data, offset + 4).to_radians().tan();
+                let y = f2dot14(data, offset + 6).to_radians().tan();
+                [1.0, y, x, 1.0, 0.0, 0.0]
+            }
+            // SkewAroundCenter
+            30 | 31 => {
+                let x = f2dot14(data, offset + 4).to_radians().tan();
+                let y = f2dot14(data, offset + 6).to_radians().tan();
+                around_center(
+                    [1.0, y, x, 1.0, 0.0, 0.0],
+                    fword(data, offset + 8),
+                    fword(data, offset + 10),
+                )
+            }
+            _ => return None,
+        })
+    }
+
+    /// Resolves a palette index (0xFFFF = text foreground) into a paint.
+    fn palette_paint(&self, index: u16, alpha: f32) -> Option<Paint> {
+        if index == 0xFFFF {
+            return Some(Paint::Foreground);
+        }
+        let color = self.colors.as_ref()?.palette.get(index as usize)?;
+        let a = (color.a as f32 * alpha.clamp(0.0, 1.0))
+            .round()
+            .clamp(0.0, 255.0) as u8;
+        Some(Paint::Solid {
+            color: Color::rgba(color.r, color.g, color.b, a),
+        })
+    }
+
+    /// Reads a gradient colour line (extend mode plus sorted stops).
+    fn parse_color_line(&self, offset: usize) -> Option<(Extend, Vec<GradientStop>)> {
+        let data = &self.data;
+        let extend = match u8_at(data, offset) {
+            1 => Extend::Repeat,
+            2 => Extend::Reflect,
+            _ => Extend::Pad,
+        };
+        let count = u16_at(data, offset + 1) as usize;
+        let mut stops = Vec::with_capacity(count);
+        for i in 0..count {
+            let p = offset + 3 + i * 6;
+            let stop_offset = i16_at(data, p) as f32 / 16384.0;
+            let index = u16_at(data, p + 2);
+            let alpha = i16_at(data, p + 4) as f32 / 16384.0;
+            let color = if index == 0xFFFF {
+                Color::BLACK
+            } else {
+                let base = *self.colors.as_ref()?.palette.get(index as usize)?;
+                Color::rgba(
+                    base.r,
+                    base.g,
+                    base.b,
+                    (base.a as f32 * alpha.clamp(0.0, 1.0))
+                        .round()
+                        .clamp(0.0, 255.0) as u8,
+                )
+            };
+            stops.push(GradientStop {
+                offset: stop_offset,
+                color,
+            });
+        }
+        stops.sort_by(|a, b| {
+            a.offset
+                .partial_cmp(&b.offset)
+                .unwrap_or(std::cmp::Ordering::Equal)
+        });
+        Some((extend, stops))
     }
 
     /// Family name (best effort).
@@ -637,12 +997,59 @@ fn parse_colors(data: &[u8], colr: usize, cpal: usize) -> Option<ColorGlyphs> {
             u8_at(data, p + 3),
         ));
     }
+    // COLR v1 adds a paint-graph list; v0-only fonts leave these empty.
+    let (base_list, layer_list) = if u16_at(data, colr) >= 1 {
+        let base = u32_at(data, colr + 14) as usize;
+        let layers = u32_at(data, colr + 18) as usize;
+        if base != 0 && layers != 0 {
+            (Some(colr + base), Some(colr + layers))
+        } else {
+            (None, None)
+        }
+    } else {
+        (None, None)
+    };
     Some(ColorGlyphs {
         base_records,
         num_base,
         layer_records,
         palette,
+        base_list,
+        layer_list,
     })
+}
+
+fn u24_at(data: &[u8], off: usize) -> u32 {
+    ((u8_at(data, off) as u32) << 16)
+        | ((u8_at(data, off + 1) as u32) << 8)
+        | u8_at(data, off + 2) as u32
+}
+
+fn fword(data: &[u8], off: usize) -> f32 {
+    i16_at(data, off) as f32
+}
+
+fn fixed(data: &[u8], off: usize) -> f32 {
+    i32::from_be_bytes([
+        u8_at(data, off),
+        u8_at(data, off + 1),
+        u8_at(data, off + 2),
+        u8_at(data, off + 3),
+    ]) as f32
+        / 65536.0
+}
+
+/// Builds a transform that scales/rotates around `(cx, cy)`.
+fn around_center(m: [f32; 6], cx: f32, cy: f32) -> [f32; 6] {
+    let [a, b, c, d, e, f] = m;
+    [
+        a,
+        b,
+        c,
+        d,
+        e + cx - a * cx - c * cy,
+        f + cy - b * cx - d * cy,
+    ]
 }
 
 fn f2dot14(data: &[u8], off: usize) -> f32 {
@@ -1239,5 +1646,44 @@ mod tests {
         // Whatever the file is, the flags must be self-consistent.
         assert_eq!(face.is_bold(), face.is_bold());
         assert_eq!(face.is_italic(), face.is_italic());
+    }
+
+    #[test]
+    fn colrv1_paint_graph_uses_gradients() {
+        let set = discover();
+        let Some(loaded) = set.load() else { return };
+        let Some(face) = loaded.find('❤', false, false, false) else {
+            return;
+        };
+        let Some(paint) = face.color_paint(face.glyph_id('❤')) else {
+            eprintln!("skipping: no COLRv1 paint graph");
+            return;
+        };
+        fn walk(p: &Paint, gradients: &mut usize, solids: &mut usize, depth: usize) {
+            if depth > 24 {
+                return;
+            }
+            match p {
+                Paint::Linear { .. } | Paint::Radial { .. } => *gradients += 1,
+                Paint::Solid { .. } => *solids += 1,
+                Paint::Layers(items) => {
+                    for item in items {
+                        walk(item, gradients, solids, depth + 1);
+                    }
+                }
+                Paint::Glyph { paint, .. } | Paint::Transform { paint, .. } => {
+                    walk(paint, gradients, solids, depth + 1);
+                }
+                Paint::Composite { source, backdrop } => {
+                    walk(source, gradients, solids, depth + 1);
+                    walk(backdrop, gradients, solids, depth + 1);
+                }
+                Paint::Foreground => {}
+            }
+        }
+        let (mut gradients, mut solids) = (0, 0);
+        walk(&paint, &mut gradients, &mut solids, 0);
+        assert!(gradients > 0, "expected gradient paints in the heart");
+        assert!(solids + gradients > 1, "expected several paint layers");
     }
 }

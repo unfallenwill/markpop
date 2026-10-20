@@ -9,7 +9,7 @@
 //! and its SVG counterpart break lines at exactly the same places.
 
 use crate::color::Color;
-use crate::font::{Contour, LoadedFonts, Point};
+use crate::font::{Contour, Extend, GradientStop, LoadedFonts, Paint as ColorPaint, Point};
 use crate::scene::{Draw, FontKind, LineDraw, RectDraw, Scene, TextDraw};
 use crate::text::{Metrics, TextStyle};
 
@@ -126,7 +126,7 @@ impl Rasterizer {
         let radius = (r.radius * self.scale).min(w.min(h) * 0.5).max(0.0);
         let poly = rounded_rect(x, y, w, h, radius);
         if let Some(fill) = r.fill {
-            fill_polygons(bmp, std::slice::from_ref(&poly), fill);
+            fill_polygons(bmp, std::slice::from_ref(&poly), &Fill::Solid(fill));
         }
         if let Some(stroke) = r.stroke {
             let sw = r.stroke_width * self.scale;
@@ -170,7 +170,7 @@ impl Rasterizer {
                 y: p0.y - ny,
             },
         ];
-        fill_polygons(bmp, &[quad], l.color);
+        fill_polygons(bmp, &[quad], &Fill::Solid(l.color));
     }
 
     fn draw_text(&self, bmp: &mut Bitmap, t: &TextDraw, fonts: &LoadedFonts) {
@@ -196,7 +196,7 @@ impl Rasterizer {
         // Groups of outlines sharing one paint, drawn in order. Colour glyphs
         // contribute one group per COLR layer; ordinary text contributes one
         // group with the text colour.
-        let mut groups: Vec<(Vec<Contour>, Color)> = Vec::new();
+        let mut groups: Vec<(Vec<Contour>, Fill)> = Vec::new();
         // Faux-bold offset, used only when the font has no bold design.
         let bold_dx = (size_px * 0.055).max(0.45);
 
@@ -215,18 +215,21 @@ impl Rasterizer {
                 let k = size_px / face.units_per_em();
                 if !ch.is_whitespace() && gid != 0 {
                     let flatness = (0.35 / k).max(0.5);
-                    if let Some(layers) = face.color_layers(gid) {
-                        // Draw the font's own layered design: exact outlines,
-                        // exact palette. No synthesis on colour glyphs.
-                        for layer in layers {
-                            let mut polys = Vec::with_capacity(1);
-                            for contour in face.outline(layer.glyph, flatness) {
-                                push_contour(&mut polys, &contour, pen, baseline, k, false, 0.0);
-                            }
-                            if !polys.is_empty() {
-                                groups.push((polys, layer.color));
-                            }
-                        }
+                    if let Some(paint) = face.color_paint(gid) {
+                        // Draw the font's own paint graph: exact outlines, exact
+                        // palette, gradients and transforms. No synthesis.
+                        self.emit_paint(
+                            &mut groups,
+                            face,
+                            &paint,
+                            Affine::IDENTITY,
+                            pen,
+                            baseline,
+                            k,
+                            flatness,
+                            t.color,
+                            0,
+                        );
                     } else {
                         // Synthesise weight/slant only when the face itself is
                         // not the requested design.
@@ -242,7 +245,7 @@ impl Rasterizer {
                             }
                         }
                         if !polys.is_empty() {
-                            groups.push((polys, t.color));
+                            groups.push((polys, Fill::Solid(t.color)));
                         }
                     }
                 }
@@ -255,10 +258,165 @@ impl Rasterizer {
             }
             pen += advance.unwrap_or_else(|| metrics.advance(ch, &style) * self.scale);
         }
-        for (polys, color) in groups {
-            fill_polygons(bmp, &polys, color);
+        for (polys, fill) in groups {
+            fill_polygons(bmp, &polys, &fill);
         }
     }
+
+    /// Walks a COLR paint graph and appends filled regions to `out`.
+    ///
+    /// `xf` accumulates COLR transforms (in font units); glyph outlines are
+    /// transformed before being mapped to pixels, so the font's geometry is
+    /// preserved exactly.
+    #[allow(clippy::too_many_arguments)]
+    fn emit_paint(
+        &self,
+        out: &mut Vec<(Vec<Contour>, Fill)>,
+        face: &crate::font::Face,
+        paint: &ColorPaint,
+        xf: Affine,
+        pen: f32,
+        baseline: f32,
+        k: f32,
+        flatness: f32,
+        foreground: Color,
+        depth: u32,
+    ) {
+        if depth > 24 {
+            return;
+        }
+        match paint {
+            ColorPaint::Layers(layers) => {
+                for layer in layers {
+                    self.emit_paint(
+                        out,
+                        face,
+                        layer,
+                        xf,
+                        pen,
+                        baseline,
+                        k,
+                        flatness,
+                        foreground,
+                        depth + 1,
+                    );
+                }
+            }
+            ColorPaint::Transform { matrix, paint } => {
+                self.emit_paint(
+                    out,
+                    face,
+                    paint,
+                    xf.compose(*matrix),
+                    pen,
+                    baseline,
+                    k,
+                    flatness,
+                    foreground,
+                    depth + 1,
+                );
+            }
+            ColorPaint::Composite { source, backdrop } => {
+                self.emit_paint(
+                    out,
+                    face,
+                    backdrop,
+                    xf,
+                    pen,
+                    baseline,
+                    k,
+                    flatness,
+                    foreground,
+                    depth + 1,
+                );
+                self.emit_paint(
+                    out,
+                    face,
+                    source,
+                    xf,
+                    pen,
+                    baseline,
+                    k,
+                    flatness,
+                    foreground,
+                    depth + 1,
+                );
+            }
+            ColorPaint::Glyph { glyph, paint } => {
+                let Some(fill) = resolve_fill(paint, xf, pen, baseline, k, foreground) else {
+                    return;
+                };
+                let mut polys = Vec::new();
+                for contour in face.outline(*glyph, flatness) {
+                    let transformed: Contour = contour.iter().map(|p| xf.apply(*p)).collect();
+                    push_contour(&mut polys, &transformed, pen, baseline, k, false, 0.0);
+                }
+                if !polys.is_empty() {
+                    out.push((polys, fill));
+                }
+            }
+            // A solid or gradient alone has no shape to fill.
+            ColorPaint::Solid { .. }
+            | ColorPaint::Foreground
+            | ColorPaint::Linear { .. }
+            | ColorPaint::Radial { .. } => {}
+        }
+    }
+}
+
+/// Turns a paint into a fill, descending through transforms.
+///
+/// `xf` accumulates the transforms that wrap the paint, so both the glyph
+/// outline and the gradient geometry go through the same affine.
+fn resolve_fill(
+    paint: &ColorPaint,
+    xf: Affine,
+    pen: f32,
+    baseline: f32,
+    k: f32,
+    foreground: Color,
+) -> Option<Fill> {
+    let to_px = |p: [f32; 2]| {
+        let q = xf.apply(Point { x: p[0], y: p[1] });
+        Point {
+            x: pen + q.x * k,
+            y: baseline - q.y * k,
+        }
+    };
+    Some(match paint {
+        ColorPaint::Solid { color } => Fill::Solid(*color),
+        ColorPaint::Foreground => Fill::Solid(foreground),
+        ColorPaint::Transform { matrix, paint } => {
+            return resolve_fill(paint, xf.compose(*matrix), pen, baseline, k, foreground);
+        }
+        ColorPaint::Linear {
+            p0,
+            p1,
+            stops,
+            extend,
+        } => Fill::Linear {
+            p0: to_px(*p0),
+            p1: to_px(*p1),
+            stops: stops.clone(),
+            extend: *extend,
+        },
+        ColorPaint::Radial {
+            c0,
+            r0,
+            c1,
+            r1,
+            stops,
+            extend,
+        } => Fill::Radial {
+            c0: to_px(*c0),
+            r0: r0 * xf.scale() * k,
+            c1: to_px(*c1),
+            r1: r1 * xf.scale() * k,
+            stops: stops.clone(),
+            extend: *extend,
+        },
+        _ => return None,
+    })
 }
 
 /// Transforms one glyph contour from font units into pixel space.
@@ -352,8 +510,182 @@ fn stroke_polyline(bmp: &mut Bitmap, poly: &[Point], width: f32, color: Color) {
                 y: a.y - ny,
             },
         ];
-        fill_polygons(bmp, &[quad], color);
+        fill_polygons(bmp, &[quad], &Fill::Solid(color));
     }
+}
+
+/// An affine transform in font units: `x' = a·x + c·y + e`,
+/// `y' = b·x + d·y + f`.
+#[derive(Debug, Clone, Copy)]
+struct Affine {
+    a: f32,
+    b: f32,
+    c: f32,
+    d: f32,
+    e: f32,
+    f: f32,
+}
+
+impl Affine {
+    const IDENTITY: Affine = Affine {
+        a: 1.0,
+        b: 0.0,
+        c: 0.0,
+        d: 1.0,
+        e: 0.0,
+        f: 0.0,
+    };
+
+    fn apply(self, p: Point) -> Point {
+        Point {
+            x: self.a * p.x + self.c * p.y + self.e,
+            y: self.b * p.x + self.d * p.y + self.f,
+        }
+    }
+
+    /// Returns `self ∘ inner`: `inner` is applied first.
+    fn compose(self, inner: [f32; 6]) -> Affine {
+        Affine {
+            a: self.a * inner[0] + self.c * inner[1],
+            b: self.b * inner[0] + self.d * inner[1],
+            c: self.a * inner[2] + self.c * inner[3],
+            d: self.b * inner[2] + self.d * inner[3],
+            e: self.a * inner[4] + self.c * inner[5] + self.e,
+            f: self.b * inner[4] + self.d * inner[5] + self.f,
+        }
+    }
+
+    /// Average scale factor, used to scale gradient radii.
+    fn scale(self) -> f32 {
+        let sx = (self.a * self.a + self.b * self.b).sqrt();
+        let sy = (self.c * self.c + self.d * self.d).sqrt();
+        ((sx + sy) * 0.5).max(0.01)
+    }
+}
+
+/// How a filled region is painted: a solid colour or a gradient.
+#[derive(Debug, Clone)]
+pub enum Fill {
+    /// A single colour.
+    Solid(Color),
+    /// Linear gradient between two pixel-space points.
+    Linear {
+        p0: Point,
+        p1: Point,
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
+    /// Radial gradient between two pixel-space circles.
+    Radial {
+        c0: Point,
+        r0: f32,
+        c1: Point,
+        r1: f32,
+        stops: Vec<GradientStop>,
+        extend: Extend,
+    },
+}
+
+impl Fill {
+    /// Colour of this paint at a pixel centre.
+    fn color_at(&self, x: f32, y: f32) -> Color {
+        match self {
+            Fill::Solid(color) => *color,
+            Fill::Linear {
+                p0,
+                p1,
+                stops,
+                extend,
+            } => {
+                let (dx, dy) = (p1.x - p0.x, p1.y - p0.y);
+                let denom = dx * dx + dy * dy;
+                let t = if denom <= 1e-6 {
+                    0.0
+                } else {
+                    ((x - p0.x) * dx + (y - p0.y) * dy) / denom
+                };
+                sample_stops(stops, t, *extend)
+            }
+            Fill::Radial {
+                c0,
+                r0,
+                c1,
+                r1,
+                stops,
+                extend,
+            } => {
+                // Solve |p - c(t)|² = r(t)² for the two-circle gradient.
+                let (dcx, dcy) = (c1.x - c0.x, c1.y - c0.y);
+                let (vx, vy) = (x - c0.x, y - c0.y);
+                let dr = r1 - r0;
+                let a = dcx * dcx + dcy * dcy - dr * dr;
+                let b = -2.0 * (vx * dcx + vy * dcy + r0 * dr);
+                let c = vx * vx + vy * vy - r0 * r0;
+                let t = if a.abs() < 1e-6 {
+                    if b.abs() < 1e-6 { 0.0 } else { -c / b }
+                } else {
+                    let disc = b * b - 4.0 * a * c;
+                    if disc < 0.0 {
+                        0.0
+                    } else {
+                        let sq = disc.sqrt();
+                        let t1 = (-b - sq) / (2.0 * a);
+                        let t2 = (-b + sq) / (2.0 * a);
+                        if t1 >= 0.0 && t2 >= 0.0 {
+                            t1.min(t2)
+                        } else if t1 >= 0.0 {
+                            t1
+                        } else if t2 >= 0.0 {
+                            t2
+                        } else {
+                            t1.max(t2)
+                        }
+                    }
+                };
+                sample_stops(stops, t, *extend)
+            }
+        }
+    }
+}
+
+/// Samples a colour line, applying the gradient's extend mode.
+fn sample_stops(stops: &[GradientStop], t: f32, extend: Extend) -> Color {
+    let Some(first) = stops.first() else {
+        return Color::TRANSPARENT;
+    };
+    let t = match extend {
+        Extend::Pad => t.clamp(0.0, 1.0),
+        Extend::Repeat => t.rem_euclid(1.0),
+        Extend::Reflect => {
+            let m = t.rem_euclid(2.0);
+            if m > 1.0 { 2.0 - m } else { m }
+        }
+    };
+    if t <= first.offset {
+        return first.color;
+    }
+    for pair in stops.windows(2) {
+        let (a, b) = (pair[0], pair[1]);
+        if t <= b.offset {
+            let span = b.offset - a.offset;
+            let f = if span > 1e-6 {
+                (t - a.offset) / span
+            } else {
+                1.0
+            };
+            return lerp_color(a.color, b.color, f);
+        }
+    }
+    stops[stops.len() - 1].color
+}
+
+fn lerp_color(a: Color, b: Color, t: f32) -> Color {
+    let mix = |x: u8, y: u8| {
+        (x as f32 + (y as f32 - x as f32) * t)
+            .round()
+            .clamp(0.0, 255.0) as u8
+    };
+    Color::rgba(mix(a.r, b.r), mix(a.g, b.g), mix(a.b, b.b), mix(a.a, b.a))
 }
 
 /// An edge of a filled polygon, oriented top-to-bottom with a winding sign.
@@ -369,8 +701,10 @@ struct Edge {
 ///
 /// Horizontal coverage is exact (fractional spans), vertical coverage uses
 /// four sub-scanlines.
-pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], color: Color) {
-    if color.a == 0 {
+pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], fill: &Fill) {
+    if let Fill::Solid(color) = fill
+        && color.a == 0
+    {
         return;
     }
     let mut edges = Vec::new();
@@ -465,6 +799,7 @@ pub fn fill_polygons(bmp: &mut Bitmap, polys: &[Contour], color: Color) {
         for (offset, &c) in coverage[px_start..px_end].iter().enumerate() {
             let c = c.min(1.0);
             if c > 0.002 {
+                let color = fill.color_at((px_start + offset) as f32 + 0.5, py as f32 + 0.5);
                 bmp.blend(px_start + offset, py as usize, color, c);
             }
         }
@@ -820,5 +1155,156 @@ mod tests {
                 .any(|(r, g, b)| (*g as i16) > (*r as i16) + 20 && (*g as i16) > (*b as i16) + 20),
             "expected the palette's green fill: {colors:?}"
         );
+    }
+
+    fn ramp(stops: Vec<GradientStop>) -> Fill {
+        Fill::Linear {
+            p0: Point { x: 0.0, y: 0.0 },
+            p1: Point { x: 100.0, y: 0.0 },
+            stops,
+            extend: Extend::Pad,
+        }
+    }
+
+    fn black_to_white() -> Vec<GradientStop> {
+        vec![
+            GradientStop {
+                offset: 0.0,
+                color: Color::BLACK,
+            },
+            GradientStop {
+                offset: 1.0,
+                color: Color::WHITE,
+            },
+        ]
+    }
+
+    #[test]
+    fn linear_gradient_samples_along_its_axis() {
+        let fill = ramp(black_to_white());
+        assert_eq!(fill.color_at(0.0, 0.0), Color::BLACK);
+        assert_eq!(fill.color_at(100.0, 0.0), Color::WHITE);
+        let mid = fill.color_at(50.0, 0.0);
+        assert!(mid.r > 120 && mid.r < 135, "{mid:?}");
+        // Perpendicular position does not change the colour.
+        assert_eq!(fill.color_at(50.0, 500.0), mid);
+    }
+
+    #[test]
+    fn gradient_extend_modes_wrap_the_colour_line() {
+        let pad = ramp(black_to_white());
+        assert_eq!(pad.color_at(150.0, 0.0), Color::WHITE);
+
+        let repeat = Fill::Linear {
+            p0: Point { x: 0.0, y: 0.0 },
+            p1: Point { x: 100.0, y: 0.0 },
+            stops: black_to_white(),
+            extend: Extend::Repeat,
+        };
+        // t = 1.25 wraps to 0.25.
+        let c = repeat.color_at(125.0, 0.0);
+        assert!(c.r > 55 && c.r < 70, "{c:?}");
+
+        let reflect = Fill::Linear {
+            p0: Point { x: 0.0, y: 0.0 },
+            p1: Point { x: 100.0, y: 0.0 },
+            stops: black_to_white(),
+            extend: Extend::Reflect,
+        };
+        // t = 1.75 reflects to 0.25 as well.
+        let c = reflect.color_at(175.0, 0.0);
+        assert!(c.r > 55 && c.r < 70, "{c:?}");
+    }
+
+    #[test]
+    fn radial_gradient_maps_radius_to_the_colour_line() {
+        let fill = Fill::Radial {
+            c0: Point { x: 50.0, y: 50.0 },
+            r0: 0.0,
+            c1: Point { x: 50.0, y: 50.0 },
+            r1: 50.0,
+            stops: black_to_white(),
+            extend: Extend::Pad,
+        };
+        assert_eq!(fill.color_at(50.0, 50.0), Color::BLACK);
+        assert_eq!(fill.color_at(100.0, 50.0), Color::WHITE);
+        let mid = fill.color_at(75.0, 50.0);
+        assert!(mid.r > 120 && mid.r < 135, "{mid:?}");
+    }
+
+    #[test]
+    fn gradients_paint_a_visible_ramp() {
+        let mut scene = Scene {
+            width: 100.0,
+            height: 20.0,
+            background: Some(RectDraw::new(0.0, 0.0, 100.0, 20.0).with_fill(Color::WHITE)),
+            draws: vec![],
+        };
+        let mut bmp = Bitmap::new(100, 20);
+        let square = vec![
+            Point { x: 0.0, y: 0.0 },
+            Point { x: 100.0, y: 0.0 },
+            Point { x: 100.0, y: 20.0 },
+            Point { x: 0.0, y: 20.0 },
+        ];
+        fill_polygons(&mut bmp, &[square], &ramp(black_to_white()));
+        let left = bmp.pixel(2, 10);
+        let right = bmp.pixel(97, 10);
+        assert!(left[0] < 30, "left should be dark: {left:?}");
+        assert!(right[0] > 225, "right should be light: {right:?}");
+        let middle = bmp.pixel(50, 10);
+        assert!(middle[0] > left[0] && middle[0] < right[0]);
+        scene.draws.clear();
+    }
+
+    #[test]
+    fn gradient_emoji_renders_many_intermediate_colours() {
+        let Some(fonts) = test_fonts() else { return };
+        let scene = Scene {
+            width: 160.0,
+            height: 160.0,
+            background: Some(RectDraw::new(0.0, 0.0, 160.0, 160.0).with_fill(Color::WHITE)),
+            draws: vec![Draw::Text(TextDraw {
+                x: 20.0,
+                y: 130.0,
+                text: "🔥".into(),
+                size: 120.0,
+                family: FontKind::Sans,
+                color: Color::BLACK,
+                bold: false,
+                italic: false,
+                underline: false,
+                strike: false,
+                letter_spacing: 0.0,
+            })],
+        };
+        let has_color = fonts
+            .find('🔥', false, false, false)
+            .is_some_and(|f| f.has_color_glyphs());
+        if !has_color {
+            eprintln!("skipping: no colour emoji font installed");
+            return;
+        }
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
+        let mut colors = std::collections::HashSet::new();
+        let mut warm = 0usize;
+        for px in bmp.data.as_chunks::<4>().0 {
+            if px[3] > 200 {
+                colors.insert((px[0], px[1], px[2]));
+                if px[0] > 200 && px[1] > 100 && px[2] < 140 {
+                    warm += 1;
+                }
+            }
+        }
+        if colors.len() < 10 {
+            eprintln!("skipping: emoji rendered without colour");
+            return;
+        }
+        assert!(
+            colors.len() > 50,
+            "gradients should produce many shades, got {}",
+            colors.len()
+        );
+        assert!(warm > 100, "expected warm flame colours, got {warm} pixels");
     }
 }
