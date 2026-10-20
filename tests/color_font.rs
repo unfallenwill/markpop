@@ -62,6 +62,10 @@ fn glyf_and_loca(glyphs: &[Glyph]) -> (Vec<u8>, Vec<u8>) {
     let mut loca = Vec::new();
     for glyph in glyphs {
         loca.extend_from_slice(&((glyf.len() / 2) as u16).to_be_bytes());
+        // An empty glyph shares its offset with the next one: no outline.
+        if glyph.is_empty() {
+            continue;
+        }
         glyf.extend_from_slice(&glyph_bytes(glyph));
         // Keep every glyph 4-byte aligned, as loca assumes padding.
         while glyf.len() % 4 != 0 {
@@ -387,11 +391,13 @@ fn face(tables: FontBuilder, colr: Vec<u8>) -> Face {
     Face::from_bytes(font, 0).expect("synthetic font parses")
 }
 
+/// Face with an empty `.notdef`, a triangle at glyph 1 and a square at 2.
+fn shape_glyphs() -> Vec<Glyph> {
+    vec![Vec::new(), triangle(), square()]
+}
+
 fn triangle_face(colr: ColrBuilder) -> Face {
-    face(
-        FontBuilder::with_base(&[triangle(), square()]),
-        colr.build(),
-    )
+    face(FontBuilder::with_base(&shape_glyphs()), colr.build())
 }
 
 // ---------------------------------------------------------------------------
@@ -583,7 +589,7 @@ fn variable_solid_alpha_follows_the_axis() {
     let colr = ColrBuilder::new(paint, &[(1, glyph_at)])
         .variations(item_variation_store(8192)) // +0.5 alpha
         .build();
-    let font = FontBuilder::with_base(&[triangle(), square()])
+    let font = FontBuilder::with_base(&shape_glyphs())
         .table(b"fvar", fvar_table())
         .table(b"COLR", colr)
         .table(b"CPAL", cpal_table())
@@ -830,4 +836,22 @@ fn composite_paint_modes_reach_the_rasterizer() {
         transparent_inside > 0,
         "XOR should clear the overlapping area"
     );
+}
+
+#[test]
+#[ignore = "writes a preview image for manual inspection"]
+fn dump_sweep_preview() {
+    let mut paint = PaintArea::default();
+    let glyph_at = paint.start(&glyph_paint(1));
+    let sweep_at = paint.start(&sweep_paint((500, 400), 0.0, 360.0));
+    paint.link(glyph_at, 1, sweep_at);
+    let line = color_line(0, &[(0.0, 0, 1.0), (0.5, 1, 1.0), (1.0, 0, 1.0)], false);
+    let line_at = paint.start(&line);
+    paint.link(sweep_at, 1, line_at);
+    let face = triangle_face(ColrBuilder::new(paint, &[(1, glyph_at)]));
+    let bmp = render_glyph(face, 'A', 400.0);
+    let png = markdown2svg::encode::png::encode(bmp.width, bmp.height, &bmp.data);
+    let path = std::env::temp_dir().join("markdown2svg-sweep.png");
+    std::fs::write(&path, png).unwrap();
+    eprintln!("wrote {}", path.display());
 }
