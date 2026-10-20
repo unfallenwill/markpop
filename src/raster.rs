@@ -303,8 +303,10 @@ impl Rasterizer {
                 if face.has_glyph(ch) {
                     // Use the font's own advance here: this is what a browser
                     // does for the SVG output, so raster and vector text end up
-                    // with the same spacing. Layout still uses `Metrics`.
-                    advance = Some(face.advance(gid) * k);
+                    // with the same spacing. Tracking is added on top, exactly
+                    // like the `letter-spacing` attribute the SVG carries (and
+                    // like `Metrics` reserved during layout).
+                    advance = Some(face.advance(gid) * k + t.letter_spacing * self.scale);
                 }
             }
             pen += advance.unwrap_or_else(|| metrics.advance(ch, &style) * self.scale);
@@ -2128,5 +2130,93 @@ mod tests {
         // Inside the target, the source wins; outside it nothing leaks.
         assert_eq!(bmp.pixel(10, 30), [0, 128, 0, 255]);
         assert_eq!(bmp.pixel(55, 30)[3], 0);
+    }
+
+    /// Horizontal ink span (first and last inked column) of a text run.
+    fn ink_span(fonts: &LoadedFonts, text: &str, size: f32, spacing: f32) -> Option<(u32, u32)> {
+        let scene = Scene {
+            width: 600.0,
+            height: size * 2.0,
+            background: None,
+            draws: vec![Draw::Text(TextDraw {
+                x: 20.0,
+                y: size * 1.5,
+                text: text.into(),
+                size,
+                family: FontKind::Sans,
+                color: Color::BLACK,
+                bold: false,
+                italic: false,
+                underline: false,
+                strike: false,
+                letter_spacing: spacing,
+            })],
+        };
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, fonts);
+        let mut span: Option<(u32, u32)> = None;
+        for x in 0..bmp.width {
+            let inked = (0..bmp.height).any(|y| bmp.pixel(x, y)[3] > 32);
+            if inked {
+                span = Some(match span {
+                    Some((first, _)) => (first, x),
+                    None => (x, x),
+                });
+            }
+        }
+        span
+    }
+
+    #[test]
+    fn letter_spacing_widens_raster_text() {
+        let Some(fonts) = test_fonts() else {
+            eprintln!("skipping: no fonts");
+            return;
+        };
+        // Four narrow glyphs: three gaps between them can grow.
+        let Some((plain_first, plain_last)) = ink_span(&fonts, "iiii", 40.0, 0.0) else {
+            eprintln!("skipping: no ink");
+            return;
+        };
+        let Some((wide_first, wide_last)) = ink_span(&fonts, "iiii", 40.0, 20.0) else {
+            eprintln!("skipping: no ink");
+            return;
+        };
+        assert_eq!(plain_first, wide_first, "the run must start at the same x");
+        let plain = plain_last - plain_first;
+        let wide = wide_last - wide_first;
+        // Three inter-glyph gaps of 20px each.
+        let expected = plain as i64 + 60;
+        assert!(
+            (wide as i64 - expected).abs() <= 6,
+            "letter spacing should add 3 x 20px: {plain} -> {wide} (expected ~{expected})"
+        );
+    }
+
+    #[test]
+    fn letter_spacing_matches_the_layout_metrics() {
+        // The raster advance must agree with the width the layout reserved,
+        // otherwise text overflows its box or leaves a gap.
+        let Some(fonts) = test_fonts() else {
+            eprintln!("skipping: no fonts");
+            return;
+        };
+        let style = TextStyle {
+            size: 20.0,
+            family: FontKind::Sans,
+            bold: false,
+            italic: false,
+            letter_spacing: 0.25,
+        };
+        let metrics = Metrics::new();
+        let reserved: f32 = "MMMM".chars().map(|c| metrics.advance(c, &style)).sum();
+        let Some((first, last)) = ink_span(&fonts, "MMMM", 20.0, 5.0) else {
+            eprintln!("skipping: no ink");
+            return;
+        };
+        let drawn = (last - first) as f32 + 5.0;
+        assert!(
+            drawn < reserved + 4.0,
+            "raster text is wider than the layout reserved: {drawn} > {reserved}"
+        );
     }
 }
