@@ -193,13 +193,16 @@ impl Rasterizer {
         let size_px = t.size * self.scale;
         let baseline = t.y * self.scale;
         let mut pen = t.x * self.scale;
-        let mut polys: Vec<Contour> = Vec::new();
-        // Faux-bold offset; real bold faces are not required.
+        // Groups of outlines sharing one paint, drawn in order. Colour glyphs
+        // contribute one group per COLR layer; ordinary text contributes one
+        // group with the text colour.
+        let mut groups: Vec<(Vec<Contour>, Color)> = Vec::new();
+        // Faux-bold offset, used only when the font has no bold design.
         let bold_dx = (size_px * 0.055).max(0.45);
 
         for ch in t.text.chars() {
             let face = fonts
-                .find(ch, mono)
+                .find(ch, mono, t.bold, t.italic)
                 // Fall back to .notdef so unsupported characters stay visible.
                 .or_else(|| fonts.sans.first().or_else(|| fonts.mono.first()));
             let mut advance = None;
@@ -212,10 +215,34 @@ impl Rasterizer {
                 let k = size_px / face.units_per_em();
                 if !ch.is_whitespace() && gid != 0 {
                     let flatness = (0.35 / k).max(0.5);
-                    for contour in face.outline(gid, flatness) {
-                        push_contour(&mut polys, &contour, pen, baseline, k, t.italic, 0.0);
-                        if t.bold {
-                            push_contour(&mut polys, &contour, pen, baseline, k, t.italic, bold_dx);
+                    if let Some(layers) = face.color_layers(gid) {
+                        // Draw the font's own layered design: exact outlines,
+                        // exact palette. No synthesis on colour glyphs.
+                        for layer in layers {
+                            let mut polys = Vec::with_capacity(1);
+                            for contour in face.outline(layer.glyph, flatness) {
+                                push_contour(&mut polys, &contour, pen, baseline, k, false, 0.0);
+                            }
+                            if !polys.is_empty() {
+                                groups.push((polys, layer.color));
+                            }
+                        }
+                    } else {
+                        // Synthesise weight/slant only when the face itself is
+                        // not the requested design.
+                        let shear = t.italic && !face.is_italic();
+                        let bold = t.bold && !face.is_bold();
+                        let mut polys = Vec::new();
+                        for contour in face.outline(gid, flatness) {
+                            push_contour(&mut polys, &contour, pen, baseline, k, shear, 0.0);
+                            if bold {
+                                push_contour(
+                                    &mut polys, &contour, pen, baseline, k, shear, bold_dx,
+                                );
+                            }
+                        }
+                        if !polys.is_empty() {
+                            groups.push((polys, t.color));
                         }
                     }
                 }
@@ -228,8 +255,8 @@ impl Rasterizer {
             }
             pen += advance.unwrap_or_else(|| metrics.advance(ch, &style) * self.scale);
         }
-        if !polys.is_empty() {
-            fill_polygons(bmp, &polys, t.color);
+        for (polys, color) in groups {
+            fill_polygons(bmp, &polys, color);
         }
     }
 }
@@ -748,5 +775,50 @@ mod tests {
                 assert_eq!(p, [255, 255, 255, 255], "ink at the canvas edge ({x},{y})");
             }
         }
+    }
+
+    #[test]
+    fn color_emoji_renders_with_palette_colors() {
+        let Some(fonts) = test_fonts() else { return };
+        let scene = Scene {
+            width: 60.0,
+            height: 60.0,
+            background: Some(RectDraw::new(0.0, 0.0, 60.0, 60.0).with_fill(Color::WHITE)),
+            draws: vec![Draw::Text(TextDraw {
+                x: 8.0,
+                y: 44.0,
+                text: "✅".into(),
+                size: 40.0,
+                family: FontKind::Sans,
+                color: Color::BLACK,
+                bold: false,
+                italic: false,
+                underline: false,
+                strike: false,
+                letter_spacing: 0.0,
+            })],
+        };
+        // Only meaningful when the selected face really has colour layers.
+        let face = fonts.find('✅', false, false, false);
+        let layers = face
+            .and_then(|f| f.color_layers(f.glyph_id('✅')))
+            .unwrap_or_default();
+        if layers.is_empty() {
+            eprintln!("skipping: no colour emoji font installed");
+            return;
+        }
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
+        let mut colors = std::collections::HashSet::new();
+        for px in bmp.data.as_chunks::<4>().0 {
+            if px[3] > 200 {
+                colors.insert((px[0], px[1], px[2]));
+            }
+        }
+        assert!(
+            colors
+                .iter()
+                .any(|(r, g, b)| (*g as i16) > (*r as i16) + 20 && (*g as i16) > (*b as i16) + 20),
+            "expected the palette's green fill: {colors:?}"
+        );
     }
 }

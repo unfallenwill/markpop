@@ -365,7 +365,7 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
   compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
 
-Current coverage: **96% of lines** across 454 tests (`cargo llvm-cov`).
+Current coverage: **96% of lines** across 458 tests (`cargo llvm-cov`).
 
 ## SVG compatibility
 
@@ -392,11 +392,25 @@ msedge --headless --screenshot=out.png --window-size=800,1200 out.svg
 - WebP is **lossless** (VP8L): literal + LZ77 tokens, length-limited canonical Huffman codes,
   no transforms and no color cache (the simplest valid encoder).
 - Both come from the same inline rasterizer, so their decoders agree byte for byte.
-- Bitmap output needs a TrueType font. Discovery covers common Windows/macOS/Linux locations;
-  pass `--font <FILE>` to pin one. Faux bold (a sub-pixel second pass) and faux italic (a shear)
-  are used, so a single regular face is enough.
-- Text in bitmaps is placed with the font's own advances (like a browser does for SVG); line
-  breaking still uses the deterministic metric table, which is what keeps output stable.
+
+### Font fidelity
+
+The rasterizer follows the font's own design rather than approximating it:
+
+- **Unhinted outlines** are flattened and filled directly; no grid fitting distorts the shapes.
+- **Real bold and italic faces** are used when the system provides them (`segoeuib.ttf`,
+  `consolai.ttf`, …). Faux bold (a sub-pixel second pass) and faux italic (a shear) are only
+  fallbacks for families that ship a single style.
+- **Colour emoji** use the font's own `COLR` layer lists and `CPAL` palette (Segoe UI Emoji,
+  Noto COLR builds): every layer is the designed outline filled with the designed colour.
+  No tinting or re-colouring is synthesised.
+- Glyphs are positioned with the font's own advances, like a browser does for SVG; line
+  breaking uses the deterministic metric table so output stays stable.
+
+Bitmap output needs a TrueType font. Discovery covers common Windows/macOS/Linux locations;
+pass `--font <FILE>` to pin one. Colour is currently limited to `COLR` v0 layers: a COLRv1
+font renders its backward-compatible flat layers (exact outlines, flat palette fills, no
+gradients), and bitmap-only colour formats (`CBDT`, `sbix`) render monochrome.
 
 ## Sample
 

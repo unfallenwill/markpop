@@ -16,6 +16,8 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::color::Color;
+
 /// A point in font units.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Point {
@@ -44,6 +46,34 @@ pub struct Face {
     hmtx: usize,
     /// Best-effort family name, for diagnostics.
     name: String,
+    /// Font-designed bold weight (OS/2 fsSelection / head.macStyle).
+    bold: bool,
+    /// Font-designed italic style.
+    italic: bool,
+    /// COLR v0 layers + CPAL palette, when the face has colour glyphs.
+    colors: Option<ColorGlyphs>,
+}
+
+/// Colour information for layered (COLR v0) glyphs.
+#[derive(Debug, Clone)]
+struct ColorGlyphs {
+    /// Absolute offset of the base glyph record array.
+    base_records: usize,
+    /// Number of base glyph records.
+    num_base: u16,
+    /// Absolute offset of the layer record array.
+    layer_records: usize,
+    /// Palette 0, as RGBA colours.
+    palette: Vec<Color>,
+}
+
+/// One layer of a colour glyph: a reusable outline plus a palette colour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ColorLayer {
+    /// Glyph id providing this layer's outline.
+    pub glyph: u16,
+    /// Fill colour from the font's palette.
+    pub color: Color,
 }
 
 fn u8_at(data: &[u8], off: usize) -> u8 {
@@ -127,6 +157,24 @@ impl Face {
         let name = read_family_name(&data, base, num_tables, &mut table)
             .unwrap_or_else(|| "unnamed".to_string());
 
+        // Font-designed style, used instead of synthesising when available.
+        let mac_style = u16_at(&data, head + 44);
+        let mut bold = mac_style & 0x0001 != 0;
+        let mut italic = mac_style & 0x0002 != 0;
+        if let Some((os2, _)) = table(b"OS/2") {
+            let selection = u16_at(&data, os2 + 62);
+            bold |= selection & 0x0020 != 0;
+            italic |= selection & 0x0001 != 0;
+        }
+
+        // Colour glyphs: COLR v0 layer lists with a CPAL palette. COLR v1
+        // fonts keep these records for older renderers, which is exactly the
+        // flat, font-designed fallback we can draw faithfully.
+        let colors = match (table(b"COLR"), table(b"CPAL")) {
+            (Some((colr, _)), Some((cpal, _))) => parse_colors(&data, colr, cpal),
+            _ => None,
+        };
+
         // Normalize a TTC offset: table offsets are absolute already.
         data.shrink_to_fit();
 
@@ -142,7 +190,63 @@ impl Face {
             loca,
             hmtx,
             name,
+            bold,
+            italic,
+            colors,
         })
+    }
+
+    /// Whether the font itself is a bold design.
+    pub fn is_bold(&self) -> bool {
+        self.bold
+    }
+
+    /// Whether the font itself is an italic design.
+    pub fn is_italic(&self) -> bool {
+        self.italic
+    }
+
+    /// Whether the face contains colour (layered) glyphs at all.
+    pub fn has_color_glyphs(&self) -> bool {
+        self.colors.as_ref().is_some_and(|c| c.num_base > 0)
+    }
+
+    /// Colour layers for a glyph, in painting order.
+    ///
+    /// Returns `None` for ordinary monochrome glyphs.
+    pub fn color_layers(&self, gid: u16) -> Option<Vec<ColorLayer>> {
+        let colors = self.colors.as_ref()?;
+        let mut lo = 0usize;
+        let mut hi = colors.num_base as usize;
+        while lo < hi {
+            let mid = (lo + hi) / 2;
+            if u16_at(&self.data, colors.base_records + mid * 6) < gid {
+                lo = mid + 1;
+            } else {
+                hi = mid;
+            }
+        }
+        if lo >= colors.num_base as usize {
+            return None;
+        }
+        let record = colors.base_records + lo * 6;
+        if u16_at(&self.data, record) != gid {
+            return None;
+        }
+        let first = u16_at(&self.data, record + 2) as usize;
+        let count = u16_at(&self.data, record + 4) as usize;
+        if count == 0 {
+            return None;
+        }
+        let mut layers = Vec::with_capacity(count);
+        for k in 0..count {
+            let layer = colors.layer_records + (first + k) * 4;
+            let glyph = u16_at(&self.data, layer);
+            let index = u16_at(&self.data, layer + 2) as usize;
+            let color = colors.palette.get(index).copied().unwrap_or(Color::BLACK);
+            layers.push(ColorLayer { glyph, color });
+        }
+        Some(layers)
     }
 
     /// Family name (best effort).
@@ -494,6 +598,53 @@ impl Transform {
     }
 }
 
+/// Parses COLR v0 layer records and the first CPAL palette.
+fn parse_colors(data: &[u8], colr: usize, cpal: usize) -> Option<ColorGlyphs> {
+    if u16_at(data, colr) > 1 {
+        return None;
+    }
+    let num_base = u16_at(data, colr + 2);
+    if num_base == 0 {
+        return None;
+    }
+    let base_records = colr.checked_add(u32_at(data, colr + 4) as usize)?;
+    let layer_records = colr.checked_add(u32_at(data, colr + 8) as usize)?;
+    if base_records >= data.len() || layer_records >= data.len() {
+        return None;
+    }
+
+    if u16_at(data, cpal) > 1 {
+        return None;
+    }
+    let num_entries = u16_at(data, cpal + 2) as usize;
+    let num_palettes = u16_at(data, cpal + 4) as usize;
+    if num_entries == 0 || num_palettes == 0 {
+        return None;
+    }
+    let color_records = cpal.checked_add(u32_at(data, cpal + 8) as usize)?;
+    let first = u16_at(data, cpal + 12) as usize;
+    let mut palette = Vec::with_capacity(num_entries);
+    for i in 0..num_entries {
+        let p = color_records + (first + i) * 4;
+        if p + 3 >= data.len() {
+            return None;
+        }
+        // CPAL stores BGRA.
+        palette.push(Color::rgba(
+            u8_at(data, p + 2),
+            u8_at(data, p + 1),
+            u8_at(data, p),
+            u8_at(data, p + 3),
+        ));
+    }
+    Some(ColorGlyphs {
+        base_records,
+        num_base,
+        layer_records,
+        palette,
+    })
+}
+
 fn f2dot14(data: &[u8], off: usize) -> f32 {
     i16_at(data, off) as f32 / 16384.0
 }
@@ -712,18 +863,25 @@ pub struct LoadedFonts {
 }
 
 impl LoadedFonts {
-    /// Finds the first face in `list` containing `c`.
-    pub fn find(&self, c: char, mono: bool) -> Option<&Face> {
+    /// Finds the best face for `c` in the requested style.
+    ///
+    /// Font fidelity first: a face designed in the requested weight and
+    /// slant wins, so bold text uses the real bold outlines when the font
+    /// provides them. Only when no styled face covers the character does it
+    /// fall back to another style (and the rasterizer synthesises the rest).
+    pub fn find(&self, c: char, mono: bool, bold: bool, italic: bool) -> Option<&Face> {
         let primary = if mono { &self.mono } else { &self.sans };
+        let fallback = if mono { &self.sans } else { &self.mono };
         primary
             .iter()
-            .chain(self.fallback_iter(mono))
-            .find(|f| f.has_glyph(c))
-    }
-
-    fn fallback_iter(&self, mono: bool) -> impl Iterator<Item = &Face> {
-        let other = if mono { &self.sans } else { &self.mono };
-        other.iter()
+            .find(|f| f.has_glyph(c) && f.is_bold() == bold && f.is_italic() == italic)
+            .or_else(|| primary.iter().find(|f| f.has_glyph(c)))
+            .or_else(|| {
+                fallback
+                    .iter()
+                    .find(|f| f.has_glyph(c) && f.is_bold() == bold && f.is_italic() == italic)
+            })
+            .or_else(|| fallback.iter().find(|f| f.has_glyph(c)))
     }
 
     /// Total number of loaded faces.
@@ -748,13 +906,50 @@ pub fn discover() -> FontSet {
     #[cfg(target_os = "windows")]
     {
         let dir = Path::new("C:/Windows/Fonts");
-        set.sans
-            .extend(existing(dir, &["segoeui.ttf", "arial.ttf", "calibri.ttf"]));
-        set.mono
-            .extend(existing(dir, &["consola.ttf", "cour.ttf", "lucon.ttf"]));
+        // R, B, I, BI for each family so the rasterizer can use designed
+        // weights and slants instead of synthesising them.
+        set.sans.extend(existing(
+            dir,
+            &[
+                "segoeui.ttf",
+                "segoeuib.ttf",
+                "segoeuii.ttf",
+                "segoeuiz.ttf",
+                "arial.ttf",
+                "arialbd.ttf",
+                "ariali.ttf",
+                "arialbi.ttf",
+                "calibri.ttf",
+                "calibrib.ttf",
+                "calibrii.ttf",
+                "calibriz.ttf",
+            ],
+        ));
+        set.mono.extend(existing(
+            dir,
+            &[
+                "consola.ttf",
+                "consolab.ttf",
+                "consolai.ttf",
+                "consolaz.ttf",
+                "cour.ttf",
+                "courbd.ttf",
+                "couri.ttf",
+                "courbi.ttf",
+            ],
+        ));
+        // CJK first, then the colour emoji font before the monochrome symbol
+        // font, so emoji resolve to their designed colour layers.
         set.fallback.extend(existing(
             dir,
-            &["msyh.ttc", "simsun.ttc", "simhei.ttf", "seguisym.ttf"],
+            &[
+                "msyh.ttc",
+                "msyhbd.ttc",
+                "simsun.ttc",
+                "simhei.ttf",
+                "seguiemj.ttf",
+                "seguisym.ttf",
+            ],
         ));
     }
 
@@ -907,7 +1102,7 @@ mod tests {
         let set = discover();
         if let Some(loaded) = set.load() {
             assert!(!loaded.is_empty());
-            if let Some(face) = loaded.find('A', false) {
+            if let Some(face) = loaded.find('A', false, false, false) {
                 assert!(face.has_glyph('A'));
             }
         }
@@ -981,5 +1176,68 @@ mod tests {
             let first = face.glyph_id(c);
             assert_eq!(first, face.glyph_id(c));
         }
+    }
+
+    #[test]
+    fn color_emoji_has_palette_layers() {
+        let set = discover();
+        let Some(loaded) = set.load() else { return };
+        let Some(face) = loaded.find('✅', false, false, false) else {
+            eprintln!("skipping: no emoji font");
+            return;
+        };
+        let gid = face.glyph_id('✅');
+        let Some(layers) = face.color_layers(gid) else {
+            eprintln!("skipping: {} has no COLR layers", face.name());
+            return;
+        };
+        assert!(layers.len() >= 2, "expected layered colour glyph");
+        let colors: Vec<crate::color::Color> = layers.iter().map(|l| l.color).collect();
+        assert!(
+            colors.iter().any(|c| c.g > c.r && c.g > c.b),
+            "expected a green palette colour: {colors:?}"
+        );
+        for layer in &layers {
+            assert!(
+                !face.outline(layer.glyph, 1.0).is_empty(),
+                "layer {} has no outline",
+                layer.glyph
+            );
+        }
+    }
+
+    #[test]
+    fn styled_faces_are_preferred_when_installed() {
+        let set = discover();
+        let Some(loaded) = set.load() else { return };
+        let Some(regular) = loaded.find('A', false, false, false) else {
+            return;
+        };
+        if let Some(bold) = loaded.find('A', false, true, false)
+            && bold.name() != regular.name()
+        {
+            assert!(
+                bold.is_bold(),
+                "bold request picked a non-bold design: {}",
+                bold.name()
+            );
+        }
+        if let Some(italic) = loaded.find('A', false, false, true)
+            && italic.name() != regular.name()
+        {
+            assert!(
+                italic.is_italic(),
+                "italic request picked an upright design: {}",
+                italic.name()
+            );
+        }
+    }
+
+    #[test]
+    fn plain_faces_report_their_design() {
+        let Some(face) = any_face() else { return };
+        // Whatever the file is, the flags must be self-consistent.
+        assert_eq!(face.is_bold(), face.is_bold());
+        assert_eq!(face.is_italic(), face.is_italic());
     }
 }
