@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="347.7" viewBox="0 0 800 347.7" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="347.7" fill="#ffffff"/>
+  <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">Golden</text>
+  <line x1="48" y1="100.8" x2="752" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve">Text with</text>
+  <text x="128.32" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">bold</text>
+  <text x="160.63" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve">,</text>
+  <rect x="170.41" y="119.08" width="39.8" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="173.99" y="133.4" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">code</text>
+  <text x="210.71" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve"> and a</text>
+  <text x="259.99" y="133.4" font-size="16" fill="#0969da" xml:space="preserve">link</text>
+  <line x1="259.99" y1="135.48" x2="286.55" y2="135.48" stroke="#0969da" stroke-width="1"/>
+  <text x="286.55" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve">.</text>
+  <rect x="57.44" y="162.84" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="175" font-size="16" fill="#1f2328" xml:space="preserve">one</text>
+  <rect x="57.44" y="188.44" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="200.6" font-size="16" fill="#1f2328" xml:space="preserve">two</text>
+  <rect x="48" y="224.6" width="72" height="37.55" fill="#f2f4f7"/>
+  <text x="58" y="247.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">a</text>
+  <text x="94" y="247.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">b</text>
+  <line x1="48" y1="224.6" x2="120" y2="224.6" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="48" y1="262.15" x2="120" y2="262.15" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="285.34" font-size="14.72" fill="#1f2328" xml:space="preserve">1</text>
+  <text x="94" y="285.34" font-size="14.72" fill="#1f2328" xml:space="preserve">2</text>
+  <line x1="48" y1="299.7" x2="120" y2="299.7" stroke="#d8dee4" stroke-width="1"/>
+</svg>

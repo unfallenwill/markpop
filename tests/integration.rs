@@ -1,0 +1,761 @@
+//! End-to-end tests over the public API.
+//!
+//! These complement the unit tests inside each module: here we only care
+//! about properties that must hold for *any* input — well-formed output,
+//! zoom invariant geometry, determinism, and no panics.
+
+use markdown2svg::scene::FontKind;
+use markdown2svg::text::{Metrics, TextStyle};
+use markdown2svg::{
+    Color, Draw, Options, Theme, parse, render, render_pages, render_with, to_pages, to_scene,
+};
+
+/// A document exercising every supported construct.
+const KITCHEN_SINK: &str = r#"
+# Heading one
+
+Some **bold**, *italic*, ***both***, ~~struck~~ and `inline code` text with a
+[link](https://example.com) and an autolink <https://example.com/a>.
+
+## Heading two
+
+### Heading three
+
+#### Heading four
+
+##### Heading five
+
+###### Heading six
+
+Setext heading
+==============
+
+Another kind
+------------
+
+> A quote
+>
+> > A nested quote with **styling**
+
+- bullet one
+- bullet two
+  - nested bullet
+1. ordered one
+2. ordered two
+
+| left | center | right |
+|:-----|:------:|------:|
+| a    | b      | c     |
+
+```rust
+fn main() { println!("hi"); }
+```
+
+    indented code
+
+---
+
+![an image](https://example.com/x.png)
+"#;
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/// Checks that `svg` is well-formed XML-ish markup: a single root element,
+/// balanced tags, self-closing leaves and fully quoted attributes.
+///
+/// Text nodes are checked separately, so any `<` inside content is a bug.
+fn assert_well_formed(svg: &str) {
+    let mut stack: Vec<String> = Vec::new();
+    let mut roots = 0usize;
+    let bytes = svg.as_bytes();
+    let mut i = 0usize;
+    while i < bytes.len() {
+        if bytes[i] != b'<' {
+            // Text node: must not contain unescaped markup characters.
+            let c = bytes[i] as char;
+            assert!(c != '>', "stray `>` in text at byte {i} of\n{svg}");
+            i += 1;
+            continue;
+        }
+        let end = svg[i..]
+            .find('>')
+            .unwrap_or_else(|| panic!("unterminated tag at {i}"))
+            + i;
+        let raw = &svg[i + 1..end];
+        if let Some(name) = raw.strip_prefix('/') {
+            let top = stack
+                .pop()
+                .unwrap_or_else(|| panic!("unexpected `</{name}>`"));
+            assert_eq!(top, name.trim(), "mismatched close tag");
+        } else {
+            let self_closing = raw.ends_with('/');
+            let body = raw.trim_end_matches('/');
+            let name = body
+                .split_whitespace()
+                .next()
+                .unwrap_or_default()
+                .to_string();
+            assert!(!name.is_empty(), "empty tag name");
+            // Every attribute must be `key="value"`.
+            let mut rest = body[name.len()..].trim();
+            while !rest.is_empty() {
+                let eq = rest
+                    .find('=')
+                    .unwrap_or_else(|| panic!("attribute without `=` in <{body}>"));
+                let key = rest[..eq].trim();
+                assert!(
+                    !key.is_empty() && !key.contains(char::is_whitespace),
+                    "bad key {key:?}"
+                );
+                rest = rest[eq + 1..].trim_start();
+                assert!(
+                    rest.starts_with('"'),
+                    "unquoted value for {key} in <{body}>"
+                );
+                let close = rest[1..]
+                    .find('"')
+                    .unwrap_or_else(|| panic!("unterminated value for {key}"));
+                rest = rest[close + 2..].trim_start();
+            }
+            if stack.is_empty() {
+                roots += 1;
+            }
+            if !self_closing {
+                stack.push(name);
+            }
+        }
+        i = end + 1;
+    }
+    assert!(stack.is_empty(), "unclosed elements: {stack:?}");
+    assert_eq!(roots, 1, "expected exactly one root element");
+}
+
+/// Extracts the root `<svg ...>` attributes as `(width, height, viewBox)`.
+fn canvas(svg: &str) -> (f32, f32, String) {
+    let first = svg.lines().next().expect("svg has a first line");
+    let attr = |name: &str| -> String {
+        let needle = format!("{name}=\"");
+        let start = first
+            .find(&needle)
+            .unwrap_or_else(|| panic!("missing {name}"))
+            + needle.len();
+        first[start..].split('"').next().unwrap().to_string()
+    };
+    (
+        attr("width").parse().unwrap(),
+        attr("height").parse().unwrap(),
+        attr("viewBox"),
+    )
+}
+
+/// A deterministic pseudo-random generator (xorshift), so fuzz-style tests
+/// are reproducible without pulling in a crate.
+struct Rng(u64);
+
+impl Rng {
+    fn next(&mut self) -> u64 {
+        let mut x = self.0;
+        x ^= x << 13;
+        x ^= x >> 7;
+        x ^= x << 17;
+        self.0 = x;
+        x
+    }
+
+    fn pick<'a, T>(&mut self, items: &'a [T]) -> &'a T {
+        &items[(self.next() as usize) % items.len()]
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Tests
+// ---------------------------------------------------------------------------
+
+#[test]
+fn kitchen_sink_renders_well_formed_svg() {
+    let svg = render(KITCHEN_SINK);
+    assert_well_formed(&svg);
+    assert!(svg.starts_with("<svg "), "root element missing");
+    assert!(svg.trim_end().ends_with("</svg>"));
+}
+
+#[test]
+fn every_construct_reaches_the_output() {
+    let svg = render(KITCHEN_SINK);
+    for needle in [
+        "Heading one",
+        "Heading six",
+        "Setext heading",
+        "Another kind",
+        "A quote",
+        "A nested quote",
+        "bullet two",
+        "ordered two",
+        "nested bullet",
+        "inline code",
+        "struck",
+        "link",
+        "an image",
+        "fn main()",
+        "indented code",
+        "https://example.com/x.png",
+    ] {
+        assert!(svg.contains(needle), "missing {needle:?} in output");
+    }
+}
+
+#[test]
+fn heading_levels_produce_decreasing_font_sizes() {
+    let scene = to_scene(KITCHEN_SINK, &Theme::light());
+    let sizes: Vec<f32> = (1..=6)
+        .map(|level| Theme::light().heading_size(level))
+        .collect();
+    for pair in sizes.windows(2) {
+        assert!(pair[0] >= pair[1], "heading sizes must not grow: {sizes:?}");
+    }
+    // At least the h1 text is present at its expected size.
+    let h1 = scene
+        .draws
+        .iter()
+        .find_map(|d| match d {
+            Draw::Text(t) if t.text == "Heading one" => Some(t.size),
+            _ => None,
+        })
+        .expect("h1 text");
+    assert_eq!(h1, sizes[0]);
+}
+
+#[test]
+fn markup_in_text_is_escaped() {
+    let svg = render("a < b & c > d and \"quotes\"");
+    assert_well_formed(&svg);
+    assert!(
+        svg.contains("a &lt; b &amp; c &gt; d and &quot;quotes&quot;"),
+        "{svg}"
+    );
+}
+
+#[test]
+fn zoom_scales_only_the_canvas() {
+    let base = render_with("hello", &Options::default()).unwrap();
+    let (w1, h1, vb1) = canvas(&base);
+
+    for (zoom, factor) in [(1.5f32, 1.5f32), (2.0, 2.0), (0.5, 0.5)] {
+        let zoomed = render_with("hello", &Options::default().with_zoom(zoom)).unwrap();
+        let (w2, h2, vb2) = canvas(&zoomed);
+        assert!(
+            (w2 - w1 * factor).abs() < 0.05,
+            "width at {zoom}x: {w2} vs {}",
+            w1 * factor
+        );
+        assert!(
+            (h2 - h1 * factor).abs() < 0.05,
+            "height at {zoom}x: {h2} vs {}",
+            h1 * factor
+        );
+        assert_eq!(vb2, vb1, "viewBox must not change with zoom");
+
+        // Geometry: strip the root line, everything else is identical.
+        let body = |s: &str| s.lines().skip(1).collect::<Vec<_>>().join("\n");
+        assert_eq!(
+            body(&base),
+            body(&zoomed),
+            "geometry changed at zoom {zoom}"
+        );
+    }
+}
+
+#[test]
+fn forced_zoom_error_mentions_zoom() {
+    let err = render_with("x", &Options::default().with_zoom(-1.0)).unwrap_err();
+    assert!(err.to_string().contains("zoom"), "{err}");
+}
+
+#[test]
+fn themes_share_geometry_but_differ_in_color() {
+    let light = render_with("hello **world**", &Options::default()).unwrap();
+    let dark = render_with(
+        "hello **world**",
+        &Options::default().with_theme(Theme::dark()),
+    )
+    .unwrap();
+    // Compare positions only: colors must differ, geometry must not.
+    let positions = |s: &str| {
+        s.lines()
+            .filter(|l| l.contains("<text"))
+            .map(|l| {
+                let get = |name: &str| {
+                    let needle = format!("{name}=\"");
+                    let start = l.find(&needle).expect("attribute") + needle.len();
+                    l[start..].split('"').next().unwrap().to_string()
+                };
+                (get("x"), get("y"), get("font-size"))
+            })
+            .collect::<Vec<_>>()
+    };
+    assert_eq!(
+        positions(&light),
+        positions(&dark),
+        "layout must be theme-independent"
+    );
+    assert_ne!(light, dark);
+}
+
+#[test]
+fn output_is_byte_identical_across_renders() {
+    let a = render(KITCHEN_SINK);
+    let b = render(KITCHEN_SINK);
+    assert_eq!(a, b);
+}
+
+#[test]
+fn empty_and_whitespace_input_is_valid() {
+    for src in ["", "   ", "\n\n\n", "\t\t"] {
+        let svg = render(src);
+        assert_well_formed(&svg);
+        assert!(svg.contains("viewBox"));
+    }
+}
+
+#[test]
+fn text_never_overflows_the_canvas() {
+    let theme = Theme::light();
+    let scene = to_scene(KITCHEN_SINK, &theme);
+    let metrics = Metrics::new();
+    let right_edge = theme.width - theme.padding + 1.0;
+    for draw in &scene.draws {
+        if let Draw::Text(t) = draw {
+            let style = TextStyle {
+                size: t.size,
+                family: t.family,
+                bold: t.bold,
+                italic: t.italic,
+                letter_spacing: if t.size > 0.0 {
+                    t.letter_spacing / t.size
+                } else {
+                    0.0
+                },
+            };
+            let w = metrics.measure(&t.text, &style);
+            assert!(
+                t.x + w <= right_edge,
+                "text overflows: {:?} x={} w={} (limit {})",
+                t.text,
+                t.x,
+                w,
+                right_edge
+            );
+            assert!(
+                t.x >= theme.padding - 1.0,
+                "text starts before the margin: {:?}",
+                t.text
+            );
+        }
+    }
+}
+
+#[test]
+fn long_unbroken_tokens_are_split_instead_of_overflowing() {
+    let src = "x".repeat(2000);
+    let scene = to_scene(&src, &Theme::light());
+    let metrics = Metrics::new();
+    for draw in &scene.draws {
+        if let Draw::Text(t) = draw {
+            let w = metrics.measure(&t.text, &TextStyle::new(t.size, t.family));
+            assert!(w <= Theme::light().width, "run of {} px is too wide", w);
+        }
+    }
+}
+
+#[test]
+fn cjk_paragraphs_wrap_instead_of_clipping() {
+    let src = "中文测试".repeat(200);
+    let scene = to_scene(&src, &Theme::light());
+    let metrics = Metrics::new();
+    let content_right = 800.0 - 48.0;
+    for draw in &scene.draws {
+        if let Draw::Text(t) = draw {
+            let w = metrics.measure(&t.text, &TextStyle::new(t.size, t.family));
+            assert!(
+                t.x + w <= content_right + 1.0,
+                "CJK run overflows: x={} w={}",
+                t.x,
+                w
+            );
+        }
+    }
+}
+
+#[test]
+fn code_blocks_use_a_monospace_face() {
+    let scene = to_scene("```\nlet x = 1;\n```", &Theme::light());
+    let code = scene.find_text("let x").expect("code text");
+    assert_eq!(code.family, FontKind::Mono);
+}
+
+#[test]
+fn inline_code_is_never_split_mid_span_when_it_fits() {
+    let scene = to_scene("a `foo bar` b", &Theme::light());
+    assert!(
+        scene.find_text("foo bar").is_some(),
+        "inline code should stay on one line"
+    );
+}
+
+#[test]
+fn center_and_right_aligned_cells_are_positioned_differently() {
+    let scene = to_scene(
+        "| h |\n|:-:|\n| x |\n\n| h |\n|--:|\n| x |",
+        &Theme::light(),
+    );
+    let xs: Vec<f32> = scene
+        .draws
+        .iter()
+        .filter_map(|d| match d {
+            Draw::Text(t) if t.text == "x" => Some(t.x),
+            _ => None,
+        })
+        .collect();
+    assert_eq!(xs.len(), 2, "expected two body cells");
+    assert!(
+        xs[1] > xs[0],
+        "right-aligned cell should sit further right: {xs:?}"
+    );
+}
+
+#[test]
+fn random_inputs_never_panic_or_produce_broken_svg() {
+    let tokens = [
+        "#",
+        "##",
+        "######",
+        "text",
+        "中文",
+        " ",
+        "\n",
+        "\n\n",
+        "*",
+        "**",
+        "_",
+        "__",
+        "~~",
+        "`",
+        "```",
+        "~~~",
+        "[",
+        "]",
+        "(",
+        ")",
+        "!",
+        "|",
+        "---",
+        ">",
+        "-",
+        "1.",
+        "\\",
+        "<",
+        "&",
+        "\t",
+        "    ",
+        "===",
+        "http://x.y",
+        "\"",
+        "'",
+    ];
+    let mut rng = Rng(0x5eed_1234_abcd_9876);
+    for case in 0..300 {
+        let len = (rng.next() % 60) as usize + 1;
+        let src: String = (0..len).map(|_| *rng.pick(&tokens)).collect();
+        let svg = render(&src);
+        assert_well_formed(&svg);
+        assert!(svg.starts_with("<svg "), "case {case}: {src:?}");
+        // Parsing must also be total on its own.
+        let _ = parse(&src);
+    }
+}
+
+#[test]
+fn shipped_demo_renders_cleanly() {
+    // Guards the artifact people actually look at: the committed demo and
+    // its screenshots are generated from this exact source.
+    let src = include_str!("../demo.md");
+    let svg = render(src);
+    assert_well_formed(&svg);
+
+    // Indentation inside code blocks is content and must survive.
+    assert!(svg.contains(">  → parse"), "code indentation was lost");
+    assert!(svg.contains(".with_theme"), "code line missing");
+
+    let theme = Theme::light();
+    let metrics = Metrics::new();
+    let right_edge = theme.width - theme.padding + 1.0;
+    for draw in &to_scene(src, &theme).draws {
+        if let Draw::Text(t) = draw {
+            let style = TextStyle {
+                size: t.size,
+                family: t.family,
+                bold: t.bold,
+                italic: t.italic,
+                letter_spacing: if t.size > 0.0 {
+                    t.letter_spacing / t.size
+                } else {
+                    0.0
+                },
+            };
+            let w = metrics.measure(&t.text, &style);
+            assert!(t.x + w <= right_edge, "demo text overflows: {:?}", t.text);
+        }
+    }
+}
+
+#[test]
+fn scene_is_inspectable_without_serializing() {
+    let scene = to_scene("# Hi", &Theme::light());
+    assert_eq!(scene.width, 800.0);
+    assert!(scene.height > 0.0);
+    assert!(scene.find_text("Hi").is_some());
+    assert!(scene.background.is_some());
+}
+
+#[test]
+fn transparent_background_is_supported() {
+    let theme = Theme {
+        background: None,
+        ..Theme::light()
+    };
+    let svg = render_with("x", &Options::default().with_theme(theme)).unwrap();
+    assert_well_formed(&svg);
+    assert!(!svg.contains("fill=\"#ffffff\""), "{svg}");
+}
+
+#[test]
+fn custom_theme_colors_reach_the_output() {
+    let theme = Theme {
+        link: Color::from_hex("#ff5500").unwrap(),
+        ..Theme::light()
+    };
+    let svg = render_with(
+        "[x](https://example.com)",
+        &Options::default().with_theme(theme),
+    )
+    .unwrap();
+    assert!(svg.contains("#ff5500"), "custom link color missing");
+}
+
+// ---------------------------------------------------------------------------
+// Long documents: pagination and table of contents
+// ---------------------------------------------------------------------------
+
+#[test]
+fn pagination_produces_fixed_height_pages() {
+    let opts = Options::default().with_page_height(420.0);
+    let pages = render_pages(KITCHEN_SINK, &opts).unwrap();
+    assert!(pages.len() > 1, "expected several pages");
+    for page in &pages {
+        assert_well_formed(page);
+        let (width, height, _) = canvas(page);
+        assert_eq!(width, 800.0);
+        assert_eq!(height, 420.0);
+    }
+}
+
+#[test]
+fn pagination_keeps_every_block_on_exactly_one_page() {
+    let opts = Options::default().with_page_height(360.0);
+    let scenes = to_pages(KITCHEN_SINK, &opts).unwrap();
+    let mut paragraphs = 0;
+    for scene in &scenes {
+        for draw in &scene.draws {
+            if let Draw::Text(t) = draw
+                && t.text.trim() == "Some"
+            {
+                paragraphs += 1;
+            }
+        }
+    }
+    assert_eq!(
+        paragraphs, 1,
+        "the intro paragraph must appear exactly once"
+    );
+}
+
+#[test]
+fn paginated_content_stays_inside_the_page() {
+    let theme = Theme::light();
+    let opts = Options::default().with_page_height(400.0);
+    for scene in to_pages(KITCHEN_SINK, &opts).unwrap() {
+        for draw in &scene.draws {
+            let bottom = match draw {
+                Draw::Text(t) => t.y,
+                Draw::Rect(r) => r.y + r.h,
+                Draw::Line(l) => l.y1.max(l.y2),
+            };
+            assert!(
+                bottom <= theme.padding * 2.0 + 400.0,
+                "draw escapes the page at {bottom}"
+            );
+        }
+    }
+}
+
+#[test]
+fn toc_is_inserted_as_a_nested_outline() {
+    let opts = Options::default().with_toc(true).with_toc_title("目录");
+    let scene = to_pages("# One\n\n## Two\n\n### Three\n\n# Four", &opts)
+        .unwrap()
+        .remove(0);
+    assert!(scene.find_text("目录").is_some(), "TOC heading missing");
+    let one = scene.find_text("One").expect("entry One");
+    let two = scene.find_text("Two").expect("entry Two");
+    let three = scene.find_text("Three").expect("entry Three");
+    assert!(one.x < two.x, "nested entries should be indented");
+    assert!(two.x < three.x, "deeper entries should be indented further");
+}
+
+#[test]
+fn toc_can_be_disabled_and_respects_empty_documents() {
+    let plain = render("just text");
+    let with_toc = render_with("just text", &Options::default().with_toc(true)).unwrap();
+    assert_eq!(plain, with_toc, "no headings means no TOC");
+}
+
+#[test]
+fn toc_appears_before_the_document_body() {
+    let scene = to_pages("# Alpha\n\nBody text", &Options::default().with_toc(true))
+        .unwrap()
+        .remove(0);
+    let toc = scene.find_text("Contents").expect("contents");
+    let body = scene.find_text("Body text").expect("body");
+    assert!(toc.y < body.y);
+}
+
+// ---------------------------------------------------------------------------
+// Themes and typography
+// ---------------------------------------------------------------------------
+
+#[test]
+fn every_preset_renders_the_demo_without_overflow() {
+    let metrics = Metrics::new();
+    for theme in [Theme::light(), Theme::dark(), Theme::print()] {
+        let scene = to_scene(KITCHEN_SINK, &theme);
+        assert!(scene.find_text("Heading one").is_some());
+        let right = theme.width - theme.padding + 1.0;
+        for draw in &scene.draws {
+            if let Draw::Text(t) = draw {
+                let style = TextStyle {
+                    size: t.size,
+                    family: t.family,
+                    bold: t.bold,
+                    italic: t.italic,
+                    letter_spacing: if t.size > 0.0 {
+                        t.letter_spacing / t.size
+                    } else {
+                        0.0
+                    },
+                };
+                assert!(
+                    t.x + metrics.measure(&t.text, &style) <= right,
+                    "{:?} overflows",
+                    t.text
+                );
+            }
+        }
+    }
+}
+
+#[test]
+fn print_theme_is_a_visibly_different_design() {
+    let light = render_with("# Title\n\nBody", &Options::default()).unwrap();
+    let print = render_with(
+        "# Title\n\nBody",
+        &Options::default().with_theme(Theme::print()),
+    )
+    .unwrap();
+    assert!(
+        print.contains("serif"),
+        "print theme should use a serif stack"
+    );
+    assert_ne!(light, print);
+    assert_well_formed(&print);
+}
+
+#[test]
+fn letter_spacing_is_reflected_in_the_svg() {
+    let theme = Theme {
+        letter_spacing: 0.05,
+        ..Theme::light()
+    };
+    let svg = render_with("tracked text", &Options::default().with_theme(theme)).unwrap();
+    assert!(svg.contains("letter-spacing="), "{svg}");
+    // Still no overflow.
+    let scene = to_scene(
+        "tracked text",
+        &Theme {
+            letter_spacing: 0.05,
+            ..Theme::light()
+        },
+    );
+    let t = scene.find_text("tracked").unwrap();
+    let m = Metrics::new();
+    let w = m.measure(
+        &t.text,
+        &TextStyle {
+            size: t.size,
+            family: t.family,
+            bold: t.bold,
+            italic: t.italic,
+            letter_spacing: t.letter_spacing / t.size,
+        },
+    );
+    assert!(t.x + w <= 752.0 + 1.0);
+}
+
+#[test]
+fn line_height_changes_vertical_rhythm_only() {
+    let tight = Theme {
+        line_height: 1.2,
+        ..Theme::light()
+    };
+    let loose = Theme {
+        line_height: 2.2,
+        ..Theme::light()
+    };
+    let a = to_scene("one\n\ntwo", &tight);
+    let b = to_scene("one\n\ntwo", &loose);
+    let y = |s: &markdown2svg::Scene| s.find_text("two").unwrap().y;
+    assert!(y(&b) > y(&a), "looser line height should push content down");
+    let x = |s: &markdown2svg::Scene| s.find_text("two").unwrap().x;
+    assert_eq!(x(&a), x(&b));
+}
+
+#[test]
+fn font_fallback_stacks_include_cjk_families() {
+    let theme = Theme::light();
+    for family in ["PingFang SC", "Microsoft YaHei", "sans-serif"] {
+        assert!(
+            theme.sans_family.contains(family),
+            "missing {family} in the stack"
+        );
+    }
+    for family in ["Consolas", "monospace"] {
+        assert!(
+            theme.mono_family.contains(family),
+            "missing {family} in the stack"
+        );
+    }
+}
+
+#[test]
+fn cjk_and_latin_mix_wraps_within_the_column() {
+    let src = "这是一段中英混排 with English words 和中文一起换行，检查是否溢出。".repeat(6);
+    let scene = to_scene(&src, &Theme::light());
+    let metrics = Metrics::new();
+    for draw in &scene.draws {
+        if let Draw::Text(t) = draw {
+            let w = metrics.measure(&t.text, &TextStyle::new(t.size, t.family));
+            assert!(t.x + w <= 752.0 + 1.0, "mixed line overflows: {:?}", t.text);
+        }
+    }
+}
