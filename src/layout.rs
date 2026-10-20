@@ -48,15 +48,10 @@ pub(crate) fn code_wrap_width(theme: &Theme) -> f32 {
     (theme.column_width() - 2.0 * code::PAD_X).max(1.0)
 }
 
-/// How many *rendered* code lines fit on one page of `page_height`.
-///
-/// Used when paginating long code blocks; the label row and the box
-/// padding are subtracted so a chunk never spills onto the next page.
-pub(crate) fn code_lines_per_page(theme: &Theme, page_height: f32) -> usize {
-    let content_h = (page_height - 2.0 * theme.padding).max(1.0);
-    let line_h = (theme.code_size() * theme.code_line_height).max(1.0);
-    let chrome = 2.0 * code::PAD_Y + theme.font_size * 0.75 + code::LABEL_GAP;
-    ((content_h - chrome).max(line_h) / line_h).floor() as usize
+/// Vertical space taken by a code box apart from its lines: the padding
+/// and (when present) the language label row.
+pub(crate) fn code_chrome_height(theme: &Theme) -> f32 {
+    2.0 * code::PAD_Y + theme.font_size * 0.75 + code::LABEL_GAP
 }
 
 /// Blockquote metrics, in base units.
@@ -605,7 +600,8 @@ impl<'a> Layout<'a> {
             }
         }
 
-        let cols = fit_columns(&natural, width);
+        let min_readable = 3.0 * size + 2.0 * table::PAD_X;
+        let cols = fit_columns(&natural, width, min_readable);
         let table_w: f32 = cols.iter().sum::<f32>().min(width);
 
         let line_h = self.line_height(size, false);
@@ -1187,28 +1183,42 @@ struct RunBox<'r> {
 
 /// Shrinks column widths so their sum never exceeds `width`.
 ///
-/// Columns keep their natural width when everything fits. Otherwise they
-/// give up width proportionally in the part above [`table::MIN_COL`], which
-/// keeps narrow columns readable and guarantees the table never overflows
-/// the content column, no matter how many columns or how wide the cells.
-fn fit_columns(natural: &[f32], width: f32) -> Vec<f32> {
+/// Columns keep their natural width when everything fits. When the table
+/// has to shrink, every column first keeps a readable minimum
+/// (`min_readable`, capped at its natural width) and only the slack above
+/// that is traded away, proportionally. This stops narrow columns — such as
+/// a two-character header — from being squeezed into wrapping while one long
+/// column hogs the width.
+fn fit_columns(natural: &[f32], width: f32, min_readable: f32) -> Vec<f32> {
+    if natural.is_empty() {
+        return Vec::new();
+    }
     let total: f32 = natural.iter().sum();
-    if total <= width || natural.is_empty() {
+    if total <= width {
         return natural.to_vec();
     }
-    let n = natural.len();
-    let min_total = table::MIN_COL * n as f32;
-    if width <= min_total {
-        return vec![width / n as f32; n];
+    let floors: Vec<f32> = natural
+        .iter()
+        .map(|w| w.min(min_readable).max(table::MIN_COL.min(*w)))
+        .collect();
+    let floor_total: f32 = floors.iter().sum();
+    if floor_total >= width {
+        // Even the minimums do not fit: share the width proportionally.
+        return floors.iter().map(|f| f * width / floor_total).collect();
     }
-    let slack_natural: f32 = natural.iter().map(|w| (w - table::MIN_COL).max(0.0)).sum();
+    let slack_natural: f32 = natural
+        .iter()
+        .zip(&floors)
+        .map(|(w, f)| (w - f).max(0.0))
+        .sum();
     if slack_natural <= 0.0 {
         return natural.to_vec();
     }
-    let slack_available = width - min_total;
+    let extra = width - floor_total;
     natural
         .iter()
-        .map(|w| table::MIN_COL + (w - table::MIN_COL).max(0.0) * slack_available / slack_natural)
+        .zip(&floors)
+        .map(|(w, f)| f + (w - f).max(0.0) * extra / slack_natural)
         .collect()
 }
 

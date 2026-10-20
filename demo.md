@@ -32,6 +32,7 @@
 | 目录 | ✅ | `--toc`，按标题层级嵌套 |
 | 输出格式 | ✅ | `--format svg/png/webp`，PNG/WebP 由内置光栅器生成 |
 | 排版配置 | ✅ | 字号、字距、行距、字体栈、分栏，均可用参数或 API 配置 |
+| 画布预设 | ✅ | `--canvas a4` 自动分页、`--canvas mobile` 移动端长图 |
 
 ### 中文与 CJK
 
@@ -62,6 +63,10 @@ markdown2svg doc.md --format webp -o doc.webp
 
 # 排版配置：字号 / 字距 / 行距 / 字体 / 列数
 markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  --font-family "Georgia, serif" --columns 2 -o doc.svg
+
+# 画布预设：A4 自动分页 / 移动端长图
+markdown2svg doc.md --canvas a4 -o page.svg
+markdown2svg doc.md --canvas mobile -o long.svg
 ```
 
 作为库使用：
@@ -102,7 +107,7 @@ Markdown
 - 不下载远程图片（输出始终自包含）
 - 引用式链接 `[a][b]` 与 HTML 内联暂不支持
 - 嵌套强调按等长标记配对，极端的 `***a** b*` 会退化为字面量
-- 高于一页的非代码块（例如超大表格）会独占一页并可能溢出
+- 单个超过一页的段落无法在不重排文本的前提下切分，会溢出（列表、引用、表格、代码块都会自动拆分）
 
 ---
 

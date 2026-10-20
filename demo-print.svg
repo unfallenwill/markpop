@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="2935.78" viewBox="0 0 800 2935.78" font-family="Georgia, &apos;Iowan Old Style&apos;, &apos;Times New Roman&apos;, &apos;Songti SC&apos;, SimSun, serif">
-  <rect x="0" y="0" width="800" height="2935.78" fill="#fffdf7"/>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="3093.6" viewBox="0 0 800 3093.6" font-family="Georgia, &apos;Iowan Old Style&apos;, &apos;Times New Roman&apos;, &apos;Songti SC&apos;, SimSun, serif">
+  <rect x="0" y="0" width="800" height="3093.6" fill="#fffdf7"/>
   <text x="48" y="78.69" font-size="32.3" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.16">markdown2svg</text>
   <line x1="48" y1="101.3" x2="752" y2="101.3" stroke="#d6ccb8" stroke-width="2"/>
   <text x="48" y="137.02" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">把 Markdown</text>
@@ -125,94 +125,107 @@
   <text x="142.66" y="1162.66" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">✅</text>
   <text x="195.87" y="1162.66" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">字号、字距、行距、字体栈、分栏，均可用参数或 API 配置</text>
   <line x1="48" y1="1178.65" x2="632.84" y2="1178.65" stroke="#d6ccb8" stroke-width="1"/>
-  <text x="48" y="1218.43" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">中文与 CJK</text>
-  <text x="48" y="1258.3" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">中日韩字符按全角（1 em）度量，逐字断行；中英混排不会溢出画布：</text>
-  <rect x="48" y="1285.07" width="704" height="41.68" rx="6" fill="#f3efe5"/>
-  <text x="60" y="1310.25" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">中文测试内容中文测试内容中文测试内容中文测试内容</text>
-  <text x="48" y="1373.97" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">用法</text>
-  <rect x="48" y="1399.6" width="704" height="450.58" rx="6" fill="#f3efe5"/>
-  <text x="711.2" y="1414.12" font-size="11.9" fill="#6b6357" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.06">bash</text>
-  <text x="60" y="1443.52" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 标准输入 / 输出</text>
-  <text x="60" y="1465.19" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">cat README.md | markdown2svg &gt; README.svg</text>
-  <text x="60" y="1508.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 指定文件、主题与缩放</text>
-  <text x="60" y="1530.22" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --theme dark --zoom 150 -o doc.svg</text>
-  <text x="60" y="1573.57" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 自定义画布宽度</text>
-  <text x="60" y="1595.24" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --width 1200 -o doc.svg</text>
-  <text x="60" y="1638.59" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 分页 + 目录（输出 page-1.svg、page-2.svg…）</text>
-  <text x="60" y="1660.27" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --toc --page-height 1123 -o page.svg</text>
-  <text x="60" y="1703.62" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）</text>
-  <text x="60" y="1725.29" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --format png -o doc.png</text>
-  <text x="60" y="1746.97" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --format webp -o doc.webp</text>
-  <text x="60" y="1790.32" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 排版配置：字号 / 字距 / 行距 / 字体 / 列数</text>
-  <text x="60" y="1811.99" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 </text>
-  <text x="60" y="1833.67" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">\n  --font-family &quot;Georgia, serif&quot; --columns 2 -o doc.svg</text>
-  <text x="48" y="1887.15" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">作为库使用：</text>
-  <rect x="48" y="1913.92" width="704" height="168.8" rx="6" fill="#f3efe5"/>
-  <text x="711.2" y="1928.44" font-size="11.9" fill="#6b6357" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.06">rust</text>
-  <text x="60" y="1957.84" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let svg = markdown2svg::render(&quot;# Hello\n\nWorld&quot;);</text>
-  <text x="60" y="2001.19" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let opts = markdown2svg::Options::default()</text>
-  <text x="60" y="2022.87" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">    .with_theme(markdown2svg::Theme::dark())</text>
-  <text x="60" y="2044.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">    .with_zoom(1.5);</text>
-  <text x="60" y="2066.22" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let svg = markdown2svg::render_with(&quot;# Hi&quot;, &amp;opts).unwrap();</text>
-  <text x="48" y="2129.94" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">架构</text>
-  <rect x="48" y="2155.57" width="704" height="106.7" rx="6" fill="#f3efe5"/>
-  <text x="60" y="2180.74" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Markdown</text>
-  <text x="60" y="2202.41" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → parse     (ast::Document)   块级 / 行内</text>
-  <text x="60" y="2224.09" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → layout    (scene::Scene)    几何图元</text>
-  <text x="60" y="2245.76" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → svg       (String)          纯序列化</text>
-  <text x="48" y="2299.24" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">每一层都是纯函数，可以单独断言：</text>
-  <rect x="58.03" y="2331.8" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2345.99" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">解析层断言 AST</text>
-  <rect x="58.03" y="2361.55" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2375.74" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">布局层断言坐标与图元</text>
-  <rect x="58.03" y="2391.3" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2405.49" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">序列化层断言标记</text>
-  <text x="48" y="2455.05" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">扩展点</text>
-  <rect x="58.03" y="2484.97" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2499.16" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">主题</text>
-  <text x="108.35" y="2499.16" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
-  <rect x="125.94" y="2483.95" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="129.77" y="2499.16" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Theme</text>
-  <text x="177.82" y="2499.16" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 是纯数据，从</text>
-  <rect x="290.52" y="2483.95" width="130.06" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="294.35" y="2499.16" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Theme::light()</text>
-  <text x="421.08" y="2499.16" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 改字段即可</text>
-  <rect x="58.03" y="2514.72" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2528.91" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">语法</text>
-  <text x="108.35" y="2528.91" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：新增</text>
-  <rect x="164.95" y="2513.7" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="168.79" y="2528.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Block</text>
-  <text x="216.83" y="2528.91" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> /</text>
-  <rect x="233.23" y="2513.7" width="60.12" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="237.06" y="2528.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Inline</text>
-  <text x="293.85" y="2528.91" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 变体，解析与布局各加一个分支</text>
-  <rect x="58.03" y="2544.47" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2558.66" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">输出格式</text>
-  <text x="143.2" y="2558.66" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
-  <rect x="160.79" y="2543.45" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="164.62" y="2558.66" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Scene</text>
-  <text x="212.67" y="2558.66" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 只有几何，另写一个序列化器即可</text>
-  <rect x="58.03" y="2574.22" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2588.41" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">字体度量</text>
-  <text x="143.2" y="2588.41" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
-  <rect x="160.79" y="2573.2" width="121.32" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="164.62" y="2588.41" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">text::Metrics</text>
-  <text x="282.6" y="2588.41" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 是唯一的宽度来源</text>
-  <text x="48" y="2645.4" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">限制</text>
-  <rect x="58.03" y="2676.81" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2691.01" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">不下载远程图片（输出始终自包含）</text>
-  <rect x="58.03" y="2706.56" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2720.76" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">引用式链接</text>
-  <rect x="164.27" y="2705.54" width="60.12" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="168.11" y="2720.76" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">[a][b]</text>
-  <text x="224.89" y="2720.76" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 与 HTML 内联暂不支持</text>
-  <rect x="58.03" y="2736.31" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2750.51" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">嵌套强调按等长标记配对，极端的</text>
-  <rect x="335.12" y="2735.29" width="86.35" height="20.23" rx="3" fill="#f3efe5"/>
-  <text x="338.95" y="2750.51" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">***a** b*</text>
-  <text x="421.97" y="2750.51" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 会退化为字面量</text>
-  <rect x="58.03" y="2766.06" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
-  <text x="73.5" y="2780.26" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">高于一页的非代码块（例如超大表格）会独占一页并可能溢出</text>
-  <line x1="48" y1="2824.03" x2="752" y2="2824.03" stroke="#d6ccb8" stroke-width="2"/>
-  <text x="48" y="2878.01" font-size="17" fill="#1a1a1a" xml:space="preserve" font-style="italic" letter-spacing="0.09">由 markdown2svg 自身渲染生成，100% 缩放。</text>
+  <text x="58" y="1204.03" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">画布预设</text>
+  <text x="142.66" y="1204.03" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">✅</text>
+  <rect x="196.37" y="1189.22" width="103.83" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="200.21" y="1204.03" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">--canvas a4</text>
+  <text x="300.71" y="1204.03" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08"> 自动分页、</text>
+  <rect x="384.26" y="1189.22" width="138.8" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="388.09" y="1204.03" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">--canvas mobile</text>
+  <text x="523.56" y="1204.03" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08"> 移动端长图</text>
+  <line x1="48" y1="1220.02" x2="632.84" y2="1220.02" stroke="#d6ccb8" stroke-width="1"/>
+  <text x="48" y="1259.8" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">中文与 CJK</text>
+  <text x="48" y="1299.67" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">中日韩字符按全角（1 em）度量，逐字断行；中英混排不会溢出画布：</text>
+  <rect x="48" y="1326.45" width="704" height="41.68" rx="6" fill="#f3efe5"/>
+  <text x="60" y="1351.62" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">中文测试内容中文测试内容中文测试内容中文测试内容</text>
+  <text x="48" y="1415.34" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">用法</text>
+  <rect x="48" y="1440.97" width="704" height="537.28" rx="6" fill="#f3efe5"/>
+  <text x="711.2" y="1455.49" font-size="11.9" fill="#6b6357" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.06">bash</text>
+  <text x="60" y="1484.89" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 标准输入 / 输出</text>
+  <text x="60" y="1506.56" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">cat README.md | markdown2svg &gt; README.svg</text>
+  <text x="60" y="1549.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 指定文件、主题与缩放</text>
+  <text x="60" y="1571.59" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --theme dark --zoom 150 -o doc.svg</text>
+  <text x="60" y="1614.94" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 自定义画布宽度</text>
+  <text x="60" y="1636.61" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --width 1200 -o doc.svg</text>
+  <text x="60" y="1679.96" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 分页 + 目录（输出 page-1.svg、page-2.svg…）</text>
+  <text x="60" y="1701.64" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --toc --page-height 1123 -o page.svg</text>
+  <text x="60" y="1744.99" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）</text>
+  <text x="60" y="1766.66" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --format png -o doc.png</text>
+  <text x="60" y="1788.34" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --format webp -o doc.webp</text>
+  <text x="60" y="1831.69" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 排版配置：字号 / 字距 / 行距 / 字体 / 列数</text>
+  <text x="60" y="1853.36" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 </text>
+  <text x="60" y="1875.04" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">\n  --font-family &quot;Georgia, serif&quot; --columns 2 -o doc.svg</text>
+  <text x="60" y="1918.39" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07"># 画布预设：A4 自动分页 / 移动端长图</text>
+  <text x="60" y="1940.06" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --canvas a4 -o page.svg</text>
+  <text x="60" y="1961.74" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">markdown2svg doc.md --canvas mobile -o long.svg</text>
+  <text x="48" y="2015.22" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">作为库使用：</text>
+  <rect x="48" y="2041.99" width="704" height="168.8" rx="6" fill="#f3efe5"/>
+  <text x="711.2" y="2056.51" font-size="11.9" fill="#6b6357" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.06">rust</text>
+  <text x="60" y="2085.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let svg = markdown2svg::render(&quot;# Hello\n\nWorld&quot;);</text>
+  <text x="60" y="2129.26" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let opts = markdown2svg::Options::default()</text>
+  <text x="60" y="2150.94" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">    .with_theme(markdown2svg::Theme::dark())</text>
+  <text x="60" y="2172.61" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">    .with_zoom(1.5);</text>
+  <text x="60" y="2194.29" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">let svg = markdown2svg::render_with(&quot;# Hi&quot;, &amp;opts).unwrap();</text>
+  <text x="48" y="2258.01" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">架构</text>
+  <rect x="48" y="2283.64" width="704" height="106.7" rx="6" fill="#f3efe5"/>
+  <text x="60" y="2308.81" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Markdown</text>
+  <text x="60" y="2330.48" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → parse     (ast::Document)   块级 / 行内</text>
+  <text x="60" y="2352.16" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → layout    (scene::Scene)    几何图元</text>
+  <text x="60" y="2373.83" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">  → svg       (String)          纯序列化</text>
+  <text x="48" y="2427.31" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">每一层都是纯函数，可以单独断言：</text>
+  <rect x="58.03" y="2459.87" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2474.06" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">解析层断言 AST</text>
+  <rect x="58.03" y="2489.62" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2503.81" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">布局层断言坐标与图元</text>
+  <rect x="58.03" y="2519.37" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2533.56" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">序列化层断言标记</text>
+  <text x="48" y="2583.12" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">扩展点</text>
+  <rect x="58.03" y="2613.03" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2627.23" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">主题</text>
+  <text x="108.35" y="2627.23" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
+  <rect x="125.94" y="2612.01" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="129.77" y="2627.23" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Theme</text>
+  <text x="177.82" y="2627.23" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 是纯数据，从</text>
+  <rect x="290.52" y="2612.01" width="130.06" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="294.35" y="2627.23" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Theme::light()</text>
+  <text x="421.08" y="2627.23" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 改字段即可</text>
+  <rect x="58.03" y="2642.79" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2656.98" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">语法</text>
+  <text x="108.35" y="2656.98" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：新增</text>
+  <rect x="164.95" y="2641.77" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="168.79" y="2656.98" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Block</text>
+  <text x="216.83" y="2656.98" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> /</text>
+  <rect x="233.23" y="2641.77" width="60.12" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="237.06" y="2656.98" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Inline</text>
+  <text x="293.85" y="2656.98" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 变体，解析与布局各加一个分支</text>
+  <rect x="58.03" y="2672.54" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2686.73" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">输出格式</text>
+  <text x="143.2" y="2686.73" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
+  <rect x="160.79" y="2671.52" width="51.38" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="164.62" y="2686.73" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">Scene</text>
+  <text x="212.67" y="2686.73" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 只有几何，另写一个序列化器即可</text>
+  <rect x="58.03" y="2702.29" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2716.48" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">字体度量</text>
+  <text x="143.2" y="2716.48" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">：</text>
+  <rect x="160.79" y="2701.27" width="121.32" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="164.62" y="2716.48" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">text::Metrics</text>
+  <text x="282.6" y="2716.48" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 是唯一的宽度来源</text>
+  <text x="48" y="2773.47" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">限制</text>
+  <rect x="58.03" y="2804.88" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2819.08" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">不下载远程图片（输出始终自包含）</text>
+  <rect x="58.03" y="2834.63" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2848.83" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">引用式链接</text>
+  <rect x="164.27" y="2833.61" width="60.12" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="168.11" y="2848.83" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">[a][b]</text>
+  <text x="224.89" y="2848.83" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 与 HTML 内联暂不支持</text>
+  <rect x="58.03" y="2864.38" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2878.58" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">嵌套强调按等长标记配对，极端的</text>
+  <rect x="335.12" y="2863.36" width="86.35" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="338.95" y="2878.58" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">***a** b*</text>
+  <text x="421.97" y="2878.58" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 会退化为字面量</text>
+  <rect x="58.03" y="2894.13" width="5.44" height="5.44" rx="2.72" fill="#2b2824"/>
+  <text x="73.5" y="2908.33" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">单个超过一页的段落无法在不重排文本的前提下切分，会溢出（列表、引用、表格、代</text>
+  <text x="73.5" y="2938.08" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">码块都会自动拆分）</text>
+  <line x1="48" y1="2981.85" x2="752" y2="2981.85" stroke="#d6ccb8" stroke-width="2"/>
+  <text x="48" y="3035.83" font-size="17" fill="#1a1a1a" xml:space="preserve" font-style="italic" letter-spacing="0.09">由 markdown2svg 自身渲染生成，100% 缩放。</text>
 </svg>

@@ -64,10 +64,11 @@
 //! ```
 //!
 //! Typography is configuration. [`Theme`] carries font size, line height,
-//! tracking, font stacks and multi-column flow, each with a builder:
+//! tracking, font stacks and multi-column flow, each with a builder, and
+//! [`CanvasPreset`] bundles a ready-made page geometry:
 //!
 //! ```
-//! use markdown2svg::Theme;
+//! use markdown2svg::{CanvasPreset, Options, Theme};
 //!
 //! let theme = Theme::light()
 //!     .with_font_size(17.0)
@@ -78,6 +79,10 @@
 //!     .with_column_gap(28.0);
 //! assert_eq!(theme.columns, 2);
 //! assert!(theme.column_width() < theme.width / 2.0);
+//!
+//! // A4 at 96 dpi, paginated automatically.
+//! let opts = Options::default().with_canvas(CanvasPreset::A4);
+//! assert_eq!(opts.page_height, Some(1123.0));
 //! ```
 //!
 //! # Extending
@@ -95,6 +100,7 @@
 //!   block type automatically participates.
 
 pub mod ast;
+pub mod canvas;
 pub mod color;
 pub mod encode;
 pub mod engine;
@@ -111,8 +117,10 @@ pub mod theme;
 mod columns;
 mod layout;
 mod paginate;
+mod split;
 
 pub use ast::Document;
+pub use canvas::CanvasPreset;
 pub use color::Color;
 pub use engine::{BitmapEngine, Engine, OutputFormat, SvgEngine};
 pub use options::{Options, RenderError};
@@ -204,8 +212,9 @@ fn to_pages_inner(markdown: &str, options: &Options) -> Vec<Scene> {
     let theme = &options.theme;
     let mut doc = prepare(markdown, options);
     if let Some(page_height) = options.page_height {
+        let available = (page_height - 2.0 * theme.padding).max(1.0);
         doc = Document {
-            blocks: paginate::split_tall_code(doc.blocks, theme, page_height),
+            blocks: split::for_height(doc.blocks, theme, available),
         };
     }
     let (scene, marks) = layout::Layout::new(theme).render_marked(&doc);

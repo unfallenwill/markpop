@@ -6,89 +6,14 @@
 //! them, which guarantees a cut never lands inside a paragraph, table or
 //! code box.
 //!
-//! Two things are handled specially:
-//!
-//! * **Tall code blocks** are pre-split by lines before layout, so a long
-//!   listing flows across pages instead of overflowing one.
-//! * **Any other oversized block** (e.g. a huge table) is placed alone on
-//!   its own page and allowed to overflow; there is no sensible place to
-//!   cut a table row set without repeating the header.
+//! Blocks that are themselves taller than a page are split beforehand by
+//! [`crate::split`] (code by lines, lists by items, quotes by children), so
+//! the packer only ever sees pieces that fit. A block that still cannot be
+//! split (e.g. a very tall table) is placed alone and allowed to overflow.
 
-use crate::ast::{Block, CodeBlock};
-use crate::layout::{self, BlockMark};
-use crate::scene::FontKind;
+use crate::layout::BlockMark;
 use crate::scene::{RectDraw, Scene};
-use crate::text::{Metrics, TextStyle};
 use crate::theme::Theme;
-
-/// Pre-splits top-level code blocks that are taller than one page.
-///
-/// Chunk boundaries follow source lines, and each chunk keeps the original
-/// info string so the language label is repeated on every page.
-pub(crate) fn split_tall_code(blocks: Vec<Block>, theme: &Theme, page_height: f32) -> Vec<Block> {
-    let max_lines = layout::code_lines_per_page(theme, page_height);
-    if max_lines == 0 {
-        return blocks;
-    }
-    let wrap_width = layout::code_wrap_width(theme);
-    let style =
-        TextStyle::new(theme.code_size(), FontKind::Mono).with_letter_spacing(theme.letter_spacing);
-    let metrics = Metrics::new();
-
-    let mut out = Vec::with_capacity(blocks.len());
-    for block in blocks {
-        match block {
-            Block::Code(code) => {
-                let chunks = split_code(&code, max_lines, wrap_width, &metrics, &style);
-                if chunks.len() <= 1 {
-                    out.push(Block::Code(code));
-                } else {
-                    out.extend(chunks.into_iter().map(Block::Code));
-                }
-            }
-            other => out.push(other),
-        }
-    }
-    out
-}
-
-fn split_code(
-    code: &CodeBlock,
-    max_lines: usize,
-    wrap_width: f32,
-    metrics: &Metrics,
-    style: &TextStyle,
-) -> Vec<CodeBlock> {
-    let mut chunks: Vec<CodeBlock> = Vec::new();
-    let mut current: Vec<String> = Vec::new();
-    let mut used = 0usize;
-
-    for raw in &code.lines {
-        let rendered = if raw.is_empty() {
-            1
-        } else {
-            metrics.wrap_preformatted(raw, wrap_width, style).len()
-        };
-        // A chunk break is only allowed at a source-line boundary; a single
-        // line taller than the page stays on one page and overflows.
-        if used + rendered > max_lines && !current.is_empty() {
-            chunks.push(CodeBlock {
-                info: code.info.clone(),
-                lines: std::mem::take(&mut current),
-            });
-            used = 0;
-        }
-        current.push(raw.clone());
-        used += rendered;
-    }
-    if !current.is_empty() || chunks.is_empty() {
-        chunks.push(CodeBlock {
-            info: code.info.clone(),
-            lines: current,
-        });
-    }
-    chunks
-}
 
 /// Packs blocks into pages of `page_height` and returns one scene per page.
 ///
@@ -160,7 +85,7 @@ mod tests {
     use super::*;
     use crate::Theme;
     use crate::parse::parse;
-    use crate::scene::{Draw, FontKind};
+    use crate::scene::Draw;
 
     fn render(doc: &crate::ast::Document, theme: &Theme) -> (Scene, Vec<BlockMark>) {
         crate::layout::Layout::new(theme).render_marked(doc)
@@ -286,69 +211,6 @@ mod tests {
             let bg = page.background.expect("page background");
             assert_eq!((bg.w, bg.h), (theme.width, 400.0));
         }
-    }
-
-    #[test]
-    fn tall_code_blocks_are_split_between_lines() {
-        let theme = Theme::light();
-        let source = format!(
-            "```rust\n{}\n```",
-            (0..200)
-                .map(|i| format!("line {i}"))
-                .collect::<Vec<_>>()
-                .join("\n")
-        );
-        let doc = parse(&source);
-        let blocks = split_tall_code(doc.blocks.clone(), &theme, 400.0);
-        assert!(blocks.len() > 1, "code block was not split");
-
-        let doc = crate::ast::Document { blocks };
-        let (scene, marks) = render(&doc, &theme);
-        let pages = paginate(scene, &marks, &theme, 400.0);
-        assert!(pages.len() > 1);
-        // No text may sit below the page's bottom padding.
-        for page in &pages {
-            for draw in &page.draws {
-                if let Draw::Text(t) = draw {
-                    assert!(
-                        t.y <= 400.0 - theme.padding + 1.0,
-                        "code text below page: {}",
-                        t.y
-                    );
-                }
-            }
-        }
-        // Every source line is present exactly once across the pages.
-        let mut lines: Vec<String> = Vec::new();
-        for page in &pages {
-            for draw in &page.draws {
-                if let Draw::Text(t) = draw
-                    && t.text.starts_with("line ")
-                {
-                    lines.push(t.text.clone());
-                }
-            }
-        }
-        assert_eq!(lines.len(), 200, "lines were lost or duplicated");
-    }
-
-    #[test]
-    fn code_chunking_keeps_the_language_label() {
-        let theme = Theme::light();
-        let code = CodeBlock {
-            info: "rust".into(),
-            lines: (0..100).map(|i| format!("l{i}")).collect(),
-        };
-        let chunks = split_code(
-            &code,
-            10,
-            layout::code_wrap_width(&theme),
-            &Metrics::new(),
-            &TextStyle::new(theme.code_size(), FontKind::Mono),
-        );
-        assert!(chunks.len() > 1);
-        assert!(chunks.iter().all(|c| c.info == "rust"));
-        assert_eq!(chunks.iter().map(|c| c.lines.len()).sum::<usize>(), 100);
     }
 
     #[test]

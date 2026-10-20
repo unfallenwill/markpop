@@ -7,7 +7,7 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use markdown2svg::{Options, OutputFormat, RenderError, Theme};
+use markdown2svg::{CanvasPreset, Options, OutputFormat, RenderError, Theme};
 
 const USAGE: &str = "\
 markdown2svg — render Markdown directly to SVG, PNG or WebP
@@ -23,6 +23,7 @@ OPTIONS:
     -f, --format <NAME>       Output format: svg (default), png or webp
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
+        --canvas <NAME>       Canvas: web (default), a4, a4-large or mobile
         --width <PX>          Canvas width in pixels (default: 800)
         --font-size <PX>      Base font size in pixels (default: 16)
         --line-height <MULT>  Line height multiplier (default: 1.6)
@@ -53,6 +54,7 @@ struct Cli {
     output: Option<String>,
     zoom: f32,
     theme: Theme,
+    canvas: Option<CanvasPreset>,
     width: Option<f32>,
     font_size: Option<f32>,
     line_height: Option<f32>,
@@ -76,6 +78,7 @@ impl Default for Cli {
             output: None,
             zoom: 1.0,
             theme: Theme::light(),
+            canvas: None,
             width: None,
             font_size: None,
             line_height: None,
@@ -98,6 +101,11 @@ impl Cli {
     /// Turns the CLI into render options.
     fn options(&self) -> Options {
         let mut theme = self.theme.clone();
+        let mut page_height = self.page_height;
+        // A canvas preset fills geometry first; explicit flags win below.
+        if let Some(preset) = self.canvas {
+            preset.apply(&mut theme, &mut page_height);
+        }
         if let Some(w) = self.width {
             theme.width = w;
         }
@@ -125,7 +133,7 @@ impl Cli {
         Options {
             theme,
             zoom: self.zoom,
-            page_height: self.page_height,
+            page_height,
             toc: self.toc,
             toc_title: "Contents".to_string(),
             format: self.format,
@@ -284,6 +292,12 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
             "-z" | "--zoom" => {
                 let raw = take_value(args, &mut i, arg)?;
                 cli.zoom = parse_zoom(&raw)?;
+            }
+            "--canvas" => {
+                let raw = take_value(args, &mut i, arg)?;
+                cli.canvas = Some(CanvasPreset::by_name(&raw).ok_or_else(|| {
+                    format!("unknown canvas `{raw}` (expected web, a4, a4-large or mobile)")
+                })?);
             }
             "--theme" => {
                 let raw = take_value(args, &mut i, arg)?;
@@ -906,5 +920,79 @@ mod tests {
         assert!(left && right, "expected content in both columns");
         let _ = std::fs::remove_file(&input);
         let _ = std::fs::remove_file(&output);
+    }
+
+    #[test]
+    fn canvas_presets_apply_geometry() {
+        let a4 = parse_args(&args(&["--canvas", "a4"])).unwrap().options();
+        assert_eq!(a4.theme.width, 794.0);
+        assert_eq!(a4.page_height, Some(1123.0));
+        assert!(a4.validate().is_ok());
+
+        let mobile = parse_args(&args(&["--canvas", "mobile"]))
+            .unwrap()
+            .options();
+        assert_eq!(mobile.theme.width, 750.0);
+        assert_eq!(mobile.page_height, None, "mobile is a long image");
+        assert_eq!(mobile.theme.font_size, 24.0);
+        assert!(mobile.validate().is_ok());
+
+        let large = parse_args(&args(&["--canvas", "a4-large"]))
+            .unwrap()
+            .options();
+        assert_eq!(large.theme.width, 1191.0);
+        assert_eq!(large.page_height, Some(1684.0));
+    }
+
+    #[test]
+    fn explicit_flags_override_the_canvas_preset() {
+        let opts = parse_args(&args(&[
+            "--canvas",
+            "a4",
+            "--width",
+            "900",
+            "--font-size",
+            "15",
+        ]))
+        .unwrap()
+        .options();
+        assert_eq!(opts.theme.width, 900.0, "explicit width wins");
+        assert_eq!(opts.theme.font_size, 15.0, "explicit size wins");
+        assert_eq!(opts.page_height, Some(1123.0), "page height comes from A4");
+    }
+
+    #[test]
+    fn unknown_canvas_is_rejected() {
+        let err = parse_args(&args(&["--canvas", "letter"])).unwrap_err();
+        assert!(err.contains("unknown canvas"), "{err}");
+    }
+
+    #[test]
+    fn run_writes_a4_pages() {
+        let input = scratch("a4.md");
+        let output = scratch("a4.svg");
+        let body = (0..60)
+            .map(|i| format!("Paragraph {i} with a reasonable amount of text.\n\n"))
+            .collect::<String>();
+        std::fs::write(&input, body).unwrap();
+        let cli = parse_args(&args(&[
+            input.to_str().unwrap(),
+            "--canvas",
+            "a4",
+            "-o",
+            output.to_str().unwrap(),
+        ]))
+        .unwrap();
+        run(&cli).unwrap();
+        let first = numbered_path(output.to_str().unwrap(), 1, "svg");
+        let svg = std::fs::read_to_string(&first).unwrap();
+        assert!(svg.contains(r#"width="794""#));
+        assert!(svg.contains(r#"height="1123""#));
+        assert!(
+            !std::path::Path::new(output.to_str().unwrap()).exists(),
+            "A4 paginates"
+        );
+        let _ = std::fs::remove_file(first);
+        let _ = std::fs::remove_file(&input);
     }
 }

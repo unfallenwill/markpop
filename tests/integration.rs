@@ -7,7 +7,8 @@
 use markdown2svg::scene::FontKind;
 use markdown2svg::text::{Metrics, TextStyle};
 use markdown2svg::{
-    Color, Draw, Options, Theme, parse, render, render_pages, render_with, to_pages, to_scene,
+    CanvasPreset, Color, Draw, Options, Theme, parse, render, render_pages, render_with, to_pages,
+    to_scene,
 };
 
 /// A document exercising every supported construct.
@@ -1070,4 +1071,108 @@ fn invalid_column_counts_are_rejected() {
         render_bytes("x", &opts),
         Err(markdown2svg::RenderError::InvalidColumns(30))
     ));
+}
+
+// ---------------------------------------------------------------------------
+// Canvas presets and automatic pagination
+// ---------------------------------------------------------------------------
+
+#[test]
+fn a4_pages_are_letter_sized_and_do_not_clip() {
+    let opts = Options::default().with_canvas(CanvasPreset::A4);
+    let mut src = String::new();
+    // A long list is the classic case that used to overflow a page.
+    for i in 0..120 {
+        src.push_str(&format!("{i}. list item with a sentence of text\n"));
+    }
+    src.push_str("\n\n");
+    for i in 0..40 {
+        src.push_str(&format!("Paragraph {i} after the list.\n\n"));
+    }
+
+    let scenes = to_pages(&src, &opts).unwrap();
+    assert!(scenes.len() > 1, "A4 must paginate");
+    for scene in &scenes {
+        assert_eq!(scene.width, 794.0);
+        assert_eq!(scene.height, 1123.0);
+        for draw in &scene.draws {
+            let bottom = match draw {
+                Draw::Text(t) => t.y,
+                Draw::Rect(r) => r.y + r.h,
+                Draw::Line(l) => l.y1.max(l.y2),
+            };
+            assert!(
+                bottom <= scene.height - 20.0,
+                "content clipped at the page bottom: {bottom}"
+            );
+            let top = match draw {
+                Draw::Text(t) => t.y - t.size,
+                Draw::Rect(r) => r.y,
+                Draw::Line(l) => l.y1.min(l.y2),
+            };
+            assert!(top >= 20.0, "content above the margin: {top}");
+        }
+    }
+}
+
+#[test]
+fn a4_keeps_ordered_list_numbering_across_pages() {
+    let opts = Options::default().with_canvas(CanvasPreset::A4);
+    let src: String = (1..=150).map(|i| format!("{i}. step {i}\n")).collect();
+    let scenes = to_pages(&src, &opts).unwrap();
+    assert!(scenes.len() > 1);
+
+    let mut numbers = Vec::new();
+    for scene in &scenes {
+        for draw in &scene.draws {
+            if let Draw::Text(t) = draw
+                && t.text.ends_with('.')
+                && t.text[..t.text.len() - 1]
+                    .chars()
+                    .all(|c| c.is_ascii_digit())
+            {
+                numbers.push(t.text.trim_end_matches('.').parse::<u32>().unwrap());
+            }
+        }
+    }
+    assert_eq!(numbers.len(), 150, "all items rendered");
+    assert_eq!(
+        numbers,
+        (1..=150).collect::<Vec<_>>(),
+        "numbering continues"
+    );
+}
+
+#[test]
+fn mobile_canvas_is_a_single_long_image() {
+    let opts = Options::default().with_canvas(CanvasPreset::Mobile);
+    let src = "A paragraph of body text for a mobile long image.\n\n".repeat(50);
+    let scenes = to_pages(&src, &opts).unwrap();
+    assert_eq!(scenes.len(), 1, "long images do not paginate");
+    assert_eq!(scenes[0].width, 750.0);
+    assert!(scenes[0].height > 750.0 * 2.0, "long image should be tall");
+}
+
+#[test]
+fn a4_raster_pages_have_a4_dimensions() {
+    let opts = Options::default()
+        .with_canvas(CanvasPreset::A4)
+        .with_format(OutputFormat::Png);
+    let pages = render_bytes_pages(&"Text.\n\n".repeat(80), &opts).unwrap();
+    assert!(pages.len() > 1);
+    for page in &pages {
+        assert_eq!(png_size(page), (794, 1123));
+    }
+}
+
+#[test]
+fn canvas_preset_accepts_explicit_overrides() {
+    let opts = Options::default().with_canvas(CanvasPreset::A4);
+    let mut overridden = opts.clone();
+    overridden.theme.width = 900.0;
+    assert!(overridden.validate().is_ok());
+    let scene = to_scene("x", &overridden.theme);
+    assert_eq!(scene.width, 900.0);
+    // Pagination still comes from the preset.
+    assert_eq!(overridden.page_height, Some(1123.0));
 }

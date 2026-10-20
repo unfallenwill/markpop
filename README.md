@@ -71,6 +71,7 @@ OPTIONS:
     -f, --format <NAME>       Output format: svg (default), png or webp
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
+        --canvas <NAME>       Canvas: web (default), a4, a4-large or mobile
         --width <PX>          Canvas width in pixels (default: 800)
         --font-size <PX>      Base font size in pixels (default: 16)
         --line-height <MULT>  Line height multiplier (default: 1.6)
@@ -91,6 +92,8 @@ Examples:
 
 ```bash
 markdown2svg doc.md -o doc.svg
+markdown2svg doc.md --canvas a4 -o page.svg                          # A4, auto-paginated
+markdown2svg doc.md --canvas mobile -o long.svg                     # 750px long image
 markdown2svg doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
 markdown2svg doc.md --format webp --font myfont.ttf -o doc.webp
 markdown2svg doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
@@ -99,6 +102,45 @@ markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \
     --font-family "Georgia, serif" -o doc.svg
 cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
 ```
+
+## Canvas presets
+
+| Preset | Size (base units) | Padding | Pagination |
+|---|---|---|---|
+| `web` (default) | 800 × auto | 48 | continuous long image |
+| `a4` | 794 × 1123 (210 × 297 mm @ 96 dpi) | 56 | automatic, one file per page |
+| `a4-large` | 1191 × 1684 (1.5×) | 84 | automatic, one file per page |
+| `mobile` | 750 × auto, 24 px body | 32 | continuous long image |
+
+```bash
+markdown2svg doc.md --canvas a4 -o page.svg      # → page-1.svg, page-2.svg, …
+markdown2svg doc.md --canvas a4 --format png -o page.png   # → page-1.png, …
+markdown2svg doc.md --canvas mobile -o long.svg  # one tall image for phone reading
+```
+
+```rust
+use markdown2svg::{CanvasPreset, Options};
+
+let opts = Options::default().with_canvas(CanvasPreset::A4);
+assert_eq!(opts.page_height, Some(1123.0));
+```
+
+A preset is applied first; explicit flags still win (`--canvas a4 --width 900`
+keeps A4 pagination but a 900 px canvas).
+
+### No clipping on paginated canvases
+
+Before layout, blocks that are taller than the available space are split so
+page cuts never truncate content:
+
+- **code blocks** split at source-line boundaries, repeating the language label;
+- **lists** split between items, with ordered numbering continuing across pages;
+- **blockquotes** split between child blocks, each piece keeping its bar;
+- **tables** split between rows, repeating the header row in every piece.
+
+Everything else is placed whole between block boundaries. The only remaining
+case is a single paragraph or figure taller than one page (thousands of
+characters in one paragraph), which cannot be cut without re-flowing text.
 
 ## Typography configuration
 
@@ -275,6 +317,8 @@ src/
   text.rs         deterministic advance table + greedy line breaking
   layout.rs       flow engine: margins, atoms, wrapping, decorations
   columns.rs      multi-column flow (balanced or paginated)
+  split.rs        splits oversized blocks (code/lists/quotes/tables)
+  canvas.rs       canvas presets: web, A4, A4-large, mobile
   paginate.rs     block-aligned page splitting + code chunking
   outline.rs      headings → table of contents
   scene.rs        geometry primitives (text/rect/line) + Scene
@@ -321,7 +365,7 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
   compared, 0 differences)
 - 300 pseudo-random inputs that must never panic or emit broken markup
 
-Current coverage: **96% of lines** across 430 tests (`cargo llvm-cov`).
+Current coverage: **96% of lines** across 454 tests (`cargo llvm-cov`).
 
 ## SVG compatibility
 
@@ -364,6 +408,8 @@ msedge --headless --screenshot=out.png --window-size=800,1200 out.svg
 - `demo.png` — same document rasterized (800 × 2648, RGBA)
 - `demo.webp` — lossless WebP of the same pixels, ~38% smaller
 - `demo-2col.svg` — the same document balanced into two text columns
+- `demo-mobile.svg` — phone-width long image (750 px, larger body text)
+- `demo-a4-1.svg` — page 1 of the A4 render (794 × 1123, auto-paginated)
 
 ## License
 
