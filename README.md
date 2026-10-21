@@ -510,6 +510,24 @@ and breaks per character, so mixed Chinese and Latin never overflows the canvas:
 | [双栏排版](examples/zh-magazine/source.md) | `--columns 2` | `zh-magazine.{svg,png,webp}` |
 | [移动端长图](examples/zh-mobile/source.md) | `--canvas mobile` | `zh-mobile.{svg,png,webp}` |
 
+### Posting images to social platforms
+
+An image is not subject to a character limit, which makes it the practical way to
+publish long content from a free account:
+
+```bash
+markpop doc.md --canvas mobile -f webp -o share.webp
+```
+
+- `--canvas mobile` gives a 750 px wide long image with 24 px body text.
+- `-f webp` writes a lossless WebP at roughly 60% of the PNG size, and every major
+  platform accepts it. Fall back to `-f png` where WebP is not supported.
+- Check the file size before uploading: X accepts up to 5 MB per image and 4 images
+  per post; a full announcement long image lands well under that.
+
+`examples/zh-announcement/` is exactly this recipe — a project announcement rendered to
+a 750 × 2750 long image, in all three formats.
+
 ## License
 
 MIT OR Apache-2.0

@@ -68,6 +68,7 @@ render zh-dark-docs zh-dark-docs --theme dark
 render zh-print     zh-print     --theme print
 render zh-magazine  zh-magazine  --columns 2 --column-gap 28
 render zh-mobile    zh-mobile    --canvas mobile
+render zh-announcement zh-announcement --canvas mobile
 
 render zh-handbook page --canvas a4
 

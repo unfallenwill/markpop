@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="750" height="2750.57" viewBox="0 0 750 2750.57" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="750" height="2750.57" fill="#ffffff"/>
+  <text x="32" y="77.6" font-size="48" fill="#05503d" xml:space="preserve" font-weight="bold">MarkPop</text>
+  <line x1="32" y1="111.2" x2="718" y2="111.2" stroke="#d8dee4" stroke-width="2"/>
+  <text x="32" y="158.6" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">把 Markdown 直接渲染成 SVG / PNG / 无损 WebP</text>
+  <text x="32" y="215" font-size="24" fill="#1f2328" xml:space="preserve">不开浏览器、不截屏、零第三方依赖。</text>
+  <rect x="32" y="251" width="686" height="50.6" rx="6" fill="#f1f3f6"/>
+  <text x="44" y="282.42" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown → parse → layout → SVG | PNG | WebP</text>
+  <text x="32" y="352" font-size="24" fill="#1f2328" xml:space="preserve">纯 Rust 实现，429 个测试，编译产物单个二进制。</text>
+  <text x="32" y="431.8" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">为什么要扔掉截图流水线</text>
+  <line x1="32" y1="457" x2="718" y2="457" stroke="#d8dee4" stroke-width="1"/>
+  <text x="32" y="504.4" font-size="24" fill="#1f2328" xml:space="preserve">常规做法是</text>
+  <rect x="159.22" y="482.92" width="411.08" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="164.84" y="504.4" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown → HTML → 无头浏览器 → 截图</text>
+  <text x="570.8" y="504.4" font-size="24" fill="#1f2328" xml:space="preserve">。它能跑，</text>
+  <text x="32" y="542.8" font-size="24" fill="#1f2328" xml:space="preserve">但代价很实在：</text>
+  <rect x="32" y="578.8" width="467.05" height="49.33" fill="#f2f4f7"/>
+  <text x="152.62" y="610.09" font-size="22.08" fill="#1f2328" xml:space="preserve" font-weight="bold">截图流水线</text>
+  <text x="375.9" y="610.09" font-size="22.08" fill="#1f2328" xml:space="preserve" font-weight="bold">MarkPop</text>
+  <line x1="32" y1="578.8" x2="499.05" y2="578.8" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="32" y1="628.13" x2="499.05" y2="628.13" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="659.42" font-size="22.08" fill="#1f2328" xml:space="preserve">冷启动</text>
+  <text x="152.62" y="659.42" font-size="22.08" fill="#1f2328" xml:space="preserve">约 90 秒</text>
+  <text x="375.9" y="659.42" font-size="22.08" fill="#1f2328" xml:space="preserve">约 0.4 秒</text>
+  <line x1="32" y1="677.46" x2="499.05" y2="677.46" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="708.74" font-size="22.08" fill="#1f2328" xml:space="preserve">依赖</text>
+  <text x="152.62" y="708.74" font-size="22.08" fill="#1f2328" xml:space="preserve">浏览器 + 系统库</text>
+  <text x="375.9" y="708.74" font-size="22.08" fill="#1f2328" xml:space="preserve">0</text>
+  <line x1="32" y1="726.78" x2="499.05" y2="726.78" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="758.07" font-size="22.08" fill="#1f2328" xml:space="preserve">文字</text>
+  <text x="152.62" y="758.07" font-size="22.08" fill="#1f2328" xml:space="preserve">压平成像素</text>
+  <text x="375.9" y="758.07" font-size="22.08" fill="#1f2328" xml:space="preserve">仍然是文字</text>
+  <line x1="32" y1="776.11" x2="499.05" y2="776.11" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="807.4" font-size="22.08" fill="#1f2328" xml:space="preserve">确定性</text>
+  <text x="152.62" y="807.4" font-size="22.08" fill="#1f2328" xml:space="preserve">取决于装了哪些字体</text>
+  <text x="375.9" y="807.4" font-size="22.08" fill="#1f2328" xml:space="preserve">逐字节一致</text>
+  <line x1="32" y1="825.44" x2="499.05" y2="825.44" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="856.73" font-size="22.08" fill="#1f2328" xml:space="preserve">远程图片</text>
+  <text x="152.62" y="856.73" font-size="22.08" fill="#1f2328" xml:space="preserve">会去拉</text>
+  <text x="375.9" y="856.73" font-size="22.08" fill="#1f2328" xml:space="preserve">永不拉取</text>
+  <line x1="32" y1="874.77" x2="499.05" y2="874.77" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="32" y="898.77" width="686" height="92.8" fill="#f8f9fb"/>
+  <rect x="32" y="898.77" width="4" height="92.8" fill="#d1d9e0"/>
+  <text x="48" y="933.17" font-size="24" fill="#1f2328" xml:space="preserve">位图是一句断言：文档到此为止。文字一旦成了像素，就不</text>
+  <text x="48" y="971.57" font-size="24" fill="#1f2328" xml:space="preserve">能搜索、不能重排、也不能改样式。</text>
+  <text x="32" y="1059.37" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">三条命令</text>
+  <line x1="32" y1="1084.57" x2="718" y2="1084.57" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="32" y="1111.57" width="686" height="197" rx="6" fill="#f1f3f6"/>
+  <text x="665.68" y="1130.01" font-size="16.8" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="44" y="1166.99" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cargo install --path .</text>
+  <text x="44" y="1228.19" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md -o doc.svg              # 矢量</text>
+  <text x="44" y="1258.79" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md -f webp -o doc.webp      # 无损位图</text>
+  <text x="44" y="1289.39" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --canvas a4 -o page.svg  # A4 分页</text>
+  <text x="32" y="1376.37" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">它能做什么</text>
+  <line x1="32" y1="1401.57" x2="718" y2="1401.57" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="46.16" y="1436.73" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1454.97" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">矢量输出</text>
+  <text x="165.92" y="1454.97" font-size="24" fill="#1f2328" xml:space="preserve"> —— SVG 里文字还是文字，任意缩放不糊</text>
+  <rect x="46.16" y="1475.13" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1493.37" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">零依赖</text>
+  <text x="141.44" y="1493.37" font-size="24" fill="#1f2328" xml:space="preserve"> —— 单二进制，无浏览器、无 JS 运行时、无 C 库</text>
+  <rect x="46.16" y="1513.53" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1531.77" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">确定性</text>
+  <text x="141.44" y="1531.77" font-size="24" fill="#1f2328" xml:space="preserve"> —— 同输入永远同字节，换台机器也不会错版</text>
+  <rect x="46.16" y="1551.93" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1570.17" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">完整 Markdown</text>
+  <text x="245.24" y="1570.17" font-size="24" fill="#1f2328" xml:space="preserve"> —— CommonMark 0.31.2 全量 652 例、</text>
+  <text x="68" y="1608.57" font-size="24" fill="#1f2328" xml:space="preserve">GFM 扩展全过</text>
+  <rect x="46.16" y="1628.73" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1646.97" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">中文友好</text>
+  <text x="165.92" y="1646.97" font-size="24" fill="#1f2328" xml:space="preserve"> —— 全角度量、逐字断行，中英混排不溢出画布</text>
+  <rect x="46.16" y="1667.13" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="1685.37" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">自动分页</text>
+  <text x="165.92" y="1685.37" font-size="24" fill="#1f2328" xml:space="preserve"> —— 代码块按行切、表格重复表头、标题不落单</text>
+  <text x="32" y="1765.17" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">库用法</text>
+  <line x1="32" y1="1790.37" x2="718" y2="1790.37" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="32" y="1817.37" width="686" height="197" rx="6" fill="#f1f3f6"/>
+  <text x="665.68" y="1835.81" font-size="16.8" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="44" y="1872.79" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render(&quot;# 你好\n\n世界&quot;);</text>
+  <text x="44" y="1933.99" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let opts = markpop::Options::default()</text>
+  <text x="44" y="1964.59" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_theme(markpop::Theme::dark())</text>
+  <text x="44" y="1995.19" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_zoom(1.5);</text>
+  <text x="32" y="2082.17" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">顺手解决了一个麻烦</text>
+  <line x1="32" y1="2107.37" x2="718" y2="2107.37" stroke="#d8dee4" stroke-width="1"/>
+  <text x="32" y="2154.77" font-size="24" fill="#1f2328" xml:space="preserve">X 的长文（Articles）是 Premium 专属，免费账号只有 280</text>
+  <text x="32" y="2193.17" font-size="24" fill="#1f2328" xml:space="preserve">字符。 但</text>
+  <text x="134.72" y="2193.17" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">图片不受字符限制</text>
+  <text x="330.56" y="2193.17" font-size="24" fill="#1f2328" xml:space="preserve">——所以把内容渲染成长图，免费账</text>
+  <text x="32" y="2231.57" font-size="24" fill="#1f2328" xml:space="preserve">号也能发。</text>
+  <text x="32" y="2287.97" font-size="24" fill="#1f2328" xml:space="preserve">这也是你正在看的这张图：它自己就是 MarkPop 渲染的。</text>
+  <rect x="32" y="2323.97" width="686" height="50.6" rx="6" fill="#f1f3f6"/>
+  <text x="44" y="2355.39" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop source.md --canvas mobile -f webp</text>
+  <text x="32" y="2442.37" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">上手</text>
+  <line x1="32" y1="2467.57" x2="718" y2="2467.57" stroke="#d8dee4" stroke-width="1"/>
+  <text x="32" y="2514.97" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">github.com/unfallenwill/markpop</text>
+  <rect x="32" y="2550.97" width="686" height="105.2" rx="6" fill="#f1f3f6"/>
+  <text x="665.68" y="2569.41" font-size="16.8" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="44" y="2606.39" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">git clone https://github.com/unfallenwill/markpop</text>
+  <text x="44" y="2636.99" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cd markpop &amp;&amp; cargo install --path .</text>
+  <text x="32" y="2706.57" font-size="24" fill="#1f2328" xml:space="preserve">零依赖、纯 Rust、单文件二进制，欢迎提 issue。</text>
+</svg>
