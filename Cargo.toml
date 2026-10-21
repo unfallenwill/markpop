@@ -6,6 +6,9 @@ rust-version = "1.88"
 description = "MarkPop: render Markdown directly to SVG, PNG or lossless WebP — no browser, no dependencies"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
+# The examples/ tree and the README rewrite plan are repository documentation,
+# not part of the published crate.
+exclude = ["examples/**", "README-outline.md"]
 keywords = ["markdown", "svg", "png", "webp", "renderer"]
 categories = ["text-processing", "visualization", "command-line-utilities"]
 

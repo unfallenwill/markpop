@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="1096.41" viewBox="0 0 800 1096.41" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="1096.41" fill="#0d1117"/>
+  <rect x="48.5" y="59.28" width="129.56" height="19.04" rx="3" fill="#161b22"/>
+  <text x="52.08" y="78.4" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop::render</text>
+  <line x1="48" y1="100.8" x2="752" y2="100.8" stroke="#2d333b" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#e6edf3" xml:space="preserve">Render a Markdown document to an SVG string.</text>
+  <text x="48" y="186.6" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">Signature</text>
+  <line x1="48" y1="203.4" x2="752" y2="203.4" stroke="#2d333b" stroke-width="1"/>
+  <rect x="48" y="222.4" width="704" height="58.4" rx="6" fill="#161b22"/>
+  <text x="713.12" y="236.36" font-size="11.2" fill="#8b949e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="60" y="264.68" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">pub fn render(markdown: &amp;str) -&gt; String</text>
+  <text x="48" y="314.4" font-size="16" fill="#e6edf3" xml:space="preserve">Renders with the default theme (</text>
+  <rect x="306.1" y="300.08" width="121.4" height="19.04" rx="3" fill="#161b22"/>
+  <text x="309.68" y="314.4" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme::light()</text>
+  <text x="428" y="314.4" font-size="16" fill="#e6edf3" xml:space="preserve">) at 100% zoom.</text>
+  <text x="48" y="367.6" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">Parameters</text>
+  <line x1="48" y1="384.4" x2="752" y2="384.4" stroke="#2d333b" stroke-width="1"/>
+  <rect x="48" y="403.4" width="704" height="61.1" fill="#161b22"/>
+  <text x="58" y="426.59" font-size="14.72" fill="#e6edf3" xml:space="preserve" font-weight="bold">Paramete</text>
+  <text x="58" y="450.14" font-size="14.72" fill="#e6edf3" xml:space="preserve" font-weight="bold">r</text>
+  <text x="155.18" y="426.59" font-size="14.72" fill="#e6edf3" xml:space="preserve" font-weight="bold">Type</text>
+  <text x="217.31" y="426.59" font-size="14.72" fill="#e6edf3" xml:space="preserve" font-weight="bold">Description</text>
+  <line x1="48" y1="403.4" x2="752" y2="403.4" stroke="#2d333b" stroke-width="1"/>
+  <line x1="48" y1="464.5" x2="752" y2="464.5" stroke="#2d333b" stroke-width="1"/>
+  <rect x="58.5" y="473.76" width="72.44" height="19.04" rx="3" fill="#161b22"/>
+  <text x="62.08" y="487.7" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown</text>
+  <rect x="155.68" y="473.76" width="39.8" height="19.04" rx="3" fill="#161b22"/>
+  <text x="159.26" y="487.7" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&amp;str</text>
+  <text x="217.31" y="487.7" font-size="14.72" fill="#e6edf3" xml:space="preserve">The document source. Unrecognized input degrades to text rather than</text>
+  <text x="217.31" y="511.25" font-size="14.72" fill="#e6edf3" xml:space="preserve">erroring.</text>
+  <line x1="48" y1="525.61" x2="752" y2="525.61" stroke="#2d333b" stroke-width="1"/>
+  <text x="48" y="570.81" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">Returns</text>
+  <line x1="48" y1="587.61" x2="752" y2="587.61" stroke="#2d333b" stroke-width="1"/>
+  <text x="48" y="620.21" font-size="16" fill="#e6edf3" xml:space="preserve">The SVG document as a</text>
+  <rect x="233.78" y="605.89" width="56.12" height="19.04" rx="3" fill="#161b22"/>
+  <text x="237.36" y="620.21" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">String</text>
+  <text x="290.4" y="620.21" font-size="16" fill="#e6edf3" xml:space="preserve">. The markup is plain SVG 1.1:</text>
+  <rect x="522.58" y="605.89" width="47.96" height="19.04" rx="3" fill="#161b22"/>
+  <text x="526.16" y="620.21" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;svg&gt;</text>
+  <text x="571.04" y="620.21" font-size="16" fill="#e6edf3" xml:space="preserve">,</text>
+  <rect x="580.82" y="605.89" width="56.12" height="19.04" rx="3" fill="#161b22"/>
+  <text x="584.4" y="620.21" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;rect&gt;</text>
+  <text x="637.44" y="620.21" font-size="16" fill="#e6edf3" xml:space="preserve">,</text>
+  <rect x="647.22" y="605.89" width="56.12" height="19.04" rx="3" fill="#161b22"/>
+  <text x="650.8" y="620.21" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;line&gt;</text>
+  <text x="703.84" y="620.21" font-size="16" fill="#e6edf3" xml:space="preserve"> and</text>
+  <rect x="48.5" y="631.49" width="56.12" height="19.04" rx="3" fill="#161b22"/>
+  <text x="52.08" y="645.81" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;text&gt;</text>
+  <text x="105.12" y="645.81" font-size="16" fill="#e6edf3" xml:space="preserve"> only — no CSS, no filters, no</text>
+  <rect x="328.02" y="631.49" width="129.56" height="19.04" rx="3" fill="#161b22"/>
+  <text x="331.6" y="645.81" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;foreignObject&gt;</text>
+  <text x="458.08" y="645.81" font-size="16" fill="#e6edf3" xml:space="preserve">, no external references.</text>
+  <text x="48" y="699.01" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">Example</text>
+  <line x1="48" y1="715.81" x2="752" y2="715.81" stroke="#2d333b" stroke-width="1"/>
+  <rect x="48" y="734.81" width="704" height="78.8" rx="6" fill="#161b22"/>
+  <text x="713.12" y="748.77" font-size="11.2" fill="#8b949e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="60" y="777.09" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render(&quot;# Hello\n\nWorld&quot;);</text>
+  <text x="60" y="797.49" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">assert!(svg.starts_with(&quot;&lt;svg&quot;));</text>
+  <text x="48" y="858.81" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">Errors</text>
+  <line x1="48" y1="875.61" x2="752" y2="875.61" stroke="#2d333b" stroke-width="1"/>
+  <text x="48" y="908.21" font-size="16" fill="#e6edf3" xml:space="preserve">This function does not fail. Parsing is total: every byte sequence produces a document.</text>
+  <text x="48" y="961.41" font-size="24" fill="#eaf3f0" xml:space="preserve" font-weight="bold">See also</text>
+  <line x1="48" y1="978.21" x2="752" y2="978.21" stroke="#2d333b" stroke-width="1"/>
+  <rect x="57.44" y="1002.65" width="5.12" height="5.12" rx="2.56" fill="#b6bdc5"/>
+  <rect x="72.5" y="1000.49" width="96.92" height="19.04" rx="3" fill="#161b22"/>
+  <text x="76.08" y="1014.81" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">render_with</text>
+  <text x="169.92" y="1014.81" font-size="16" fill="#e6edf3" xml:space="preserve"> — control the theme, zoom, canvas and output format</text>
+  <rect x="57.44" y="1028.25" width="5.12" height="5.12" rx="2.56" fill="#b6bdc5"/>
+  <rect x="72.5" y="1026.09" width="72.44" height="19.04" rx="3" fill="#161b22"/>
+  <text x="76.08" y="1040.41" font-size="13.6" fill="#dbdfe4" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">to_scene</text>
+  <text x="145.44" y="1040.41" font-size="16" fill="#e6edf3" xml:space="preserve"> — get geometry without serializing it</text>
+</svg>

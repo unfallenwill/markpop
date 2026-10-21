@@ -9,6 +9,18 @@ markpop doc.md --format png  -o doc.png       # bitmap, wide compatibility
 markpop doc.md --format webp -o doc.webp      # bitmap, smaller files
 ```
 
+<img src="examples/showcase/showcase.svg" width="800" alt="A Markdown document rendered to SVG by MarkPop">
+
+<p align="center">
+  <a href="examples/dark-docs/source.md"><img src="examples/dark-docs/dark-docs.svg" width="190" alt="Dark theme"></a>
+  <a href="examples/magazine/source.md"><img src="examples/magazine/magazine.svg" width="190" alt="Two columns"></a>
+  <a href="examples/mobile/source.md"><img src="examples/mobile/mobile.svg" width="190" alt="Mobile width"></a>
+  <a href="examples/print/source.md"><img src="examples/print/print.svg" width="190" alt="Print theme"></a>
+  <a href="examples/zh-magazine/source.md"><img src="examples/zh-magazine/zh-magazine.svg" width="190" alt="中文双栏"></a>
+</p>
+
+<p align="center"><sub>More use cases in <a href="examples/">examples/</a> — every image is rendered by the crate itself.</sub></p>
+
 ## Why
 
 The usual pipeline is `Markdown → HTML → headless Chrome → screenshot`. It is slow, heavy and
@@ -421,7 +433,8 @@ searchable), decimals are rounded to two places, and every text node is XML-esca
 It renders directly in browsers (verified in Chromium), can be embedded with `<img>`, and
 converts cleanly to PNG/PDF with the usual tooling. All generated files (samples, golden fixture,
 paginated pages) parse with an independent XML parser, and a real-browser measurement of every
-text run in `demo.svg` put the widest right edge at 739.8px inside the 752px content column.
+text run in `examples/showcase/showcase.svg` put the widest right edge at 739.8px inside the
+752px content column.
 
 Underlines and strikethroughs are drawn as explicit `<line>` primitives instead of
 `text-decoration`, so every renderer places them identically.
@@ -465,18 +478,37 @@ pass `--font <FILE>` to pin one, and `--variation TAG=VALUE` (repeatable) to pic
 instance. Colour requires a COLR-based font (Segoe UI Emoji, Noto COLR builds, …);
 bitmap-only colour formats (`CBDT`, `sbix`) render monochrome.
 
-## Sample
+## Examples
 
-`demo.md` is rendered by the crate itself with every engine:
+[`examples/`](examples/) holds one directory per use case. Each contains the Markdown
+source and the files MarkPop renders from it, and every image is reproducible with
+`examples/render.sh`:
 
-- `demo.svg` — light theme, 100%
-- `demo-dark.svg` — dark theme, 150%
-- `demo-print.svg` — print theme (serif, paper tone)
-- `demo.png` — same document rasterized (800 × 3738, RGBA)
-- `demo.webp` — lossless WebP of the same pixels, ~38% smaller
-- `demo-2col.svg` — the same document balanced into two text columns
-- `demo-mobile.svg` — phone-width long image (750 px, larger body text)
-- `demo-a4-1.svg` — page 1 of the A4 render (794 × 1123, auto-paginated)
+| Use case | Flags | Output |
+|---|---|---|
+| [Feature showcase](examples/showcase/source.md) | — | `showcase.{svg,png,webp}` |
+| [Blog post](examples/blog-post/source.md) | — | `blog-post.{svg,png,webp}` |
+| [Operations handbook](examples/handbook/source.md) | `--canvas a4` | `page-{1,2,3}.{svg,png,webp}` |
+| [Dark documentation](examples/dark-docs/source.md) | `--theme dark` | `dark-docs.{svg,png,webp}` |
+| [Print-ready paper](examples/print/source.md) | `--theme print` | `print.{svg,png,webp}` |
+| [Two-column article](examples/magazine/source.md) | `--columns 2` | `magazine.{svg,png,webp}` |
+| [Mobile share image](examples/mobile/source.md) | `--canvas mobile` | `mobile.{svg,png,webp}` |
+
+Every document is rendered in all three formats. The showcase is the same document through
+every engine: SVG for vectors, PNG for compatibility, and lossless WebP for the same
+pixels at roughly 38% less size.
+
+The same six use cases exist in Chinese — CJK is measured as full width (1 em per glyph)
+and breaks per character, so mixed Chinese and Latin never overflows the canvas:
+
+| 用例 | 参数 | 产物 |
+|---|---|---|
+| [技术博客](examples/zh-blog-post/source.md) | — | `zh-blog-post.{svg,png,webp}` |
+| [值班手册](examples/zh-handbook/source.md) | `--canvas a4` | `page-{1,2,3}.{svg,png,webp}` |
+| [深色文档](examples/zh-dark-docs/source.md) | `--theme dark` | `zh-dark-docs.{svg,png,webp}` |
+| [打印稿](examples/zh-print/source.md) | `--theme print` | `zh-print.{svg,png,webp}` |
+| [双栏排版](examples/zh-magazine/source.md) | `--columns 2` | `zh-magazine.{svg,png,webp}` |
+| [移动端长图](examples/zh-mobile/source.md) | `--canvas mobile` | `zh-mobile.{svg,png,webp}` |
 
 ## License
 

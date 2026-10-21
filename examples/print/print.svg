@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="2074.21" viewBox="0 0 800 2074.21" font-family="Georgia, &apos;Iowan Old Style&apos;, &apos;Times New Roman&apos;, &apos;Songti SC&apos;, SimSun, serif">
+  <rect x="0" y="0" width="800" height="2074.21" fill="#fffdf7"/>
+  <text x="48" y="78.69" font-size="32.3" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.16">Deterministic Raster Output</text>
+  <line x1="48" y1="101.3" x2="752" y2="101.3" stroke="#d6ccb8" stroke-width="2"/>
+  <text x="48" y="137.02" font-size="17" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.09">A note on reproducing bitmaps exactly</text>
+  <text x="48" y="194.01" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">1. Introduction</text>
+  <text x="48" y="235.37" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">A rasterizer that produces a different image on every machine is not a rasterizer,</text>
+  <text x="48" y="265.12" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">it is a lottery. This document sets out what it takes to render the same pixels</text>
+  <text x="48" y="294.87" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">everywhere: a font whose outlines are read from the file rather than guessed, a</text>
+  <text x="48" y="324.62" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">metric table that does not depend on what happens to be installed, and an encoder</text>
+  <text x="48" y="354.37" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">that never consults the operating system.</text>
+  <text x="48" y="411.36" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">2. The problem of hinted outlines</text>
+  <text x="48" y="452.71" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">TrueType ships coordinates that describe the shape at the design size. Renderers</text>
+  <text x="48" y="482.46" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">usually apply grid fitting at small sizes to keep stems aligned to the pixel grid. Grid</text>
+  <text x="48" y="512.21" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">fitting is a rounding decision, and rounding decisions differ between</text>
+  <text x="48" y="541.96" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">implementations.</text>
+  <text x="48" y="584.46" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">The rasterizer in this project deliberately does not apply grid fitting. Outlines are</text>
+  <text x="48" y="614.21" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">flattened as they are stored and filled directly. The consequence is that a glyph</text>
+  <text x="48" y="643.96" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">may not look quite as crisp at 12 px as it would in a system renderer. The other</text>
+  <text x="48" y="673.71" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">consequence, which matters far more, is that it looks the same everywhere.</text>
+  <text x="48" y="723.27" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">2.1 Synthetic bold</text>
+  <text x="48" y="763.13" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">When a family ships only one weight, a synthetic bold is produced by drawing the</text>
+  <text x="48" y="792.88" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">outline a second time, offset by a fraction of the stem width. Real bold faces are</text>
+  <text x="48" y="822.63" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">always preferred when the system provides them.</text>
+  <text x="48" y="872.19" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">2.2 Synthetic italic</text>
+  <text x="48" y="912.05" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Italic is produced by shearing the outline horizontally by twelve degrees. As with</text>
+  <text x="48" y="941.8" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">bold, a real italic face is preferred and the synthetic form is only a fallback.</text>
+  <text x="48" y="998.79" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">3. Colour fonts</text>
+  <text x="48" y="1040.15" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Colour requires a font that carries a palette. The COLR table describes a paint</text>
+  <text x="48" y="1069.9" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">graph: layers, glyph references, transforms, composites, and gradient brushes.</text>
+  <text x="48" y="1099.65" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Each is resolved during rasterization, in document order, into a single flat bitmap.</text>
+  <rect x="48" y="1126.42" width="545.07" height="41.37" fill="#f3efe5"/>
+  <text x="58" y="1151.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">Table</text>
+  <text x="123.03" y="1151.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">Purpose</text>
+  <text x="448.27" y="1151.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">Supported</text>
+  <line x1="48" y1="1126.42" x2="593.07" y2="1126.42" stroke="#d6ccb8" stroke-width="1"/>
+  <line x1="48" y1="1167.79" x2="593.07" y2="1167.79" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1178.36" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1193.17" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="123.03" y="1193.17" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">Paint graph for colour glyphs</text>
+  <text x="448.27" y="1193.17" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">yes</text>
+  <line x1="48" y1="1209.16" x2="593.07" y2="1209.16" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1219.73" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1234.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">CPAL</text>
+  <text x="123.03" y="1234.54" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">Palette of colours referenced by</text>
+  <rect x="378.54" y="1219.73" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="382.37" y="1234.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="448.27" y="1234.54" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">yes</text>
+  <line x1="48" y1="1250.53" x2="593.07" y2="1250.53" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1261.1" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1275.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">CBDT</text>
+  <text x="123.03" y="1275.91" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">Bitmap colour strikes</text>
+  <text x="448.27" y="1275.91" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">monochrome only</text>
+  <line x1="48" y1="1291.9" x2="593.07" y2="1291.9" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1302.47" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1317.28" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">sbix</text>
+  <text x="123.03" y="1317.28" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">Bitmap strikes</text>
+  <text x="448.27" y="1317.28" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">monochrome only</text>
+  <line x1="48" y1="1333.27" x2="593.07" y2="1333.27" stroke="#d6ccb8" stroke-width="1"/>
+  <text x="48" y="1370.25" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Variable fields inside a</text>
+  <rect x="241.03" y="1355.03" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="244.86" y="1370.25" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="284.16" y="1370.25" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> paint graph are resolved against the axis coordinates</text>
+  <text x="48" y="1400" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">of the variable font instance in use.</text>
+  <text x="48" y="1456.99" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">4. Encoding</text>
+  <text x="48" y="1498.34" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">The PNG encoder performs adaptive per-row filtering and writes its own deflate</text>
+  <text x="48" y="1528.09" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">stream with fixed Huffman codes. The WebP encoder writes a lossless VP8L</text>
+  <text x="48" y="1557.84" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">stream with canonical prefix codes and an LZ77 token stream. Neither encoder</text>
+  <text x="48" y="1587.59" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">calls into a system library.</text>
+  <text x="48" y="1630.09" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">The practical consequence is that the two decoders agree byte for byte:</text>
+  <rect x="48" y="1656.87" width="704" height="45.75" fill="#faf7ef"/>
+  <rect x="48" y="1656.87" width="4" height="45.75" fill="#c9bea8"/>
+  <text x="64" y="1684.84" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">8,092,800 bytes compared across a full rendered page, zero differing pixels.</text>
+  <text x="48" y="1749.83" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">5. Verification</text>
+  <text x="48" y="1791.19" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">The test suite builds fonts byte by byte inside the test process, so the fixtures do</text>
+  <text x="48" y="1820.94" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">not depend on any font file being installed. It then renders, decodes with a decoder</text>
+  <text x="48" y="1850.69" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">written for the purpose, and compares.</text>
+  <rect x="53.25" y="1878" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1886.25" x2="59.85" y2="1889.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1889.25" x2="64.95" y2="1882.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1897.44" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Chunk CRCs validated</text>
+  <rect x="53.25" y="1908" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1916.25" x2="59.85" y2="1919.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1919.25" x2="64.95" y2="1912.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1927.19" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Adaptive filter round-trip</text>
+  <rect x="53.25" y="1937" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1945.25" x2="59.85" y2="1948.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1948.25" x2="64.95" y2="1941.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1956.94" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">Exact pixel recovery with an independent inflater</text>
+  <rect x="53.25" y="1967" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1975.25" x2="59.85" y2="1978.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1978.25" x2="64.95" y2="1971.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1986.69" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">VP8L canonical prefix codes verified against a Kraft sum</text>
+  <rect x="53.25" y="1997" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="2005.25" x2="59.85" y2="2008.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="2008.25" x2="64.95" y2="2001.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="2016.44" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">LZ77 token replay and distance-range invariants</text>
+</svg>

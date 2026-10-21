@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="1717.21" viewBox="0 0 800 1717.21" font-family="Georgia, &apos;Iowan Old Style&apos;, &apos;Times New Roman&apos;, &apos;Songti SC&apos;, SimSun, serif">
+  <rect x="0" y="0" width="800" height="1717.21" fill="#fffdf7"/>
+  <text x="48" y="78.69" font-size="32.3" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.16">排版的确定性</text>
+  <line x1="48" y1="101.3" x2="752" y2="101.3" stroke="#d6ccb8" stroke-width="2"/>
+  <text x="48" y="137.02" font-size="17" fill="#1a1a1a" xml:space="preserve" font-style="italic" letter-spacing="0.09">关于如何让一张位图在每台机器上都长得一样</text>
+  <text x="48" y="194.01" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">一、引言</text>
+  <text x="48" y="235.37" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">如果一个光栅化器在不同的机器上渲染出不同的图像，那它就不是光栅化器，而是一台 抽奖</text>
+  <text x="48" y="265.12" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">机。本文说明要付出什么代价，才能让同样的像素在任何地方都出现：一个从文件 读取而不</text>
+  <text x="48" y="294.87" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">是靠猜的字体、一张不依赖系统安装情况的度量表，以及一个从不询问操作 系统的编码器。</text>
+  <text x="48" y="351.86" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">二、字形微调的问题</text>
+  <text x="48" y="393.21" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">TrueType 里保存的坐标描述的是设计尺寸下的形状。渲染器通常会在小字号下做网格 对齐</text>
+  <text x="48" y="422.96" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">，让竖笔正好落在像素格上。网格对齐本质上是一次取整，而取整的策略在不同 实现之间并</text>
+  <text x="48" y="452.71" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">不一致。</text>
+  <text x="48" y="495.21" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">本项目的光栅化器刻意不做网格对齐：轮廓按存储的形状展开，直接填充。代价是 12 px 下</text>
+  <text x="48" y="524.96" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">的字形可能没有系统渲染器那么锐利；收益是它在任何地方看起来都一样。</text>
+  <text x="48" y="574.52" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">2.1 合成粗体</text>
+  <text x="48" y="614.38" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">当一个字族只提供一种字重时，合成粗体的做法是把轮廓再画一遍，偏移量为字干宽度 的一</text>
+  <text x="48" y="644.13" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">个比例。系统提供了真实粗体时，永远优先使用真实粗体。</text>
+  <text x="48" y="693.69" font-size="20.4" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.1">2.2 合成斜体</text>
+  <text x="48" y="733.55" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">斜体由轮廓水平剪切 12 度得到。和粗体一样，真实斜体优先，合成形态只作为兜底。</text>
+  <text x="48" y="790.54" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">三、彩色字体</text>
+  <text x="48" y="831.9" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">彩色需要带调色板的字体。</text>
+  <rect x="253.52" y="816.68" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="257.35" y="831.9" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="296.66" y="831.9" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 表描述一张绘制图：有图层、字形引用、变换、合成 和渐</text>
+  <text x="48" y="861.65" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">变画笔。光栅化时按文档顺序逐个求解，最终压平成一张位图。</text>
+  <rect x="48" y="888.42" width="316.77" height="41.37" fill="#f3efe5"/>
+  <text x="58" y="913.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">表</text>
+  <text x="123.03" y="913.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">用途</text>
+  <text x="288.84" y="913.8" font-size="15.64" fill="#1a1a1a" xml:space="preserve" font-weight="bold" letter-spacing="0.08">支持情况</text>
+  <line x1="48" y1="888.42" x2="364.77" y2="888.42" stroke="#d6ccb8" stroke-width="1"/>
+  <line x1="48" y1="929.79" x2="364.77" y2="929.79" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="940.36" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="955.17" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="123.03" y="955.17" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">彩色字形的绘制图</text>
+  <text x="288.84" y="955.17" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">支持</text>
+  <line x1="48" y1="971.16" x2="364.77" y2="971.16" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="981.73" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="996.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">CPAL</text>
+  <rect x="123.53" y="981.73" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="127.36" y="996.54" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="166.67" y="996.54" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08"> 引用的调色板</text>
+  <text x="288.84" y="996.54" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">支持</text>
+  <line x1="48" y1="1012.53" x2="364.77" y2="1012.53" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1023.1" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1037.91" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">CBDT</text>
+  <text x="123.03" y="1037.91" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">位图彩色字形</text>
+  <text x="288.84" y="1037.91" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">仅单色</text>
+  <line x1="48" y1="1053.9" x2="364.77" y2="1053.9" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="58.5" y="1064.47" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="62.34" y="1079.28" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">sbix</text>
+  <text x="123.03" y="1079.28" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">位图字形</text>
+  <text x="288.84" y="1079.28" font-size="15.64" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.08">仅单色</text>
+  <line x1="48" y1="1095.27" x2="364.77" y2="1095.27" stroke="#d6ccb8" stroke-width="1"/>
+  <rect x="48.5" y="1117.03" width="42.64" height="20.23" rx="3" fill="#f3efe5"/>
+  <text x="52.34" y="1132.25" font-size="14.45" fill="#2b2824" xml:space="preserve" font-family="&apos;SFMono-Regular&apos;, Consolas, &apos;Liberation Mono&apos;, monospace" letter-spacing="0.07">COLR</text>
+  <text x="91.64" y="1132.25" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09"> 绘制图中的可变字段，会按当前变量字体实例的轴坐标求解。</text>
+  <text x="48" y="1189.24" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">四、编码</text>
+  <text x="48" y="1230.59" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">PNG 编码器做逐行自适应过滤，并输出自带的 deflate 流（固定 Huffman 码）。WebP 编</text>
+  <text x="48" y="1260.34" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">码器输出无损 VP8L 流，规范前缀码加 LZ77 词元流。两者都不调用系统库。</text>
+  <text x="48" y="1302.84" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">实际效果是两种解码器的结果逐字节一致：</text>
+  <rect x="48" y="1329.62" width="704" height="45.75" fill="#faf7ef"/>
+  <rect x="48" y="1329.62" width="4" height="45.75" fill="#c9bea8"/>
+  <text x="64" y="1357.59" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">整个渲染页面共比对 8,092,800 字节，零个像素存在差异。</text>
+  <text x="48" y="1422.58" font-size="24.65" fill="#000000" xml:space="preserve" font-weight="bold" letter-spacing="0.12">五、验证</text>
+  <text x="48" y="1463.94" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">测试套件在测试进程内部逐字节构造字体，因此测试数据不依赖任何已安装的字体文件。 然</text>
+  <text x="48" y="1493.69" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">后渲染、用专门写的解码器解码，再逐像素比对。</text>
+  <rect x="53.25" y="1521" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1529.25" x2="59.85" y2="1532.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1532.25" x2="64.95" y2="1525.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1540.44" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">校验分块 CRC</text>
+  <rect x="53.25" y="1551" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1559.25" x2="59.85" y2="1562.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1562.25" x2="64.95" y2="1555.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1570.19" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">自适应滤波往返一致</text>
+  <rect x="53.25" y="1580" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1588.25" x2="59.85" y2="1591.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1591.25" x2="64.95" y2="1584.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1599.94" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">用独立解压器精确还原像素</text>
+  <rect x="53.25" y="1610" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1618.25" x2="59.85" y2="1621.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1621.25" x2="64.95" y2="1614.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1629.69" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">用 Kraft 和验证 VP8L 规范前缀码</text>
+  <rect x="53.25" y="1640" width="15" height="15" rx="3.06" fill="#1a4b7a"/>
+  <line x1="56.85" y1="1648.25" x2="59.85" y2="1651.25" stroke="#fffdf7" stroke-width="1.7"/>
+  <line x1="59.85" y1="1651.25" x2="64.95" y2="1644.2" stroke="#fffdf7" stroke-width="1.7"/>
+  <text x="73.5" y="1659.44" font-size="17" fill="#1a1a1a" xml:space="preserve" letter-spacing="0.09">LZ77 词元回放与距离区间不变式</text>
+</svg>

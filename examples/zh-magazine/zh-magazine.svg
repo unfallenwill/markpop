@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="990.2" viewBox="0 0 800 990.2" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="990.2" fill="#ffffff"/>
+  <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">文档的代价</text>
+  <line x1="48" y1="100.8" x2="386" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">关于渲染、保真度，以及那些还能继续编辑的</text>
+  <text x="48" y="159" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">文件。</text>
+  <text x="48" y="196.6" font-size="16" fill="#1f2328" xml:space="preserve">截图是一句断言：文档到此为止。它把标题、</text>
+  <text x="48" y="222.2" font-size="16" fill="#1f2328" xml:space="preserve">列表、引用这些结构压成一个墨色的 矩形，然</text>
+  <text x="48" y="247.8" font-size="16" fill="#1f2328" xml:space="preserve">后要求读者相信这里没有内容被裁掉、没有段</text>
+  <text x="48" y="273.4" font-size="16" fill="#1f2328" xml:space="preserve">落被重排、也没有任何东西在 传递过程中丢失</text>
+  <text x="48" y="299" font-size="16" fill="#1f2328" xml:space="preserve">。</text>
+  <text x="48" y="352.2" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">压平</text>
+  <line x1="48" y1="369" x2="386" y2="369" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="401.6" font-size="16" fill="#1f2328" xml:space="preserve">压平本身并不是坏事。做缩略图、或者在信息</text>
+  <text x="48" y="427.2" font-size="16" fill="#1f2328" xml:space="preserve">流里放个预览，压平完全正确。问题在于 当压</text>
+  <text x="48" y="452.8" font-size="16" fill="#1f2328" xml:space="preserve">平的产物变成了唯一的产物。</text>
+  <text x="48" y="490.4" font-size="16" fill="#1f2328" xml:space="preserve">文字一旦成了像素，三件事就会跟着发生：它</text>
+  <text x="48" y="516" font-size="16" fill="#1f2328" xml:space="preserve">不能再被搜索；它不能再被重排，所以窄屏 上</text>
+  <text x="48" y="541.6" font-size="16" fill="#1f2328" xml:space="preserve">要么无限滚动，要么被裁掉；它也不能再被改</text>
+  <text x="48" y="567.2" font-size="16" fill="#1f2328" xml:space="preserve">样式，换个品牌就得把每一页重新渲染 一遍。</text>
+  <text x="48" y="620.4" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">另一条路</text>
+  <line x1="48" y1="637.2" x2="386" y2="637.2" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="669.8" font-size="16" fill="#1f2328" xml:space="preserve">另一条路不是&quot;更快的截图&quot;，而是&quot;一份从来就</text>
+  <text x="48" y="695.4" font-size="16" fill="#1f2328" xml:space="preserve">不是图片的文档&quot;。</text>
+  <rect x="48" y="719.4" width="338" height="78.8" rx="6" fill="#f1f3f6"/>
+  <text x="347.12" y="733.36" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="60" y="761.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render(&quot;# 你好\n\n世</text>
+  <text x="60" y="782.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">界&quot;);</text>
+  <text x="48" y="831.8" font-size="16" fill="#1f2328" xml:space="preserve">这次调用返回的是一段标记。里面的文字就是</text>
+  <text x="48" y="857.4" font-size="16" fill="#1f2328" xml:space="preserve">文字：可以选中、可以搜索、可以缩放到 任意</text>
+  <text x="48" y="883" font-size="16" fill="#1f2328" xml:space="preserve">尺寸，也可以交给另一个渲染器。几何信息保</text>
+  <text x="48" y="908.6" font-size="16" fill="#1f2328" xml:space="preserve">存在一份扁平的图元列表里，所以 序列化是唯</text>
+  <text x="48" y="934.2" font-size="16" fill="#1f2328" xml:space="preserve">一对输出长相有意见的部分。</text>
+  <rect x="414" y="48" width="338" height="67.2" fill="#f8f9fb"/>
+  <rect x="414" y="48" width="4" height="67.2" fill="#d1d9e0"/>
+  <text x="430" y="73.6" font-size="16" fill="#1f2328" xml:space="preserve">文档是事实来源，图片只是它的一种渲染</text>
+  <text x="430" y="99.2" font-size="16" fill="#1f2328" xml:space="preserve">结果。</text>
+  <text x="414" y="160.4" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">双栏</text>
+  <line x1="414" y1="177.2" x2="752" y2="177.2" stroke="#d8dee4" stroke-width="1"/>
+  <text x="414" y="209.8" font-size="16" fill="#1f2328" xml:space="preserve">双栏改变的是阅读方式。窄的栏宽会逼出更短</text>
+  <text x="414" y="235.4" font-size="16" fill="#1f2328" xml:space="preserve">的句子和更快的段落。一整页密集的正文 会变</text>
+  <text x="414" y="261" font-size="16" fill="#1f2328" xml:space="preserve">成一页可以快速扫读的内容。</text>
+  <text x="414" y="298.6" font-size="16" fill="#1f2328" xml:space="preserve">平衡分栏共享同一条流：引擎先找出能装下指</text>
+  <text x="414" y="324.2" font-size="16" fill="#1f2328" xml:space="preserve">定栏数的最短高度，再把内容尽量均匀地 分到</text>
+  <text x="414" y="349.8" font-size="16" fill="#1f2328" xml:space="preserve">各栏。内容不会丢失也不会重排，只是读者到</text>
+  <text x="414" y="375.4" font-size="16" fill="#1f2328" xml:space="preserve">达第一栏底部的时间比第二栏稍早 一点。</text>
+  <text x="414" y="428.6" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">失去了什么</text>
+  <line x1="414" y1="445.4" x2="752" y2="445.4" stroke="#d8dee4" stroke-width="1"/>
+  <text x="414" y="478" font-size="16" fill="#1f2328" xml:space="preserve">诚实起见，得把损失列出来。没有语法高亮，</text>
+  <text x="414" y="503.6" font-size="16" fill="#1f2328" xml:space="preserve">因为高亮器是另一个程序，它对词法切分 有自</text>
+  <text x="414" y="529.2" font-size="16" fill="#1f2328" xml:space="preserve">己的主张。没有远程图片抓取，因为会联网的</text>
+  <text x="414" y="554.8" font-size="16" fill="#1f2328" xml:space="preserve">渲染器是会卡住的渲染器。也没有 HTML 执行</text>
+  <text x="414" y="580.4" font-size="16" fill="#1f2328" xml:space="preserve">，理由和&quot;文档不该在显示它的机器上跑代码&quot;</text>
+  <text x="414" y="606" font-size="16" fill="#1f2328" xml:space="preserve">完全一样。</text>
+  <text x="414" y="643.6" font-size="16" fill="#1f2328" xml:space="preserve">其余的一切——强调、代码、表格、引用、任务</text>
+  <text x="414" y="669.2" font-size="16" fill="#1f2328" xml:space="preserve">列表，还有你自己写的脚注——都在那里， 而且</text>
+  <text x="414" y="694.8" font-size="16" fill="#1f2328" xml:space="preserve">归你重新配色。</text>
+  <text x="414" y="748" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">收尾</text>
+  <line x1="414" y1="764.8" x2="752" y2="764.8" stroke="#d8dee4" stroke-width="1"/>
+  <text x="414" y="797.4" font-size="16" fill="#1f2328" xml:space="preserve">评价任何一个渲染工具，该问的不是它有多快</text>
+  <text x="414" y="823" font-size="16" fill="#1f2328" xml:space="preserve">，而是它留下了什么。好的工具会把文档 原样</text>
+  <text x="414" y="848.6" font-size="16" fill="#1f2328" xml:space="preserve">留下。</text>
+</svg>

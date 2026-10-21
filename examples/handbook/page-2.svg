@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="794" height="1123" viewBox="0 0 794 1123" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="794" height="1123" fill="#ffffff"/>
+  <rect x="56" y="56" width="682" height="67.2" fill="#f8f9fb"/>
+  <rect x="56" y="56" width="4" height="67.2" fill="#d1d9e0"/>
+  <text x="72" y="81.6" font-size="16" fill="#1f2328" xml:space="preserve">Rollback is always safe. Prefer rolling back and investigating over debugging in</text>
+  <text x="72" y="107.2" font-size="16" fill="#1f2328" xml:space="preserve">place.</text>
+  <text x="56" y="168.4" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">2. Alert catalogue</text>
+  <line x1="56" y1="185.2" x2="738" y2="185.2" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="56" y="204.2" width="682" height="37.55" fill="#f2f4f7"/>
+  <text x="66" y="227.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">Alert</text>
+  <text x="247.55" y="227.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">Severity</text>
+  <text x="330.01" y="227.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">Meaning</text>
+  <text x="557.37" y="227.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">First action</text>
+  <line x1="56" y1="204.2" x2="738" y2="204.2" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="56" y1="241.75" x2="738" y2="241.75" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="251.01" width="137.72" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="264.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">pipeline-stalled</text>
+  <text x="247.55" y="264.94" font-size="14.72" fill="#1f2328" xml:space="preserve">P2</text>
+  <text x="330.01" y="264.94" font-size="14.72" fill="#1f2328" xml:space="preserve">A stage exceeded its</text>
+  <text x="330.01" y="288.5" font-size="14.72" fill="#1f2328" xml:space="preserve">timeout</text>
+  <text x="557.37" y="264.94" font-size="14.72" fill="#1f2328" xml:space="preserve">Check the run log</text>
+  <line x1="56" y1="302.86" x2="738" y2="302.86" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="312.11" width="145.88" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="326.05" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">canary-error-rate</text>
+  <text x="247.55" y="326.05" font-size="14.72" fill="#1f2328" xml:space="preserve">P1</text>
+  <text x="330.01" y="326.05" font-size="14.72" fill="#1f2328" xml:space="preserve">Canary error rate above</text>
+  <text x="330.01" y="349.6" font-size="14.72" fill="#1f2328" xml:space="preserve">0.1%</text>
+  <text x="557.37" y="326.05" font-size="14.72" fill="#1f2328" xml:space="preserve">Roll back</text>
+  <line x1="56" y1="363.96" x2="738" y2="363.96" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="373.22" width="154.04" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="387.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">saturation-critica</text>
+  <rect x="66.5" y="396.77" width="7.16" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="66" y="410.7" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">l</text>
+  <text x="247.55" y="387.15" font-size="14.72" fill="#1f2328" xml:space="preserve">P1</text>
+  <text x="330.01" y="387.15" font-size="14.72" fill="#1f2328" xml:space="preserve">Cluster is saturated</text>
+  <text x="557.37" y="387.15" font-size="14.72" fill="#1f2328" xml:space="preserve">Scale out, then roll</text>
+  <text x="557.37" y="410.7" font-size="14.72" fill="#1f2328" xml:space="preserve">back</text>
+  <line x1="56" y1="425.06" x2="738" y2="425.06" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="434.32" width="129.56" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="448.26" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cert-expiry-30d</text>
+  <text x="247.55" y="448.26" font-size="14.72" fill="#1f2328" xml:space="preserve">P3</text>
+  <text x="330.01" y="448.26" font-size="14.72" fill="#1f2328" xml:space="preserve">Certificate expires soon</text>
+  <text x="557.37" y="448.26" font-size="14.72" fill="#1f2328" xml:space="preserve">Renew</text>
+  <line x1="56" y1="462.62" x2="738" y2="462.62" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="500.82" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">2.1 Muting</text>
+  <text x="56" y="537.42" font-size="16" fill="#1f2328" xml:space="preserve">Muting requires a ticket reference in the annotation:</text>
+  <rect x="56" y="561.42" width="682" height="58.4" rx="6" fill="#f1f3f6"/>
+  <text x="699.12" y="575.38" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="68" y="603.7" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">alertctl mute pipeline-stalled --until 2h --reason &quot;INC-4821&quot;</text>
+  <text x="56" y="653.42" font-size="16" fill="#1f2328" xml:space="preserve">Mutes expire automatically. There is no permanent mute.</text>
+  <text x="56" y="706.62" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">3. Escalation</text>
+  <line x1="56" y1="723.42" x2="738" y2="723.42" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="755.22" font-size="16" fill="#1f2328" xml:space="preserve">1.</text>
+  <text x="80.08" y="760.02" font-size="16" fill="#1f2328" xml:space="preserve">Primary on-call acknowledges within five minutes.</text>
+  <text x="56" y="780.82" font-size="16" fill="#1f2328" xml:space="preserve">2.</text>
+  <text x="80.08" y="785.62" font-size="16" fill="#1f2328" xml:space="preserve">If unacknowledged after fifteen minutes, the secondary is paged.</text>
+  <text x="56" y="806.42" font-size="16" fill="#1f2328" xml:space="preserve">3.</text>
+  <text x="80.08" y="811.22" font-size="16" fill="#1f2328" xml:space="preserve">If unacknowledged after thirty minutes, the incident manager is paged.</text>
+  <text x="56" y="857.42" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">3.1 Contact details</text>
+  <text x="56" y="894.02" font-size="16" fill="#1f2328" xml:space="preserve">Escalation runs through the on-call rota in the internal directory. Do not keep</text>
+  <text x="56" y="919.62" font-size="16" fill="#1f2328" xml:space="preserve">personal contact details in this handbook.</text>
+</svg>

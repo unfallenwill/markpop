@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="750" height="1664.77" viewBox="0 0 750 1664.77" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="750" height="1664.77" fill="#ffffff"/>
+  <text x="32" y="77.6" font-size="48" fill="#05503d" xml:space="preserve" font-weight="bold">速查卡：把 README 做成图</text>
+  <text x="32" y="140" font-size="48" fill="#05503d" xml:space="preserve" font-weight="bold">片</text>
+  <line x1="32" y1="173.6" x2="718" y2="173.6" stroke="#d8dee4" stroke-width="2"/>
+  <text x="32" y="221" font-size="24" fill="#1f2328" xml:space="preserve" font-weight="bold">目标</text>
+  <text x="80.96" y="221" font-size="24" fill="#1f2328" xml:space="preserve">：一张可以在社交平台和聊天里直接转发的长图</text>
+  <text x="32" y="277.4" font-size="24" fill="#1f2328" xml:space="preserve">README 截图通常有 800 px 宽，在手机上根本看不清。这张</text>
+  <text x="32" y="315.8" font-size="24" fill="#1f2328" xml:space="preserve">速查卡说明怎么用手机宽度 渲染同一份文档，并放大正文。</text>
+  <rect x="32" y="351.8" width="686" height="74.6" rx="6" fill="#f1f3f6"/>
+  <text x="665.68" y="370.24" font-size="16.8" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="44" y="407.22" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop README.md --canvas mobile -o share.svg</text>
+  <text x="32" y="494.2" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">会得到什么</text>
+  <line x1="32" y1="519.4" x2="718" y2="519.4" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="46.16" y="554.56" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="572.8" font-size="24" fill="#1f2328" xml:space="preserve">宽度 750 px 的连续长图，不分页</text>
+  <rect x="46.16" y="592.96" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="611.2" font-size="24" fill="#1f2328" xml:space="preserve">正文字号 24 px，而不是默认的 16 px</text>
+  <rect x="46.16" y="631.36" width="7.68" height="7.68" rx="3.84" fill="#33383f"/>
+  <text x="68" y="649.6" font-size="24" fill="#1f2328" xml:space="preserve">内边距 32 px，而不是默认的 48 px</text>
+  <text x="32" y="729.4" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">调参</text>
+  <line x1="32" y1="754.6" x2="718" y2="754.6" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="32" y="781.6" width="411.46" height="49.33" fill="#f2f4f7"/>
+  <text x="42" y="812.89" font-size="22.08" fill="#1f2328" xml:space="preserve" font-weight="bold">目的</text>
+  <text x="175.15" y="812.89" font-size="22.08" fill="#1f2328" xml:space="preserve" font-weight="bold">参数</text>
+  <text x="370.51" y="812.89" font-size="22.08" fill="#1f2328" xml:space="preserve" font-weight="bold">取值</text>
+  <line x1="32" y1="781.6" x2="443.46" y2="781.6" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="32" y1="830.93" x2="443.46" y2="830.93" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="862.22" font-size="22.08" fill="#1f2328" xml:space="preserve">更宽的画布</text>
+  <rect x="175.65" y="841.31" width="96.92" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="181.27" y="862.22" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--width</text>
+  <rect x="371.01" y="841.31" width="47.96" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="376.63" y="862.22" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">800</text>
+  <line x1="32" y1="880.26" x2="443.46" y2="880.26" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="911.54" font-size="22.08" fill="#1f2328" xml:space="preserve">更大的字号</text>
+  <rect x="175.65" y="890.64" width="145.88" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="181.27" y="911.54" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--font-size</text>
+  <rect x="371.01" y="890.64" width="35.72" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="376.63" y="911.54" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">26</text>
+  <line x1="32" y1="929.58" x2="443.46" y2="929.58" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="960.87" font-size="22.08" fill="#1f2328" xml:space="preserve">更松的行距</text>
+  <rect x="175.65" y="939.97" width="170.36" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="181.27" y="960.87" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--line-height</text>
+  <rect x="371.01" y="939.97" width="47.96" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="376.63" y="960.87" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">1.7</text>
+  <line x1="32" y1="978.91" x2="443.46" y2="978.91" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="1010.2" font-size="22.08" fill="#1f2328" xml:space="preserve">深色背景</text>
+  <rect x="175.65" y="989.3" width="96.92" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="181.27" y="1010.2" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--theme</text>
+  <rect x="371.01" y="989.3" width="60.2" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="376.63" y="1010.2" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">dark</text>
+  <line x1="32" y1="1028.24" x2="443.46" y2="1028.24" stroke="#d8dee4" stroke-width="1"/>
+  <text x="42" y="1059.53" font-size="22.08" fill="#1f2328" xml:space="preserve">更高分辨率</text>
+  <rect x="175.65" y="1038.62" width="84.68" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="181.27" y="1059.53" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--zoom</text>
+  <rect x="371.01" y="1038.62" width="47.96" height="28.56" rx="3" fill="#f1f3f6"/>
+  <text x="376.63" y="1059.53" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">150</text>
+  <line x1="32" y1="1077.57" x2="443.46" y2="1077.57" stroke="#d8dee4" stroke-width="1"/>
+  <text x="32" y="1145.37" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">配合位图格式</text>
+  <line x1="32" y1="1170.57" x2="718" y2="1170.57" stroke="#d8dee4" stroke-width="1"/>
+  <text x="32" y="1217.97" font-size="24" fill="#1f2328" xml:space="preserve">如果目标平台不接受 SVG，改成无损 WebP：</text>
+  <rect x="32" y="1253.97" width="686" height="105.2" rx="6" fill="#f1f3f6"/>
+  <text x="665.68" y="1272.41" font-size="16.8" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="44" y="1309.39" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop README.md --canvas mobile --zoom 150 -f webp </text>
+  <text x="44" y="1339.99" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">-o share.webp</text>
+  <text x="32" y="1426.97" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">清单</text>
+  <line x1="32" y1="1452.17" x2="718" y2="1452.17" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="39.5" y="1480" width="21" height="21" rx="4.32" fill="#0969da"/>
+  <line x1="44.54" y1="1491.55" x2="48.74" y2="1495.75" stroke="#ffffff" stroke-width="2.4"/>
+  <line x1="48.74" y1="1495.75" x2="55.88" y2="1485.88" stroke="#ffffff" stroke-width="2.4"/>
+  <text x="68" y="1505.57" font-size="24" fill="#1f2328" xml:space="preserve">用手机宽度渲染</text>
+  <rect x="39.5" y="1518" width="21" height="21" rx="4.32" fill="#0969da"/>
+  <line x1="44.54" y1="1529.55" x2="48.74" y2="1533.75" stroke="#ffffff" stroke-width="2.4"/>
+  <line x1="48.74" y1="1533.75" x2="55.88" y2="1523.88" stroke="#ffffff" stroke-width="2.4"/>
+  <text x="68" y="1543.97" font-size="24" fill="#1f2328" xml:space="preserve">正文放大到 24 px</text>
+  <rect x="39.5" y="1556" width="21" height="21" rx="4.32" fill="#0969da"/>
+  <line x1="44.54" y1="1567.55" x2="48.74" y2="1571.75" stroke="#ffffff" stroke-width="2.4"/>
+  <line x1="48.74" y1="1571.75" x2="55.88" y2="1561.88" stroke="#ffffff" stroke-width="2.4"/>
+  <text x="68" y="1582.37" font-size="24" fill="#1f2328" xml:space="preserve">导出无损 WebP 供聊天软件使用</text>
+  <rect x="39.5" y="1595" width="21" height="21" rx="4.32" fill="none" stroke="#5b636c" stroke-width="2.16"/>
+  <text x="68" y="1620.77" font-size="24" fill="#1f2328" xml:space="preserve">在页眉加上项目 Logo</text>
+</svg>

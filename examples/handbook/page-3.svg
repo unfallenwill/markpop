@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="794" height="1123" viewBox="0 0 794 1123" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="794" height="1123" fill="#ffffff"/>
+  <text x="56" y="78.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">4. Post-incident checklist</text>
+  <line x1="56" y1="95.6" x2="738" y2="95.6" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="61" y="114.82" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="132.2" font-size="16" fill="#1f2328" xml:space="preserve">Write the timeline within 24 hours</text>
+  <rect x="61" y="140.82" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="157.8" font-size="16" fill="#1f2328" xml:space="preserve">Identify the contributing factors, not only the trigger</text>
+  <rect x="61" y="165.82" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="183.4" font-size="16" fill="#1f2328" xml:space="preserve">Add a regression test where one is possible</text>
+  <rect x="61" y="191.82" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="209" font-size="16" fill="#1f2328" xml:space="preserve">Link the follow-up issue from the incident record</text>
+  <text x="56" y="262.2" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">Appendix A. Frequently asked</text>
+  <line x1="56" y1="279" x2="738" y2="279" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="311.6" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">Can I skip the canary?</text>
+  <text x="227.69" y="311.6" font-size="16" fill="#1f2328" xml:space="preserve"> No. Every promotion path includes the canary stage.</text>
+  <text x="56" y="349.2" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">Can I roll back a promotion that already finished?</text>
+  <text x="444.09" y="349.2" font-size="16" fill="#1f2328" xml:space="preserve"> Yes. Rollback is a supported</text>
+  <text x="56" y="374.8" font-size="16" fill="#1f2328" xml:space="preserve">operation at any time, and it is expected as a first response.</text>
+  <text x="56" y="412.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">What if the rollback itself fails?</text>
+  <text x="309.61" y="412.4" font-size="16" fill="#1f2328" xml:space="preserve"> Escalate immediately. Do not attempt a manual</text>
+  <text x="56" y="438" font-size="16" fill="#1f2328" xml:space="preserve">rollback on top of a failed automatic rollback.</text>
+</svg>

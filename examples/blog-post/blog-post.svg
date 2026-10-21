@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="1738.91" viewBox="0 0 800 1738.91" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="1738.91" fill="#ffffff"/>
+  <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">We Replaced Our Screenshot Pipeline</text>
+  <line x1="48" y1="100.8" x2="752" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">How a single Rust binary cut our docs build from 4 minutes to 400 milliseconds.</text>
+  <line x1="48" y1="173.4" x2="752" y2="173.4" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="223" font-size="16" fill="#1f2328" xml:space="preserve">Every documentation page we publish used to go through the same three steps: render</text>
+  <text x="48" y="248.6" font-size="16" fill="#1f2328" xml:space="preserve">Markdown to HTML, spin up a headless browser, wait for it to settle, and screenshot the</text>
+  <text x="48" y="274.2" font-size="16" fill="#1f2328" xml:space="preserve">result. It worked, sort of. It also cost us a 300 MB browser dependency in the build</text>
+  <text x="48" y="299.8" font-size="16" fill="#1f2328" xml:space="preserve">image, added roughly ninety seconds of wall clock per run, and handed us a PNG that</text>
+  <text x="48" y="325.4" font-size="16" fill="#1f2328" xml:space="preserve">nobody could restyle, re-search, or paste into a slide with working text.</text>
+  <text x="48" y="378.6" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">What we wanted instead</text>
+  <line x1="48" y1="395.4" x2="752" y2="395.4" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="428" font-size="16" fill="#1f2328" xml:space="preserve">The requirements were not exotic:</text>
+  <rect x="57.44" y="457.44" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="469.6" font-size="16" fill="#1f2328" xml:space="preserve">text that stays</text>
+  <text x="193.28" y="469.6" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">text</text>
+  <text x="226.9" y="469.6" font-size="16" fill="#1f2328" xml:space="preserve">, so it can be selected, searched and read by a screen reader;</text>
+  <rect x="57.44" y="483.04" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="495.2" font-size="16" fill="#1f2328" xml:space="preserve">output that looks identical on a CI runner and on a laptop;</text>
+  <rect x="57.44" y="508.64" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="520.8" font-size="16" fill="#1f2328" xml:space="preserve">no browser, no system APIs, no C libraries;</text>
+  <rect x="57.44" y="534.24" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="546.4" font-size="16" fill="#1f2328" xml:space="preserve">a build that finishes before you finish reading the commit message.</text>
+  <rect x="48" y="570.4" width="704" height="67.2" fill="#f8f9fb"/>
+  <rect x="48" y="570.4" width="4" height="67.2" fill="#d1d9e0"/>
+  <text x="64" y="596" font-size="16" fill="#1f2328" xml:space="preserve">The moment the output is a bitmap, every downstream consumer inherits the</text>
+  <text x="64" y="621.6" font-size="16" fill="#1f2328" xml:space="preserve">limitations of a bitmap. Fonts get baked in. Text stops being text.</text>
+  <text x="48" y="682.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">The pipeline now</text>
+  <line x1="48" y1="699.6" x2="752" y2="699.6" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="732.2" font-size="16" fill="#1f2328" xml:space="preserve">There are three stages, and each one is a pure function with its own test suite:</text>
+  <rect x="48" y="756.2" width="704" height="119.6" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="770.16" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">text</text>
+  <text x="60" y="798.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown text</text>
+  <text x="60" y="818.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  -&gt; parse     (src/parse)   -&gt; Document</text>
+  <text x="60" y="839.28" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  -&gt; layout    (src/layout)  -&gt; Scene</text>
+  <text x="60" y="859.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  -&gt; engine    (src/engine)  -&gt; SVG | PNG | WebP</text>
+  <text x="48" y="909.4" font-size="16" fill="#1f2328" xml:space="preserve">The interesting part is the middle stage.</text>
+  <rect x="365.62" y="895.08" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="369.2" y="909.4" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Scene</text>
+  <text x="414.08" y="909.4" font-size="16" fill="#1f2328" xml:space="preserve"> is a flat list of primitives — text runs,</text>
+  <text x="48" y="935" font-size="16" fill="#1f2328" xml:space="preserve">rectangles, lines — with coordinates in base units. Everything downstream is a serializer</text>
+  <text x="48" y="960.6" font-size="16" fill="#1f2328" xml:space="preserve">over that list, which is why adding WebP output took an afternoon and not a quarter.</text>
+  <text x="48" y="1006.8" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">Measuring without a font file</text>
+  <text x="48" y="1043.4" font-size="16" fill="#1f2328" xml:space="preserve">The obvious dependency for a layout engine is the system&apos;s font metrics, but that makes</text>
+  <text x="48" y="1069" font-size="16" fill="#1f2328" xml:space="preserve">output depend on whatever happens to be installed. Instead we ship a deterministic</text>
+  <text x="48" y="1094.6" font-size="16" fill="#1f2328" xml:space="preserve">advance table, so the same document breaks its lines the same way everywhere.</text>
+  <rect x="48" y="1118.6" width="462.24" height="37.55" fill="#f2f4f7"/>
+  <text x="58" y="1141.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">Property</text>
+  <text x="188.75" y="1141.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">Screenshot pipeline</text>
+  <text x="398.21" y="1141.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">MarkPop</text>
+  <line x1="48" y1="1118.6" x2="510.24" y2="1118.6" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="48" y1="1156.15" x2="510.24" y2="1156.15" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1179.34" font-size="14.72" fill="#1f2328" xml:space="preserve">Cold start</text>
+  <text x="188.75" y="1179.34" font-size="14.72" fill="#1f2328" xml:space="preserve">~90 s</text>
+  <text x="398.21" y="1179.34" font-size="14.72" fill="#1f2328" xml:space="preserve">~0.4 s</text>
+  <line x1="48" y1="1193.7" x2="510.24" y2="1193.7" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1216.9" font-size="14.72" fill="#1f2328" xml:space="preserve">Dependencies</text>
+  <text x="188.75" y="1216.9" font-size="14.72" fill="#1f2328" xml:space="preserve">browser + system libs</text>
+  <text x="398.21" y="1216.9" font-size="14.72" fill="#1f2328" xml:space="preserve">none</text>
+  <line x1="48" y1="1231.26" x2="510.24" y2="1231.26" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1254.45" font-size="14.72" fill="#1f2328" xml:space="preserve">Text</text>
+  <text x="188.75" y="1254.45" font-size="14.72" fill="#1f2328" xml:space="preserve">flattened to pixels</text>
+  <text x="398.21" y="1254.45" font-size="14.72" fill="#1f2328" xml:space="preserve">real text</text>
+  <line x1="48" y1="1268.81" x2="510.24" y2="1268.81" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1292" font-size="14.72" fill="#1f2328" xml:space="preserve">Determinism</text>
+  <text x="188.75" y="1292" font-size="14.72" fill="#1f2328" xml:space="preserve">depends on installed fonts</text>
+  <text x="398.21" y="1292" font-size="14.72" fill="#1f2328" xml:space="preserve">byte-for-byte</text>
+  <line x1="48" y1="1306.36" x2="510.24" y2="1306.36" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1329.55" font-size="14.72" fill="#1f2328" xml:space="preserve">Remote images</text>
+  <text x="188.75" y="1329.55" font-size="14.72" fill="#1f2328" xml:space="preserve">fetched</text>
+  <text x="398.21" y="1329.55" font-size="14.72" fill="#1f2328" xml:space="preserve">never fetched</text>
+  <line x1="48" y1="1343.91" x2="510.24" y2="1343.91" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="1389.11" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">Results</text>
+  <line x1="48" y1="1405.91" x2="752" y2="1405.91" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="57.44" y="1430.35" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1442.51" font-size="16" fill="#1f2328" xml:space="preserve">Build time for the full docs site dropped from four minutes to under two seconds.</text>
+  <rect x="57.44" y="1455.95" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1468.11" font-size="16" fill="#1f2328" xml:space="preserve">The published SVG is 38 KB and searchable in the browser.</text>
+  <rect x="57.44" y="1481.55" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1493.71" font-size="16" fill="#1f2328" xml:space="preserve">Our CI image lost 300 MB and about forty transitive packages.</text>
+  <rect x="57.44" y="1507.15" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1519.31" font-size="16" fill="#1f2328" xml:space="preserve">Nobody has asked for the PNGs back.</text>
+  <text x="48" y="1565.51" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">Checklist</text>
+  <rect x="53" y="1589" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1596.7" x2="59.16" y2="1599.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1599.5" x2="63.92" y2="1592.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1606.11" font-size="16" fill="#1f2328" xml:space="preserve">Replace the HTML intermediate with a direct Markdown parser</text>
+  <rect x="53" y="1614" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1621.7" x2="59.16" y2="1624.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1624.5" x2="63.92" y2="1617.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1631.71" font-size="16" fill="#1f2328" xml:space="preserve">Ship a deterministic metrics table instead of reading system fonts</text>
+  <rect x="53" y="1640" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1647.7" x2="59.16" y2="1650.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1650.5" x2="63.92" y2="1643.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1657.31" font-size="16" fill="#1f2328" xml:space="preserve">Add a bitmap engine only where compatibility demands it</text>
+  <rect x="53" y="1666" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="72" y="1682.91" font-size="16" fill="#1f2328" xml:space="preserve">Add PDF export without leaving the Rust world</text>
+</svg>

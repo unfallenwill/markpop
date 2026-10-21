@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="794" height="1123" viewBox="0 0 794 1123" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="794" height="1123" fill="#ffffff"/>
+  <text x="56" y="78.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">二、告警目录</text>
+  <line x1="56" y1="95.6" x2="738" y2="95.6" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="56" y="114.6" width="543.53" height="37.55" fill="#f2f4f7"/>
+  <text x="66" y="137.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">告警</text>
+  <text x="253.03" y="137.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">级别</text>
+  <text x="304.17" y="137.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">含义</text>
+  <text x="483.89" y="137.79" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">第一动作</text>
+  <line x1="56" y1="114.6" x2="599.53" y2="114.6" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="56" y1="152.15" x2="599.53" y2="152.15" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="161.41" width="137.72" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="175.34" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">pipeline-stalled</text>
+  <text x="253.03" y="175.34" font-size="14.72" fill="#1f2328" xml:space="preserve">P2</text>
+  <text x="304.17" y="175.34" font-size="14.72" fill="#1f2328" xml:space="preserve">某阶段超时</text>
+  <text x="483.89" y="175.34" font-size="14.72" fill="#1f2328" xml:space="preserve">查看运行日志</text>
+  <line x1="56" y1="189.7" x2="599.53" y2="189.7" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="198.96" width="145.88" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="212.9" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">canary-error-rate</text>
+  <text x="253.03" y="212.9" font-size="14.72" fill="#1f2328" xml:space="preserve">P1</text>
+  <text x="304.17" y="212.9" font-size="14.72" fill="#1f2328" xml:space="preserve">金丝雀错误率超过 0.1%</text>
+  <text x="483.89" y="212.9" font-size="14.72" fill="#1f2328" xml:space="preserve">执行回滚</text>
+  <line x1="56" y1="227.26" x2="599.53" y2="227.26" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="236.51" width="162.2" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="250.45" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">saturation-critical</text>
+  <text x="253.03" y="250.45" font-size="14.72" fill="#1f2328" xml:space="preserve">P1</text>
+  <text x="304.17" y="250.45" font-size="14.72" fill="#1f2328" xml:space="preserve">集群已饱和</text>
+  <text x="483.89" y="250.45" font-size="14.72" fill="#1f2328" xml:space="preserve">先扩容，再回滚</text>
+  <line x1="56" y1="264.81" x2="599.53" y2="264.81" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="66.5" y="274.06" width="129.56" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="70.08" y="288" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cert-expiry-30d</text>
+  <text x="253.03" y="288" font-size="14.72" fill="#1f2328" xml:space="preserve">P3</text>
+  <text x="304.17" y="288" font-size="14.72" fill="#1f2328" xml:space="preserve">证书即将过期</text>
+  <text x="483.89" y="288" font-size="14.72" fill="#1f2328" xml:space="preserve">走续期流程</text>
+  <line x1="56" y1="302.36" x2="599.53" y2="302.36" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="340.56" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">2.1 屏蔽规则</text>
+  <text x="56" y="377.16" font-size="16" fill="#1f2328" xml:space="preserve">屏蔽告警必须在备注里带上工单号：</text>
+  <rect x="56" y="401.16" width="682" height="58.4" rx="6" fill="#f1f3f6"/>
+  <text x="699.12" y="415.12" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="68" y="443.44" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">alertctl mute pipeline-stalled --until 2h --reason &quot;INC-4821&quot;</text>
+  <text x="56" y="493.16" font-size="16" fill="#1f2328" xml:space="preserve">屏蔽会到期自动解除，不存在永久屏蔽。</text>
+  <text x="56" y="546.36" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">三、升级路径</text>
+  <line x1="56" y1="563.16" x2="738" y2="563.16" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="594.96" font-size="16" fill="#1f2328" xml:space="preserve">1.</text>
+  <text x="80.08" y="599.76" font-size="16" fill="#1f2328" xml:space="preserve">主值班在五分钟内确认告警。</text>
+  <text x="56" y="620.56" font-size="16" fill="#1f2328" xml:space="preserve">2.</text>
+  <text x="80.08" y="625.36" font-size="16" fill="#1f2328" xml:space="preserve">十五分钟内无人确认，呼叫备班。</text>
+  <text x="56" y="646.16" font-size="16" fill="#1f2328" xml:space="preserve">3.</text>
+  <text x="80.08" y="650.96" font-size="16" fill="#1f2328" xml:space="preserve">三十分钟内无人确认，呼叫事故经理。</text>
+  <text x="56" y="697.16" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">3.1 联系方式</text>
+  <text x="56" y="733.76" font-size="16" fill="#1f2328" xml:space="preserve">升级走内部目录里的值班轮转表。个人联系方式不要写进本手册。</text>
+  <text x="56" y="786.96" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">四、事故复盘清单</text>
+  <line x1="56" y1="803.76" x2="738" y2="803.76" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="61" y="823.24" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="840.36" font-size="16" fill="#1f2328" xml:space="preserve">二十四小时内写完时间线</text>
+  <rect x="61" y="848.24" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="865.96" font-size="16" fill="#1f2328" xml:space="preserve">找到促成因素，而不只是直接触发因素</text>
+  <rect x="61" y="874.24" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="891.56" font-size="16" fill="#1f2328" xml:space="preserve">能补测试的地方补上回归测试</text>
+  <rect x="61" y="900.24" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="80" y="917.16" font-size="16" fill="#1f2328" xml:space="preserve">在事故记录里关联后续工单</text>
+  <text x="56" y="970.36" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">附录 A：常见问题</text>
+  <line x1="56" y1="987.16" x2="738" y2="987.16" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="1019.76" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">可以跳过金丝雀吗？</text>
+  <text x="202.88" y="1019.76" font-size="16" fill="#1f2328" xml:space="preserve"> 不可以。所有晋级路径都包含金丝雀阶段。</text>
+</svg>

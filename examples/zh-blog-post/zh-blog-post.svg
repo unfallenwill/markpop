@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="1644.51" viewBox="0 0 800 1644.51" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="1644.51" fill="#ffffff"/>
+  <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">我们放弃了截图流水线</text>
+  <line x1="48" y1="100.8" x2="752" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">把文档构建从四分钟压到四百毫秒，中间只改了一个渲染器。</text>
+  <line x1="48" y1="173.4" x2="752" y2="173.4" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="223" font-size="16" fill="#1f2328" xml:space="preserve">过去每次发布文档，走的都是同一条路：Markdown 转 HTML，起一个无头浏览器，等它把 布局</text>
+  <text x="48" y="248.6" font-size="16" fill="#1f2328" xml:space="preserve">稳定下来，然后截图。这条路能跑通，但它有三个代价。</text>
+  <text x="48" y="301.8" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">代价在哪</text>
+  <line x1="48" y1="318.6" x2="752" y2="318.6" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="351.2" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">慢。</text>
+  <text x="80.64" y="351.2" font-size="16" fill="#1f2328" xml:space="preserve"> 一个 800 × 4000 的页面，浏览器要跑完布局、加载字体、合成图层，再等 screenshot 触发</text>
+  <text x="48" y="376.8" font-size="16" fill="#1f2328" xml:space="preserve">。整站 40 个页面，一次构建四分钟，其中九成时间在等浏览器。</text>
+  <text x="48" y="414.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">重。</text>
+  <text x="80.64" y="414.4" font-size="16" fill="#1f2328" xml:space="preserve"> 我们的构建镜像里为了这一件事塞进了整个 Chromium，连同它自己的 依赖树——300 MB 镜</text>
+  <text x="48" y="440" font-size="16" fill="#1f2328" xml:space="preserve">像体积、四十多个传递依赖，只为了输出几张图。</text>
+  <text x="48" y="477.6" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">不可逆。</text>
+  <text x="113.28" y="477.6" font-size="16" fill="#1f2328" xml:space="preserve"> 位图一旦生成，后面就全不可逆了：文字变成了像素，不能搜索、不能复制、 不能重新</text>
+  <text x="48" y="503.2" font-size="16" fill="#1f2328" xml:space="preserve">排版。换个主题，整站重新渲染一遍。</text>
+  <rect x="48" y="527.2" width="704" height="41.6" fill="#f8f9fb"/>
+  <rect x="48" y="527.2" width="4" height="41.6" fill="#d1d9e0"/>
+  <text x="64" y="552.8" font-size="16" fill="#1f2328" xml:space="preserve">位图是一句断言：文档到此为止了。它要求读者相信没有内容被裁掉、没有段落被重排。</text>
+  <text x="48" y="614" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">现在的管线</text>
+  <line x1="48" y1="630.8" x2="752" y2="630.8" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="663.4" font-size="16" fill="#1f2328" xml:space="preserve">三个阶段，每一层都是纯函数，各自都有独立的测试：</text>
+  <rect x="48" y="687.4" width="704" height="119.6" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="701.36" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">text</text>
+  <text x="60" y="729.68" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown 文本</text>
+  <text x="60" y="750.08" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → 解析    (src/parse)   → Document</text>
+  <text x="60" y="770.48" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → 排版    (src/layout)  → Scene</text>
+  <text x="60" y="790.88" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → 输出    (src/engine)  → SVG | PNG | WebP</text>
+  <text x="48" y="840.6" font-size="16" fill="#1f2328" xml:space="preserve">关键在中间那层。</text>
+  <rect x="176.5" y="826.28" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="180.08" y="840.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Scene</text>
+  <text x="224.96" y="840.6" font-size="16" fill="#1f2328" xml:space="preserve"> 是一串扁平的几何图元——文本串、矩形、线段——坐标写在 基础单位里。</text>
+  <text x="48" y="866.2" font-size="16" fill="#1f2328" xml:space="preserve">往下的每一种格式都只是这个列表的一个序列化器，所以加 WebP 只花了 一个下午，而不是一个</text>
+  <text x="48" y="891.8" font-size="16" fill="#1f2328" xml:space="preserve">季度。</text>
+  <text x="48" y="938" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">度量不依赖字体文件</text>
+  <text x="48" y="974.6" font-size="16" fill="#1f2328" xml:space="preserve">排版引擎最自然的做法是读系统字体度量，但这会让输出随机器变化。这里改成内置一张 确定性</text>
+  <text x="48" y="1000.2" font-size="16" fill="#1f2328" xml:space="preserve">字宽表，同一份文档在任何机器上断行结果都一样。</text>
+  <rect x="48" y="1024.2" width="331.87" height="37.55" fill="#f2f4f7"/>
+  <text x="58" y="1047.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">指标</text>
+  <text x="138.58" y="1047.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">截图流水线</text>
+  <text x="294.27" y="1047.39" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">MarkPop</text>
+  <line x1="48" y1="1024.2" x2="379.87" y2="1024.2" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="48" y1="1061.75" x2="379.87" y2="1061.75" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1084.94" font-size="14.72" fill="#1f2328" xml:space="preserve">冷启动</text>
+  <text x="138.58" y="1084.94" font-size="14.72" fill="#1f2328" xml:space="preserve">约 90 秒</text>
+  <text x="294.27" y="1084.94" font-size="14.72" fill="#1f2328" xml:space="preserve">约 0.4 秒</text>
+  <line x1="48" y1="1099.3" x2="379.87" y2="1099.3" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1122.5" font-size="14.72" fill="#1f2328" xml:space="preserve">依赖</text>
+  <text x="138.58" y="1122.5" font-size="14.72" fill="#1f2328" xml:space="preserve">浏览器 + 系统库</text>
+  <text x="294.27" y="1122.5" font-size="14.72" fill="#1f2328" xml:space="preserve">无</text>
+  <line x1="48" y1="1136.86" x2="379.87" y2="1136.86" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1160.05" font-size="14.72" fill="#1f2328" xml:space="preserve">文字</text>
+  <text x="138.58" y="1160.05" font-size="14.72" fill="#1f2328" xml:space="preserve">压平成像素</text>
+  <text x="294.27" y="1160.05" font-size="14.72" fill="#1f2328" xml:space="preserve">仍然是文字</text>
+  <line x1="48" y1="1174.41" x2="379.87" y2="1174.41" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1197.6" font-size="14.72" fill="#1f2328" xml:space="preserve">确定性</text>
+  <text x="138.58" y="1197.6" font-size="14.72" fill="#1f2328" xml:space="preserve">取决于装了哪些字体</text>
+  <text x="294.27" y="1197.6" font-size="14.72" fill="#1f2328" xml:space="preserve">逐字节一致</text>
+  <line x1="48" y1="1211.96" x2="379.87" y2="1211.96" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="1235.15" font-size="14.72" fill="#1f2328" xml:space="preserve">远程图片</text>
+  <text x="138.58" y="1235.15" font-size="14.72" fill="#1f2328" xml:space="preserve">会去拉</text>
+  <text x="294.27" y="1235.15" font-size="14.72" fill="#1f2328" xml:space="preserve">永不拉取</text>
+  <line x1="48" y1="1249.51" x2="379.87" y2="1249.51" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="1294.71" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">结果</text>
+  <line x1="48" y1="1311.51" x2="752" y2="1311.51" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="57.44" y="1335.95" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1348.11" font-size="16" fill="#1f2328" xml:space="preserve">整站文档构建从四分钟降到两秒以内。</text>
+  <rect x="57.44" y="1361.55" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1373.71" font-size="16" fill="#1f2328" xml:space="preserve">产出的 SVG 只有 38 KB，在浏览器里可以直接搜索。</text>
+  <rect x="57.44" y="1387.15" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1399.31" font-size="16" fill="#1f2328" xml:space="preserve">CI 镜像瘦了 300 MB，四十多个传递依赖消失。</text>
+  <rect x="57.44" y="1412.75" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="1424.91" font-size="16" fill="#1f2328" xml:space="preserve">没有人来问我们要回 PNG。</text>
+  <text x="48" y="1471.11" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">待办</text>
+  <rect x="53" y="1494" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1501.7" x2="59.16" y2="1504.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1504.5" x2="63.92" y2="1497.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1511.71" font-size="16" fill="#1f2328" xml:space="preserve">用直接的 Markdown 解析器替掉 HTML 中间层</text>
+  <rect x="53" y="1520" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1527.7" x2="59.16" y2="1530.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1530.5" x2="63.92" y2="1523.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1537.31" font-size="16" fill="#1f2328" xml:space="preserve">用确定性度量表替掉系统字体</text>
+  <rect x="53" y="1546" width="14" height="14" rx="2.88" fill="#0969da"/>
+  <line x1="56.36" y1="1553.7" x2="59.16" y2="1556.5" stroke="#ffffff" stroke-width="1.6"/>
+  <line x1="59.16" y1="1556.5" x2="63.92" y2="1549.92" stroke="#ffffff" stroke-width="1.6"/>
+  <text x="72" y="1562.91" font-size="16" fill="#1f2328" xml:space="preserve">只在兼容性要求高的地方才启用位图引擎</text>
+  <rect x="53" y="1571" width="14" height="14" rx="2.88" fill="none" stroke="#5b636c" stroke-width="1.44"/>
+  <text x="72" y="1588.51" font-size="16" fill="#1f2328" xml:space="preserve">不离开 Rust 世界直接导出 PDF</text>
+</svg>
