@@ -1,12 +1,12 @@
-# markdown2svg
+# MarkPop
 
-Render Markdown **directly to SVG, PNG or lossless WebP** — no HTML, no headless browser, no
-screenshots, no image libraries. Pure Rust, zero dependencies.
+**MarkPop** renders Markdown **directly to SVG, PNG or lossless WebP** — no HTML, no headless
+browser, no screenshots, no image libraries. Pure Rust, zero dependencies.
 
 ```bash
-cat README.md | markdown2svg > README.svg          # vector (default)
-markdown2svg doc.md --format png  -o doc.png       # bitmap, wide compatibility
-markdown2svg doc.md --format webp -o doc.webp      # bitmap, smaller files
+cat README.md | markpop > README.svg          # vector (default)
+markpop doc.md --format png  -o doc.png       # bitmap, wide compatibility
+markpop doc.md --format webp -o doc.webp      # bitmap, smaller files
 ```
 
 ## Why
@@ -63,7 +63,7 @@ cargo install --path .
 
 ```
 USAGE:
-    markdown2svg [OPTIONS] [INPUT]
+    markpop [OPTIONS] [INPUT]
 
 ARGS:
     <INPUT>    Markdown file to render. Omit or use `-` to read stdin.
@@ -94,17 +94,17 @@ OPTIONS:
 Examples:
 
 ```bash
-markdown2svg doc.md -o doc.svg
-markdown2svg doc.md --canvas a4 -o page.svg                          # A4, auto-paginated
-markdown2svg doc.md --canvas mobile -o long.svg                     # 750px long image
-markdown2svg doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
-markdown2svg doc.md --format webp --font myfont.ttf -o doc.webp
-markdown2svg doc.md --font SegUIVar.ttf --variation wght=700 -o doc.png   # bold instance
-markdown2svg doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
-markdown2svg doc.md --columns 3 --page-height 1123 -o page.svg      # 3 columns per page
-markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \
+markpop doc.md -o doc.svg
+markpop doc.md --canvas a4 -o page.svg                          # A4, auto-paginated
+markpop doc.md --canvas mobile -o long.svg                     # 750px long image
+markpop doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
+markpop doc.md --format webp --font myfont.ttf -o doc.webp
+markpop doc.md --font SegUIVar.ttf --variation wght=700 -o doc.png   # bold instance
+markpop doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
+markpop doc.md --columns 3 --page-height 1123 -o page.svg      # 3 columns per page
+markpop doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \
     --font-family "Georgia, serif" -o doc.svg
-cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
+cat doc.md | markpop --theme dark --zoom 150 > doc.svg
 ```
 
 ## Canvas presets
@@ -117,13 +117,13 @@ cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
 | `mobile` | 750 × auto, 24 px body | 32 | continuous long image |
 
 ```bash
-markdown2svg doc.md --canvas a4 -o page.svg      # → page-1.svg, page-2.svg, …
-markdown2svg doc.md --canvas a4 --format png -o page.png   # → page-1.png, …
-markdown2svg doc.md --canvas mobile -o long.svg  # one tall image for phone reading
+markpop doc.md --canvas a4 -o page.svg      # → page-1.svg, page-2.svg, …
+markpop doc.md --canvas a4 --format png -o page.png   # → page-1.png, …
+markpop doc.md --canvas mobile -o long.svg  # one tall image for phone reading
 ```
 
 ```rust
-use markdown2svg::{CanvasPreset, Options};
+use markpop::{CanvasPreset, Options};
 
 let opts = Options::default().with_canvas(CanvasPreset::A4);
 assert_eq!(opts.page_height, Some(1123.0));
@@ -162,13 +162,13 @@ The layout engine is driven entirely by configuration; nothing is hard-coded.
 | Variable axis | `--variation wght=700` | `with_variation("wght", 700.0)` | font default |
 
 ```rust
-let theme = markdown2svg::Theme::light()
+let theme = markpop::Theme::light()
     .with_font_size(17.0)
     .with_line_height(1.75)
     .with_letter_spacing(0.01)
     .with_font_family("Georgia, 'Times New Roman', serif")
     .with_columns(2);
-let svg = markdown2svg::render_with("# Hi", &markdown2svg::Options::default().with_theme(theme))?;
+let svg = markpop::render_with("# Hi", &markpop::Options::default().with_theme(theme))?;
 ```
 
 Notes:
@@ -192,28 +192,28 @@ Notes:
 
 ```rust
 // Defaults: light theme, 100% zoom.
-let svg: String = markdown2svg::render("# Hello\n\nWorld");
+let svg: String = markpop::render("# Hello\n\nWorld");
 
 // Custom options, including zoom (1.0 = 100%).
-let opts = markdown2svg::Options::default()
-    .with_theme(markdown2svg::Theme::dark())
+let opts = markpop::Options::default()
+    .with_theme(markpop::Theme::dark())
     .with_zoom(1.5);
-let svg = markdown2svg::render_with("# Hi", &opts)?;
+let svg = markpop::render_with("# Hi", &opts)?;
 
 // Geometry without serialization: useful for tests or other output formats.
-let scene = markdown2svg::to_scene("# Hi", &markdown2svg::Theme::light());
+let scene = markpop::to_scene("# Hi", &markpop::Theme::light());
 assert!(scene.find_text("Hi").is_some());
 
 // Bitmap engines: PNG or lossless WebP, from the same layout.
-use markdown2svg::OutputFormat;
-let opts = markdown2svg::Options::default().with_format(OutputFormat::Webp);
-let bytes: Vec<u8> = markdown2svg::render_bytes("# Hi", &opts)?;
+use markpop::OutputFormat;
+let opts = markpop::Options::default().with_format(OutputFormat::Webp);
+let bytes: Vec<u8> = markpop::render_bytes("# Hi", &opts)?;
 
 // Long documents: pagination + table of contents.
-let opts = markdown2svg::Options::default()
+let opts = markpop::Options::default()
     .with_page_height(1123.0)
     .with_toc(true);
-let pages: Vec<String> = markdown2svg::render_pages("# One\n\nBody", &opts)?;
+let pages: Vec<String> = markpop::render_pages("# One\n\nBody", &opts)?;
 ```
 
 ### Zoom
@@ -223,7 +223,7 @@ Zoom is implemented with the SVG `viewBox`: geometry is written in base units an
 and the output stays vector-crisp.
 
 ```rust
-use markdown2svg::{Color, Options, Theme};
+use markpop::{Color, Options, Theme};
 
 let branding = Theme { link: "#ff5500".parse()?, ..Theme::light() };
 let opts = Options::default().with_theme(branding).with_zoom(1.5);
@@ -240,10 +240,10 @@ Three presets ship built in, and every visual constant is a field on `Theme`:
 | `Theme::print()` | Serif body, warm paper, loose leading, subtle tracking |
 
 ```rust
-let print = markdown2svg::Theme {
+let print = markpop::Theme {
     line_height: 1.9,
     letter_spacing: 0.01,
-    ..markdown2svg::Theme::print()
+    ..markpop::Theme::print()
 };
 ```
 
@@ -472,7 +472,7 @@ bitmap-only colour formats (`CBDT`, `sbix`) render monochrome.
 - `demo.svg` — light theme, 100%
 - `demo-dark.svg` — dark theme, 150%
 - `demo-print.svg` — print theme (serif, paper tone)
-- `demo.png` — same document rasterized (800 × 2648, RGBA)
+- `demo.png` — same document rasterized (800 × 3738, RGBA)
 - `demo.webp` — lossless WebP of the same pixels, ~38% smaller
 - `demo-2col.svg` — the same document balanced into two text columns
 - `demo-mobile.svg` — phone-width long image (750 px, larger body text)

@@ -5,7 +5,7 @@
 //! [`Theme::dark`]); override any field for custom styling:
 //!
 //! ```
-//! use markdown2svg::{Options, Theme};
+//! use markpop::{Options, Theme};
 //!
 //! let branding = Theme {
 //!     link: "#ff5500".parse().unwrap(),

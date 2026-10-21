@@ -3,5 +3,5 @@
 version = 4
 
 [[package]]
-name = "markdown2svg"
+name = "markpop"
 version = "0.1.0"

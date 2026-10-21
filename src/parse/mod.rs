@@ -55,7 +55,7 @@ impl Default for Extensions {
 /// Parses Markdown source into a [`Document`].
 ///
 /// ```
-/// use markdown2svg::parse;
+/// use markpop::parse;
 ///
 /// let doc = parse("# Hello\n\nworld");
 /// assert_eq!(doc.block_counts().headings, 1);

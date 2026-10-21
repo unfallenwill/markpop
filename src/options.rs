@@ -8,7 +8,7 @@ use crate::theme::Theme;
 /// Zoom is expressed as a multiplier where `1.0` means 100%:
 ///
 /// ```
-/// use markdown2svg::Options;
+/// use markpop::Options;
 ///
 /// // 150% output
 /// let opts = Options::default().with_zoom(1.5);
@@ -18,12 +18,12 @@ use crate::theme::Theme;
 /// Pagination and a table of contents are opt-in:
 ///
 /// ```
-/// use markdown2svg::Options;
+/// use markpop::Options;
 ///
 /// let opts = Options::default()
 ///     .with_page_height(1123.0) // A4 at 96 dpi, roughly
 ///     .with_toc(true);
-/// let pages = markdown2svg::render_pages("# Title\n\nBody", &opts).unwrap();
+/// let pages = markpop::render_pages("# Title\n\nBody", &opts).unwrap();
 /// assert!(!pages.is_empty());
 /// ```
 #[derive(Debug, Clone, PartialEq)]
@@ -104,7 +104,7 @@ impl Options {
     /// Selects a variable-font instance (builder style).
     ///
     /// ```
-    /// use markdown2svg::Options;
+    /// use markpop::Options;
     ///
     /// let opts = Options::default().with_variation("wght", 700.0);
     /// assert_eq!(opts.variations, vec![("wght".to_string(), 700.0)]);

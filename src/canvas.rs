@@ -128,7 +128,7 @@ impl Options {
     /// Applies a canvas preset (builder style).
     ///
     /// ```
-    /// use markdown2svg::{CanvasPreset, Options};
+    /// use markpop::{CanvasPreset, Options};
     ///
     /// let opts = Options::default().with_canvas(CanvasPreset::A4);
     /// assert_eq!(opts.theme.width, 794.0);

@@ -17,10 +17,10 @@ use crate::scene::{Draw, Scene, TextDraw};
 /// `zoom` is a multiplier where `1.0` is 100%.
 ///
 /// ```
-/// use markdown2svg::{scene::Scene, svg};
+/// use markpop::{scene::Scene, svg};
 ///
 /// let scene = Scene::new(100.0, 50.0);
-/// let out = svg::render(&scene, &markdown2svg::Theme::light(), 2.0);
+/// let out = svg::render(&scene, &markpop::Theme::light(), 2.0);
 /// assert!(out.contains(r#"width="200""#));
 /// assert!(out.contains(r#"viewBox="0 0 100 50""#));
 /// ```

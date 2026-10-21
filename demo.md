@@ -1,6 +1,6 @@
-# markdown2svg
+# MarkPop
 
-把 Markdown **直接**渲染成 SVG —— 不经过 HTML，不启动浏览器，不依赖任何字体文件。
+**MarkPop** 把 Markdown **直接**渲染成 SVG —— 不经过 HTML，不启动浏览器，不依赖任何字体文件。
 
 ## 为什么
 
@@ -74,38 +74,38 @@
 
 ```bash
 # 标准输入 / 输出
-cat README.md | markdown2svg > README.svg
+cat README.md | markpop > README.svg
 
 # 指定文件、主题与缩放
-markdown2svg doc.md --theme dark --zoom 150 -o doc.svg
+markpop doc.md --theme dark --zoom 150 -o doc.svg
 
 # 自定义画布宽度
-markdown2svg doc.md --width 1200 -o doc.svg
+markpop doc.md --width 1200 -o doc.svg
 
 # 分页 + 目录（输出 page-1.svg、page-2.svg…）
-markdown2svg doc.md --toc --page-height 1123 -o page.svg
+markpop doc.md --toc --page-height 1123 -o page.svg
 
 # 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）
-markdown2svg doc.md --format png -o doc.png
-markdown2svg doc.md --format webp -o doc.webp
+markpop doc.md --format png -o doc.png
+markpop doc.md --format webp -o doc.webp
 
 # 排版配置：字号 / 字距 / 行距 / 字体 / 列数
-markdown2svg doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  --font-family "Georgia, serif" --columns 2 -o doc.svg
+markpop doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  --font-family "Georgia, serif" --columns 2 -o doc.svg
 
 # 画布预设：A4 自动分页 / 移动端长图
-markdown2svg doc.md --canvas a4 -o page.svg
-markdown2svg doc.md --canvas mobile -o long.svg
+markpop doc.md --canvas a4 -o page.svg
+markpop doc.md --canvas mobile -o long.svg
 ```
 
 作为库使用：
 
 ```rust
-let svg = markdown2svg::render("# Hello\n\nWorld");
+let svg = markpop::render("# Hello\n\nWorld");
 
-let opts = markdown2svg::Options::default()
-    .with_theme(markdown2svg::Theme::dark())
+let opts = markpop::Options::default()
+    .with_theme(markpop::Theme::dark())
     .with_zoom(1.5);
-let svg = markdown2svg::render_with("# Hi", &opts).unwrap();
+let svg = markpop::render_with("# Hi", &opts).unwrap();
 ```
 
 ## 架构
@@ -138,4 +138,4 @@ Markdown
 
 ---
 
-*由 markdown2svg 自身渲染生成，100% 缩放。*
+*由 markpop 自身渲染生成，100% 缩放。*

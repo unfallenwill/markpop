@@ -1,5 +1,5 @@
-//! Render Markdown directly to SVG, PNG or lossless WebP — no HTML, no
-//! headless browser.
+//! MarkPop renders Markdown directly to SVG, PNG or lossless WebP — no
+//! HTML, no headless browser.
 //!
 //! The pipeline is a straight line of pure stages followed by a pluggable
 //! output engine:
@@ -24,7 +24,7 @@
 //! # Example
 //!
 //! ```
-//! let svg = markdown2svg::render("# Hello\n\nWorld with **bold** text.");
+//! let svg = markpop::render("# Hello\n\nWorld with **bold** text.");
 //! assert!(svg.starts_with("<svg"));
 //! assert!(svg.contains("Hello"));
 //! ```
@@ -32,34 +32,34 @@
 //! With zoom and a theme:
 //!
 //! ```
-//! use markdown2svg::{Options, Theme};
+//! use markpop::{Options, Theme};
 //!
 //! let opts = Options::default()
 //!     .with_theme(Theme::dark())
 //!     .with_zoom(1.5); // 150%
-//! let svg = markdown2svg::render_with("# Hi", &opts).unwrap();
+//! let svg = markpop::render_with("# Hi", &opts).unwrap();
 //! assert!(svg.contains(r#"width="1200""#));
 //! ```
 //!
 //! Long documents can be paginated and given a table of contents:
 //!
 //! ```
-//! use markdown2svg::Options;
+//! use markpop::Options;
 //!
 //! let opts = Options::default()
 //!     .with_page_height(1123.0) // roughly A4 at 96 dpi
 //!     .with_toc(true);
-//! let pages = markdown2svg::render_pages("# One\n\nBody", &opts).unwrap();
+//! let pages = markpop::render_pages("# One\n\nBody", &opts).unwrap();
 //! assert_eq!(pages.len(), 1);
 //! ```
 //!
 //! Bitmap output selects a different engine on the same scene:
 //!
 //! ```no_run
-//! use markdown2svg::{Options, OutputFormat};
+//! use markpop::{Options, OutputFormat};
 //!
 //! let opts = Options::default().with_format(OutputFormat::Webp);
-//! let bytes = markdown2svg::render_bytes("# Hi", &opts).unwrap();
+//! let bytes = markpop::render_bytes("# Hi", &opts).unwrap();
 //! assert_eq!(&bytes[..4], b"RIFF");
 //! ```
 //!
@@ -68,7 +68,7 @@
 //! [`CanvasPreset`] bundles a ready-made page geometry:
 //!
 //! ```
-//! use markdown2svg::{CanvasPreset, Options, Theme};
+//! use markpop::{CanvasPreset, Options, Theme};
 //!
 //! let theme = Theme::light()
 //!     .with_font_size(17.0)
@@ -132,7 +132,7 @@ pub use theme::Theme;
 /// Renders Markdown to SVG with the default options (light theme, 100%).
 ///
 /// ```
-/// let svg = markdown2svg::render("# Title");
+/// let svg = markpop::render("# Title");
 /// assert!(svg.contains("viewBox=\"0 0 800"));
 /// ```
 pub fn render(markdown: &str) -> String {

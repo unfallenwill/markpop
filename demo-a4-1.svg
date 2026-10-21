@@ -1,30 +1,32 @@
 <svg xmlns="http://www.w3.org/2000/svg" role="img" width="794" height="1123" viewBox="0 0 794 1123" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
   <rect x="0" y="0" width="794" height="1123" fill="#ffffff"/>
-  <text x="56" y="86.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">markdown2svg</text>
+  <text x="56" y="86.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">MarkPop</text>
   <line x1="56" y1="108.8" x2="738" y2="108.8" stroke="#d8dee4" stroke-width="2"/>
-  <text x="56" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve">把 Markdown</text>
-  <text x="160.32" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">直接</text>
-  <text x="192.96" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve">渲染成 SVG —— 不经过 HTML，不启动浏览器，不依赖任何字体文件。</text>
-  <text x="56" y="194.6" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">为什么</text>
-  <line x1="56" y1="211.4" x2="738" y2="211.4" stroke="#d8dee4" stroke-width="1"/>
-  <text x="56" y="244" font-size="16" fill="#1f2328" xml:space="preserve">传统方案</text>
-  <rect x="124.98" y="229.68" width="249.24" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="128.56" y="244" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown → HTML → 无头浏览器截图</text>
-  <text x="374.72" y="244" font-size="16" fill="#1f2328" xml:space="preserve"> 有三个问题：慢、依赖重、输出是位图。 这里用</text>
-  <text x="56" y="269.6" font-size="16" fill="#1f2328" xml:space="preserve">纯 Rust 重写整条管线：</text>
-  <text x="56" y="306.4" font-size="16" fill="#1f2328" xml:space="preserve">1.</text>
-  <text x="80.08" y="311.2" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">解析</text>
-  <text x="112.72" y="311.2" font-size="16" fill="#1f2328" xml:space="preserve">：手写块级 / 行内解析器（CommonMark 子集 + GFM 表格、删除线）</text>
-  <text x="56" y="332" font-size="16" fill="#1f2328" xml:space="preserve">2.</text>
-  <text x="80.08" y="336.8" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">布局</text>
-  <text x="112.72" y="336.8" font-size="16" fill="#1f2328" xml:space="preserve">：把 AST 变成带坐标的几何图元（段落、引用、列表、表格）</text>
-  <text x="56" y="357.6" font-size="16" fill="#1f2328" xml:space="preserve">3.</text>
-  <text x="80.08" y="362.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">序列化</text>
-  <text x="129.04" y="362.4" font-size="16" fill="#1f2328" xml:space="preserve">：直接写 SVG 标签，缩放通过</text>
-  <rect x="351.62" y="348.08" width="64.28" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="355.2" y="362.4" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">viewBox</text>
-  <text x="416.4" y="362.4" font-size="16" fill="#1f2328" xml:space="preserve"> 实现，矢量无损</text>
-  <rect x="56" y="386.4" width="682" height="41.6" fill="#f8f9fb"/>
-  <rect x="56" y="386.4" width="4" height="41.6" fill="#d1d9e0"/>
-  <text x="72" y="412" font-size="16" fill="#1f2328" xml:space="preserve">相同输入永远产生相同字节 —— 度量用的是确定性字宽表，而不是系统字体。</text>
+  <text x="56" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">MarkPop</text>
+  <text x="124.87" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve"> 把 Markdown</text>
+  <text x="233.67" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">直接</text>
+  <text x="266.31" y="141.4" font-size="16" fill="#1f2328" xml:space="preserve">渲染成 SVG —— 不经过 HTML，不启动浏览器，不依赖任何字体</text>
+  <text x="56" y="167" font-size="16" fill="#1f2328" xml:space="preserve">文件。</text>
+  <text x="56" y="220.2" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">为什么</text>
+  <line x1="56" y1="237" x2="738" y2="237" stroke="#d8dee4" stroke-width="1"/>
+  <text x="56" y="269.6" font-size="16" fill="#1f2328" xml:space="preserve">传统方案</text>
+  <rect x="124.98" y="255.28" width="249.24" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="128.56" y="269.6" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown → HTML → 无头浏览器截图</text>
+  <text x="374.72" y="269.6" font-size="16" fill="#1f2328" xml:space="preserve"> 有三个问题：慢、依赖重、输出是位图。 这里用</text>
+  <text x="56" y="295.2" font-size="16" fill="#1f2328" xml:space="preserve">纯 Rust 重写整条管线：</text>
+  <text x="56" y="332" font-size="16" fill="#1f2328" xml:space="preserve">1.</text>
+  <text x="80.08" y="336.8" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">解析</text>
+  <text x="112.72" y="336.8" font-size="16" fill="#1f2328" xml:space="preserve">：手写块级 / 行内解析器（CommonMark 0.31.2 全量 + GFM 扩展）</text>
+  <text x="56" y="357.6" font-size="16" fill="#1f2328" xml:space="preserve">2.</text>
+  <text x="80.08" y="362.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">布局</text>
+  <text x="112.72" y="362.4" font-size="16" fill="#1f2328" xml:space="preserve">：把 AST 变成带坐标的几何图元（段落、引用、列表、表格）</text>
+  <text x="56" y="383.2" font-size="16" fill="#1f2328" xml:space="preserve">3.</text>
+  <text x="80.08" y="388" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">序列化</text>
+  <text x="129.04" y="388" font-size="16" fill="#1f2328" xml:space="preserve">：直接写 SVG 标签，缩放通过</text>
+  <rect x="351.62" y="373.68" width="64.28" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="355.2" y="388" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">viewBox</text>
+  <text x="416.4" y="388" font-size="16" fill="#1f2328" xml:space="preserve"> 实现，矢量无损</text>
+  <rect x="56" y="412" width="682" height="41.6" fill="#f8f9fb"/>
+  <rect x="56" y="412" width="4" height="41.6" fill="#d1d9e0"/>
+  <text x="72" y="437.6" font-size="16" fill="#1f2328" xml:space="preserve">相同输入永远产生相同字节 —— 度量用的是确定性字宽表，而不是系统字体。</text>
 </svg>

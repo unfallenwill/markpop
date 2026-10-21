@@ -116,8 +116,8 @@ impl Metrics {
     /// removed from the returned lines.
     ///
     /// ```
-    /// use markdown2svg::text::{Metrics, TextStyle};
-    /// use markdown2svg::scene::FontKind;
+    /// use markpop::text::{Metrics, TextStyle};
+    /// use markpop::scene::FontKind;
     ///
     /// let style = TextStyle::new(10.0, FontKind::Mono);
     /// let m = Metrics::new();
@@ -135,8 +135,8 @@ impl Metrics {
     /// single space at a line-break point.
     ///
     /// ```
-    /// use markdown2svg::text::{Metrics, TextStyle};
-    /// use markdown2svg::scene::FontKind;
+    /// use markpop::text::{Metrics, TextStyle};
+    /// use markpop::scene::FontKind;
     ///
     /// let style = TextStyle::new(10.0, FontKind::Mono);
     /// let m = Metrics::new();
@@ -233,7 +233,7 @@ impl Metrics {
 /// single wide characters, and single spaces.
 ///
 /// ```
-/// use markdown2svg::text::atomize;
+/// use markpop::text::atomize;
 /// assert_eq!(atomize("hi 你 ok"), ["hi", " ", "你", " ", "ok"]);
 /// ```
 pub fn atomize(s: &str) -> Vec<&str> {

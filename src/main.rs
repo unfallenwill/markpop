@@ -7,13 +7,13 @@ use std::io::{self, Read, Write};
 use std::path::Path;
 use std::process::ExitCode;
 
-use markdown2svg::{CanvasPreset, Options, OutputFormat, RenderError, Theme};
+use markpop::{CanvasPreset, Options, OutputFormat, RenderError, Theme};
 
 const USAGE: &str = "\
-markdown2svg — render Markdown directly to SVG, PNG or WebP
+MarkPop — render Markdown directly to SVG, PNG or WebP
 
 USAGE:
-    markdown2svg [OPTIONS] [INPUT]
+    markpop [OPTIONS] [INPUT]
 
 ARGS:
     <INPUT>    Markdown file to render. Omit or use `-` to read stdin.
@@ -41,11 +41,11 @@ OPTIONS:
     -V, --version             Print version information
 
 EXAMPLES:
-    markdown2svg README.md -o README.svg
-    markdown2svg README.md --format png -o README.png
-    markdown2svg README.md --format webp -o README.webp
-    markdown2svg doc.md --theme print --page-height 1123 -o page.svg
-    cat doc.md | markdown2svg --theme dark --zoom 150 > doc.svg
+    markpop README.md -o README.svg
+    markpop README.md --format png -o README.png
+    markpop README.md --format webp -o README.webp
+    markpop doc.md --theme print --page-height 1123 -o page.svg
+    cat doc.md | markpop --theme dark --zoom 150 > doc.svg
 ";
 
 /// Parsed command line.
@@ -162,7 +162,7 @@ fn main() -> ExitCode {
         return ExitCode::SUCCESS;
     }
     if cli.version {
-        println!("markdown2svg {}", env!("CARGO_PKG_VERSION"));
+        println!("markpop {}", env!("CARGO_PKG_VERSION"));
         return ExitCode::SUCCESS;
     }
 
@@ -178,8 +178,7 @@ fn main() -> ExitCode {
 /// Executes a parsed command line.
 fn run(cli: &Cli) -> Result<(), String> {
     let markdown = read_input(cli.input.as_deref())?;
-    let pages =
-        markdown2svg::render_bytes_pages(&markdown, &cli.options()).map_err(render_message)?;
+    let pages = markpop::render_bytes_pages(&markdown, &cli.options()).map_err(render_message)?;
     write_pages(cli.output.as_deref(), &pages, cli.format.extension())
 }
 
@@ -633,7 +632,7 @@ mod tests {
     /// A unique scratch path for a test file.
     fn scratch(name: &str) -> std::path::PathBuf {
         let mut path = std::env::temp_dir();
-        path.push(format!("markdown2svg-test-{}-{name}", std::process::id()));
+        path.push(format!("markpop-test-{}-{name}", std::process::id()));
         path
     }
 
@@ -718,12 +717,12 @@ mod tests {
     #[test]
     fn missing_input_file_reports_the_path() {
         let cli = Cli {
-            input: Some("markdown2svg-does-not-exist.md".into()),
+            input: Some("markpop-does-not-exist.md".into()),
             ..Cli::default()
         };
         let err = run(&cli).unwrap_err();
         assert!(err.contains("cannot read"), "{err}");
-        assert!(err.contains("markdown2svg-does-not-exist.md"), "{err}");
+        assert!(err.contains("markpop-does-not-exist.md"), "{err}");
     }
 
     #[test]
@@ -732,7 +731,7 @@ mod tests {
         std::fs::write(&input, "x").unwrap();
         let cli = Cli {
             input: Some(input.to_str().unwrap().to_string()),
-            output: Some("markdown2svg-no-such-dir/out.svg".into()),
+            output: Some("markpop-no-such-dir/out.svg".into()),
             ..Cli::default()
         };
         let err = run(&cli).unwrap_err();

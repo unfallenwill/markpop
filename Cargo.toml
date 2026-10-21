@@ -1,9 +1,9 @@
 [package]
-name = "markdown2svg"
+name = "markpop"
 version = "0.1.0"
 edition = "2024"
 rust-version = "1.88"
-description = "Render Markdown directly to SVG, PNG or lossless WebP — no browser, no dependencies"
+description = "MarkPop: render Markdown directly to SVG, PNG or lossless WebP — no browser, no dependencies"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 keywords = ["markdown", "svg", "png", "webp", "renderer"]

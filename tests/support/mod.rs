@@ -6,8 +6,8 @@
 
 use std::fmt::Write as _;
 
-use markdown2svg::ast::{Align, Block, Document, ImageData, Inline, ListData, TableData};
-use markdown2svg::parse::{parse, parse_commonmark};
+use markpop::ast::{Align, Block, Document, ImageData, Inline, ListData, TableData};
+use markpop::parse::{parse, parse_commonmark};
 
 /// One spec example: Markdown source plus the expected HTML.
 pub struct Example {

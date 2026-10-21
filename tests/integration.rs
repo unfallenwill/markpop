@@ -4,9 +4,9 @@
 //! about properties that must hold for *any* input — well-formed output,
 //! zoom invariant geometry, determinism, and no panics.
 
-use markdown2svg::scene::FontKind;
-use markdown2svg::text::{Metrics, TextStyle};
-use markdown2svg::{
+use markpop::scene::FontKind;
+use markpop::text::{Metrics, TextStyle};
+use markpop::{
     CanvasPreset, Color, Draw, Options, Theme, parse, render, render_pages, render_with, to_pages,
     to_scene,
 };
@@ -725,9 +725,9 @@ fn line_height_changes_vertical_rhythm_only() {
     };
     let a = to_scene("one\n\ntwo", &tight);
     let b = to_scene("one\n\ntwo", &loose);
-    let y = |s: &markdown2svg::Scene| s.find_text("two").unwrap().y;
+    let y = |s: &markpop::Scene| s.find_text("two").unwrap().y;
     assert!(y(&b) > y(&a), "looser line height should push content down");
-    let x = |s: &markdown2svg::Scene| s.find_text("two").unwrap().x;
+    let x = |s: &markpop::Scene| s.find_text("two").unwrap().x;
     assert_eq!(x(&a), x(&b));
 }
 
@@ -765,7 +765,7 @@ fn cjk_and_latin_mix_wraps_within_the_column() {
 // Output engines: SVG / PNG / lossless WebP
 // ---------------------------------------------------------------------------
 
-use markdown2svg::{OutputFormat, render_bytes, render_bytes_pages};
+use markpop::{OutputFormat, render_bytes, render_bytes_pages};
 
 /// Reads width/height from a PNG `IHDR` chunk.
 fn png_size(data: &[u8]) -> (u32, u32) {
@@ -907,7 +907,7 @@ fn raster_output_respects_themes() {
 
 #[test]
 fn explicit_font_file_is_used() {
-    let set = markdown2svg::font::discover();
+    let set = markpop::font::discover();
     let Some(path) = set.sans.first().or_else(|| set.fallback.first()) else {
         eprintln!("skipping: no system fonts");
         return;
@@ -926,7 +926,7 @@ fn missing_font_file_is_an_error() {
         .with_font_file("definitely-not-a-font.ttf");
     assert_eq!(
         render_bytes("x", &opts),
-        Err(markdown2svg::RenderError::FontUnavailable)
+        Err(markpop::RenderError::FontUnavailable)
     );
 }
 
@@ -952,7 +952,7 @@ fn two_column_layout_uses_both_columns() {
     );
     let column_width = theme.column_width();
     let mid = theme.padding + column_width;
-    let texts: Vec<&markdown2svg::scene::TextDraw> = scene
+    let texts: Vec<&markpop::scene::TextDraw> = scene
         .draws
         .iter()
         .filter_map(|d| match d {
@@ -1069,7 +1069,7 @@ fn invalid_column_counts_are_rejected() {
     let opts = Options::default().with_theme(Theme::light().with_columns(30));
     assert!(matches!(
         render_bytes("x", &opts),
-        Err(markdown2svg::RenderError::InvalidColumns(30))
+        Err(markpop::RenderError::InvalidColumns(30))
     ));
 }
 

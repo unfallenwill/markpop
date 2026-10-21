@@ -165,7 +165,7 @@ pub struct ColorLayer {
 /// One axis of a variable font, in design units.
 ///
 /// ```
-/// use markdown2svg::font::Axis;
+/// use markpop::font::Axis;
 /// let axis = Axis {
 ///     tag: "wght".into(),
 ///     min: 100.0,

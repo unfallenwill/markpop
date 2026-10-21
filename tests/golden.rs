@@ -18,7 +18,7 @@ fn output_matches_the_committed_golden_file() {
     // `.gitattributes` pins LF, but tolerate a CRLF checkout anyway: this
     // assertion is about geometry and markup, not line endings.
     let expected = EXPECTED.replace("\r\n", "\n");
-    let actual = markdown2svg::render(SOURCE);
+    let actual = markpop::render(SOURCE);
     assert_eq!(
         actual, expected,
         "\nSVG output changed.\n\
@@ -29,10 +29,8 @@ fn output_matches_the_committed_golden_file() {
 
 #[test]
 fn golden_output_is_zoom_independent_geometry() {
-    let base = markdown2svg::render(SOURCE);
-    let zoomed =
-        markdown2svg::render_with(SOURCE, &markdown2svg::Options::default().with_zoom(2.0))
-            .unwrap();
+    let base = markpop::render(SOURCE);
+    let zoomed = markpop::render_with(SOURCE, &markpop::Options::default().with_zoom(2.0)).unwrap();
     // Same elements, different canvas size.
     assert_eq!(base.lines().count(), zoomed.lines().count());
     assert!(zoomed.contains(r#"width="1600""#));

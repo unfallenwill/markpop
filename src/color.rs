@@ -43,7 +43,7 @@ impl Color {
     /// The leading `#` is required; hex digits are case-insensitive.
     ///
     /// ```
-    /// use markdown2svg::Color;
+    /// use markpop::Color;
     /// assert_eq!(Color::from_hex("#fff"), Some(Color::WHITE));
     /// assert_eq!(Color::from_hex("#00000080"), Some(Color::rgba(0, 0, 0, 0x80)));
     /// assert_eq!(Color::from_hex("fff"), None);

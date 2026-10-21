@@ -4,8 +4,8 @@
 //! The fonts here are built from scratch, so each test pins down exactly one
 //! part of the specification.
 
-use markdown2svg::color::Color;
-use markdown2svg::font::{Extend, Face, Paint};
+use markpop::color::Color;
+use markpop::font::{Extend, Face, Paint};
 
 // ---------------------------------------------------------------------------
 // A minimal TrueType font builder
@@ -689,12 +689,12 @@ fn variable_outlines_use_gvar_and_hvar() {
 // End-to-end rendering through the public rasterizer
 // ---------------------------------------------------------------------------
 
-use markdown2svg::font::LoadedFonts;
-use markdown2svg::raster::Rasterizer;
-use markdown2svg::scene::{Draw, FontKind, Scene, TextDraw};
+use markpop::font::LoadedFonts;
+use markpop::raster::Rasterizer;
+use markpop::scene::{Draw, FontKind, Scene, TextDraw};
 
 /// Renders one character of `face` at `size` pixels per em.
-fn render_glyph(face: Face, ch: char, size: f32) -> markdown2svg::raster::Bitmap {
+fn render_glyph(face: Face, ch: char, size: f32) -> markpop::raster::Bitmap {
     let mut face = face;
     // A static instance keeps the geometry of the test font predictable.
     face.set_variations(&[]);
@@ -724,7 +724,7 @@ fn render_glyph(face: Face, ch: char, size: f32) -> markdown2svg::raster::Bitmap
 }
 
 /// Distinct opaque colours in a bitmap.
-fn palette(bmp: &markdown2svg::raster::Bitmap) -> std::collections::HashSet<(u8, u8, u8)> {
+fn palette(bmp: &markpop::raster::Bitmap) -> std::collections::HashSet<(u8, u8, u8)> {
     bmp.data
         .as_chunks::<4>()
         .0
@@ -850,8 +850,8 @@ fn dump_sweep_preview() {
     paint.link(sweep_at, 1, line_at);
     let face = triangle_face(ColrBuilder::new(paint, &[(1, glyph_at)]));
     let bmp = render_glyph(face, 'A', 400.0);
-    let png = markdown2svg::encode::png::encode(bmp.width, bmp.height, &bmp.data);
-    let path = std::env::temp_dir().join("markdown2svg-sweep.png");
+    let png = markpop::encode::png::encode(bmp.width, bmp.height, &bmp.data);
+    let path = std::env::temp_dir().join("markpop-sweep.png");
     std::fs::write(&path, png).unwrap();
     eprintln!("wrote {}", path.display());
 }
