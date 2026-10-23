@@ -13,6 +13,8 @@ mod block;
 mod entities;
 mod inline;
 
+pub(crate) use inline::decode_entities;
+
 use crate::ast::Document;
 
 /// Syntax extensions layered on top of CommonMark.

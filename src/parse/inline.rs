@@ -711,6 +711,26 @@ fn scan_title(chars: &[char], i: usize) -> Option<(String, usize)> {
     None
 }
 
+/// Decodes character references (`&amp;`, `&#65;`, `&#x41;`) only.
+///
+/// Raw HTML text has no backslash escapes, so unlike [`decode_text`] a
+/// backslash is just a backslash.
+pub(crate) fn decode_entities(raw: &str) -> String {
+    let chars: Vec<char> = raw.chars().collect();
+    let mut out = String::with_capacity(raw.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '&' && let Some((text, next)) = scan_entity(&chars, i) {
+            out.push_str(&text);
+            i = next;
+            continue;
+        }
+        out.push(chars[i]);
+        i += 1;
+    }
+    out
+}
+
 /// Decodes backslash escapes and character references in a raw string.
 fn decode_text(raw: &str) -> String {
     let chars: Vec<char> = raw.chars().collect();

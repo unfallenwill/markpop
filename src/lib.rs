@@ -115,6 +115,7 @@ pub mod text;
 pub mod theme;
 
 mod columns;
+mod html;
 mod layout;
 mod paginate;
 mod split;
