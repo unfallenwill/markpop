@@ -406,7 +406,7 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
   extension examples** parse to the structure the specifications prescribe (see below)
 - task lists draw real checkboxes, autolink literals become links, HTML renders as markup
 
-Current coverage: **94% of lines** across 429 tests (`cargo llvm-cov`), including the two
+Current coverage: **94% of lines** across 483 tests (`cargo llvm-cov`), including the two
 specification corpora.
 
 ## Markdown conformance
