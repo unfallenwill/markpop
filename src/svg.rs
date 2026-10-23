@@ -12,6 +12,27 @@ use std::fmt::Write;
 
 use crate::scene::{Draw, Scene, TextDraw};
 
+const B64: &[u8; 64] =
+    b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+/// Base64-encodes `data` (with padding, no line breaks).
+fn base64(data: &[u8]) -> String {
+    let mut out = String::with_capacity(data.len().div_ceil(3) * 4);
+    for chunk in data.chunks(3) {
+        let b = [
+            chunk[0],
+            *chunk.get(1).unwrap_or(&0),
+            *chunk.get(2).unwrap_or(&0),
+        ];
+        let n = (u32::from(b[0]) << 16) | (u32::from(b[1]) << 8) | u32::from(b[2]);
+        out.push(B64[(n >> 18) as usize & 63] as char);
+        out.push(B64[(n >> 12) as usize & 63] as char);
+        out.push(if chunk.len() > 1 { B64[(n >> 6) as usize & 63] as char } else { '=' });
+        out.push(if chunk.len() > 2 { B64[n as usize & 63] as char } else { '=' });
+    }
+    out
+}
+
 /// Serializes a scene to an SVG document.
 ///
 /// `zoom` is a multiplier where `1.0` is 100%.
@@ -64,6 +85,21 @@ pub fn render(scene: &Scene, theme: &crate::theme::Theme, zoom: f32) -> String {
             }
             Draw::Text(t) => {
                 let _ = writeln!(out, "  {}", text(t, theme));
+            }
+            Draw::Image(i) => {
+                let Some(payload) = scene.images.get(i.image) else {
+                    continue;
+                };
+                let _ = writeln!(
+                    out,
+                    "  <image x=\"{}\" y=\"{}\" width=\"{}\" height=\"{}\" \
+                     preserveAspectRatio=\"none\" href=\"data:image/png;base64,{}\"/>",
+                    num(i.x),
+                    num(i.y),
+                    num(i.w),
+                    num(i.h),
+                    base64(&payload.embed),
+                );
             }
         }
     }

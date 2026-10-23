@@ -55,6 +55,13 @@ pub struct Options {
     /// Variable-font axis settings as `(tag, value)` pairs, e.g.
     /// `("wght", 700.0)`. Ignored by static faces.
     pub variations: Vec<(String, f32)>,
+    /// Directory relative image paths resolve against (the source
+    /// file's directory for the CLI). `None` means the working directory.
+    pub base_dir: Option<String>,
+    /// Whether local images referenced by `![alt](path)` are read from
+    /// disk and rendered. `false` restores the all-placeholder behavior —
+    /// use it when rendering untrusted documents.
+    pub local_images: bool,
 }
 
 impl Options {
@@ -114,6 +121,19 @@ impl Options {
         self
     }
 
+    /// Sets the directory relative image paths resolve against
+    /// (builder style).
+    pub fn with_base_dir(mut self, dir: impl Into<String>) -> Options {
+        self.base_dir = Some(dir.into());
+        self
+    }
+
+    /// Enables or disables local image rendering (builder style).
+    pub fn with_local_images(mut self, enabled: bool) -> Options {
+        self.local_images = enabled;
+        self
+    }
+
     /// Checks that the options describe a renderable picture.
     ///
     /// Zoom must be a finite, positive number; the canvas must be wide
@@ -156,8 +176,11 @@ impl Default for Options {
             format: OutputFormat::Svg,
             font_file: None,
             variations: Vec::new(),
+            base_dir: None,
+            local_images: true,
         }
     }
+
 }
 
 /// Ways a render can be rejected before any work is done.

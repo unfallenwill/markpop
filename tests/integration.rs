@@ -592,6 +592,7 @@ fn paginated_content_stays_inside_the_page() {
                 Draw::Text(t) => t.y,
                 Draw::Rect(r) => r.y + r.h,
                 Draw::Line(l) => l.y1.max(l.y2),
+                Draw::Image(i) => i.y + i.h,
             };
             assert!(
                 bottom <= theme.padding * 2.0 + 400.0,
@@ -1010,6 +1011,7 @@ fn columns_stay_inside_the_canvas() {
             }
             Draw::Rect(r) => assert!(r.x + r.w <= theme.width + 1.0),
             Draw::Line(l) => assert!(l.x1.max(l.x2) <= theme.width - theme.padding + 1.0),
+            Draw::Image(i) => assert!(i.x + i.w <= theme.width + 1.0),
         }
     }
 }
@@ -1100,6 +1102,7 @@ fn a4_pages_are_letter_sized_and_do_not_clip() {
                 Draw::Text(t) => t.y,
                 Draw::Rect(r) => r.y + r.h,
                 Draw::Line(l) => l.y1.max(l.y2),
+                Draw::Image(i) => i.y + i.h,
             };
             assert!(
                 bottom <= scene.height - 20.0,
@@ -1109,6 +1112,7 @@ fn a4_pages_are_letter_sized_and_do_not_clip() {
                 Draw::Text(t) => t.y - t.size,
                 Draw::Rect(r) => r.y,
                 Draw::Line(l) => l.y1.min(l.y2),
+                Draw::Image(i) => i.y,
             };
             assert!(top >= 20.0, "content above the margin: {top}");
         }

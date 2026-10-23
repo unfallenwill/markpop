@@ -37,6 +37,7 @@ pub(crate) fn paginate(
             height: page_height,
             background: background(page_height),
             draws: Vec::new(),
+            images: scene.images.clone(),
         }];
     }
 
@@ -75,6 +76,7 @@ pub(crate) fn paginate(
             height: page_height,
             background: background(page_height),
             draws,
+            images: scene.images.clone(),
         });
     }
     pages
@@ -193,6 +195,7 @@ mod tests {
                     Draw::Text(t) => t.y,
                     Draw::Rect(r) => r.y,
                     Draw::Line(l) => l.y1,
+                    Draw::Image(i) => i.y,
                 })
                 .fold(f32::INFINITY, f32::min);
             assert!(

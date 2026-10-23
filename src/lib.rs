@@ -115,6 +115,7 @@ pub mod text;
 pub mod theme;
 
 mod columns;
+mod decode;
 mod html;
 mod layout;
 mod paginate;
@@ -220,7 +221,14 @@ fn to_pages_inner(markdown: &str, options: &Options) -> Vec<Scene> {
             blocks: split::for_height(doc.blocks, theme, available),
         };
     }
-    let (scene, marks) = layout::Layout::new(theme).render_marked(&doc);
+    let env = layout::ImageEnv {
+        base_dir: options.base_dir.as_ref().map(std::path::PathBuf::from),
+        enabled: options.local_images,
+        max_height: options
+            .page_height
+            .map(|h| (h - 2.0 * theme.padding).max(1.0)),
+    };
+    let (scene, marks) = layout::Layout::with_image_env(theme, env).render_marked(&doc);
 
     if theme.columns > 1 {
         return columns::layout_columns(scene, &marks, theme, options.page_height);

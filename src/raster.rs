@@ -163,9 +163,79 @@ impl Rasterizer {
                 Draw::Rect(r) => self.draw_rect(&mut bmp, r),
                 Draw::Line(l) => self.draw_line(&mut bmp, l),
                 Draw::Text(t) => self.draw_text(&mut bmp, t, fonts),
+                Draw::Image(i) => {
+                    if let Some(payload) = scene.images.get(i.image) {
+                        self.draw_image(&mut bmp, i, payload);
+                    }
+                }
             }
         }
         bmp
+    }
+
+    /// Draws a scaled image with a box filter (area average); nearest
+    /// neighbour would shimmer next to anti-aliased text.
+    fn draw_image(&self, bmp: &mut Bitmap, i: &crate::scene::ImageDraw, src: &crate::scene::SceneImage) {
+        let x0 = (i.x * self.scale).round() as i64;
+        let y0 = (i.y * self.scale).round() as i64;
+        let w = (i.w * self.scale).round().max(1.0) as i64;
+        let h = (i.h * self.scale).round().max(1.0) as i64;
+        if w <= 0 || h <= 0 || src.pixels.is_empty() {
+            return;
+        }
+        let sx = src.width as f64 / w as f64;
+        let sy = src.height as f64 / h as f64;
+        for dy in 0..h {
+            let ty = y0 + dy;
+            if ty < 0 || ty >= i64::from(bmp.height) {
+                continue;
+            }
+            // Source rows covered by this destination row.
+            let sy0 = ((dy as f64) * sy).floor() as u32;
+            let sy1 = (((dy + 1) as f64) * sy).ceil().min(src.height as f64) as u32;
+            for dx in 0..w {
+                let tx = x0 + dx;
+                if tx < 0 || tx >= i64::from(bmp.width) {
+                    continue;
+                }
+                let sx0 = ((dx as f64) * sx).floor() as u32;
+                let sx1 = (((dx + 1) as f64) * sx).ceil().min(src.width as f64) as u32;
+                // Average the source rectangle (all samples weighted
+                // equally — a plain box filter is enough at these sizes).
+                let (mut r, mut g, mut b, mut a, mut n) = (0u32, 0u32, 0u32, 0u32, 0u32);
+                for yy in sy0..sy1.max(sy0 + 1) {
+                    for xx in sx0..sx1.max(sx0 + 1) {
+                        let at = ((yy as usize * src.width as usize) + xx as usize) * 4;
+                        if let Some(px) = src.pixels.get(at..at + 4) {
+                            let alpha = u32::from(px[3]);
+                            r += u32::from(px[0]) * alpha;
+                            g += u32::from(px[1]) * alpha;
+                            b += u32::from(px[2]) * alpha;
+                            a += alpha;
+                            n += 1;
+                        }
+                    }
+                }
+                if n == 0 || a == 0 {
+                    continue;
+                }
+                // Premultiplied average, then straight-alpha source-over.
+                let (fr, fg, fb) = (r / a, g / a, b / a);
+                let fa = (a / n) as f32 / 255.0;
+                let di = ((ty as usize * bmp.width as usize) + tx as usize) * 4;
+                let da = bmp.data[di + 3] as f32 / 255.0;
+                let out_a = fa + da * (1.0 - fa);
+                if out_a <= 0.0 {
+                    continue;
+                }
+                for (c, channel) in [fr, fg, fb].iter().enumerate() {
+                    let value = (*channel as f32 * fa + bmp.data[di + c] as f32 * da * (1.0 - fa))
+                        / out_a;
+                    bmp.data[di + c] = value.round().clamp(0.0, 255.0) as u8;
+                }
+                bmp.data[di + 3] = (out_a * 255.0).round().clamp(0.0, 255.0) as u8;
+            }
+        }
     }
 
     fn draw_rect(&self, bmp: &mut Bitmap, r: &RectDraw) {
@@ -1525,6 +1595,7 @@ mod tests {
             draws: vec![Draw::Rect(
                 RectDraw::new(2.0, 2.0, 4.0, 4.0).with_fill(Color::BLACK),
             )],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &LoadedFonts::default());
         assert_eq!(bmp.pixel(3, 3), [0, 0, 0, 255]);
@@ -1540,9 +1611,11 @@ mod tests {
             background: None,
             draws: vec![Draw::Rect(
                 RectDraw::new(2.0, 2.0, 16.0, 16.0)
+                
                     .with_fill(Color::BLACK)
                     .with_radius(6.0),
             )],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &LoadedFonts::default());
         assert_eq!(bmp.pixel(10, 10), [0, 0, 0, 255]);
@@ -1565,6 +1638,7 @@ mod tests {
                 color: Color::BLACK,
                 width: 2.0,
             })],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &LoadedFonts::default());
         let partial = bmp
@@ -1589,6 +1663,7 @@ mod tests {
             draws: vec![Draw::Rect(
                 RectDraw::new(2.0, 2.0, 4.0, 4.0).with_fill(Color::BLACK),
             )],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(2.0).rasterize(&scene, &LoadedFonts::default());
         assert_eq!((bmp.width, bmp.height), (20, 20));
@@ -1606,6 +1681,7 @@ mod tests {
             height: 8.0,
             background: Some(RectDraw::new(0.0, 0.0, 8.0, 8.0).with_fill(Color::rgb(255, 0, 0))),
             draws: vec![],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &LoadedFonts::default());
         assert_eq!(bmp.pixel(0, 0), [255, 0, 0, 255]);
@@ -1620,6 +1696,7 @@ mod tests {
             draws: vec![Draw::Rect(
                 RectDraw::new(-20.0, -20.0, 100.0, 100.0).with_fill(Color::BLACK),
             )],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &LoadedFonts::default());
         assert_eq!(bmp.pixel(0, 0), [0, 0, 0, 255]);
@@ -1649,6 +1726,7 @@ mod tests {
                 strike: false,
                 letter_spacing: 0.0,
             })],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
         let dark = (0..bmp.height)
@@ -1681,6 +1759,7 @@ mod tests {
                 strike: false,
                 letter_spacing: 0.0,
             })],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
         let dark = bmp
@@ -1692,6 +1771,42 @@ mod tests {
             .count();
         assert!(dark > 30, "expected CJK glyph ink, got {dark}");
     }
+
+    
+    #[test]
+    fn image_draw_rasterizes_decoded_pixels() {
+        let Some(fonts) = test_fonts() else { return };
+        // 2x2 red image, drawn at 4x4: the center must be red.
+        let scene = Scene {
+            width: 8.0,
+            height: 8.0,
+            background: Some(RectDraw::new(0.0, 0.0, 8.0, 8.0).with_fill(Color::WHITE)),
+            draws: vec![Draw::Image(crate::scene::ImageDraw {
+                x: 2.0,
+                y: 2.0,
+                w: 4.0,
+                h: 4.0,
+                image: 0,
+            })],
+            images: vec![crate::scene::SceneImage {
+                width: 2,
+                height: 2,
+                pixels: vec![
+                    200, 30, 30, 255, 200, 30, 30, 255, //
+                    200, 30, 30, 255, 200, 30, 30, 255,
+                ],
+                embed: Vec::new(),
+            }],
+        };
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
+        // The 4x4 destination covers (2..6); corners stay white.
+        assert_eq!(bmp.pixel(4, 4), [200, 30, 30, 255]);
+        assert_eq!(bmp.pixel(2, 2), [200, 30, 30, 255]);
+        assert_eq!(bmp.pixel(5, 5), [200, 30, 30, 255]);
+        assert_eq!(bmp.pixel(1, 1), [255, 255, 255, 255]);
+        assert_eq!(bmp.pixel(6, 6), [255, 255, 255, 255]);
+    }
+
 
     #[test]
     fn bold_text_is_heavier_than_regular() {
@@ -1713,6 +1828,7 @@ mod tests {
                 strike: false,
                 letter_spacing: 0.0,
             })],
+            images: Vec::new(),
         };
         let regular: u32 = Rasterizer::new(1.0)
             .rasterize(&make(false), &fonts)
@@ -1773,6 +1889,7 @@ mod tests {
                 strike: false,
                 letter_spacing: 0.0,
             })],
+            images: Vec::new(),
         };
         // Only meaningful when the selected face really has colour layers.
         let face = fonts.find('✅', false, false, false);
@@ -1886,6 +2003,7 @@ mod tests {
             height: 20.0,
             background: Some(RectDraw::new(0.0, 0.0, 100.0, 20.0).with_fill(Color::WHITE)),
             draws: vec![],
+            images: Vec::new(),
         };
         let mut bmp = Bitmap::new(100, 20);
         let square = vec![
@@ -1925,6 +2043,7 @@ mod tests {
                 strike: false,
                 letter_spacing: 0.0,
             })],
+            images: Vec::new(),
         };
         let has_color = fonts
             .find('🔥', false, false, false)
@@ -2202,6 +2321,7 @@ mod tests {
                 strike: false,
                 letter_spacing: spacing,
             })],
+            images: Vec::new(),
         };
         let bmp = Rasterizer::new(1.0).rasterize(&scene, fonts);
         let mut span: Option<(u32, u32)> = None;

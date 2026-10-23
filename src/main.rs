@@ -37,6 +37,10 @@ OPTIONS:
         --font <FILE>         TrueType font used for png/webp output
         --variation <TAG=VAL> Variable-font axis, e.g. wght=700 (repeatable)
         --toc                 Prepend a table of contents
+        --base-dir <DIR>      Directory relative image paths resolve
+                              against (default: the input file's directory)
+        --no-local-images     Never read local image files; render all
+                              images as labeled placeholders
     -h, --help                Print this help
     -V, --version             Print version information
 
@@ -69,6 +73,8 @@ struct Cli {
     font: Option<String>,
     variations: Vec<(String, f32)>,
     toc: bool,
+    base_dir: Option<String>,
+    no_local_images: bool,
     help: bool,
     version: bool,
 }
@@ -94,6 +100,8 @@ impl Default for Cli {
             font: None,
             variations: Vec::new(),
             toc: false,
+            base_dir: None,
+            no_local_images: false,
             help: false,
             version: false,
         }
@@ -142,6 +150,8 @@ impl Cli {
             format: self.format,
             font_file: self.font.clone(),
             variations: self.variations.clone(),
+            base_dir: self.base_dir.clone(),
+            local_images: !self.no_local_images,
         }
     }
 }
@@ -178,7 +188,15 @@ fn main() -> ExitCode {
 /// Executes a parsed command line.
 fn run(cli: &Cli) -> Result<(), String> {
     let markdown = read_input(cli.input.as_deref())?;
-    let pages = markpop::render_bytes_pages(&markdown, &cli.options()).map_err(render_message)?;
+    let mut opts = cli.options();
+    // Relative image paths resolve next to the source file.
+    if opts.base_dir.is_none()
+        && let Some(path) = cli.input.as_deref()
+            && path != "-"
+                && let Some(parent) = std::path::Path::new(path).parent() {
+                    opts.base_dir = Some(parent.display().to_string());
+                }
+    let pages = markpop::render_bytes_pages(&markdown, &opts).map_err(render_message)?;
     write_pages(cli.output.as_deref(), &pages, cli.format.extension())
 }
 
@@ -376,6 +394,13 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
             }
             "--toc" => {
                 cli.toc = true;
+                i += 1;
+            }
+            "--base-dir" => {
+                cli.base_dir = Some(take_value(args, &mut i, arg)?);
+            }
+            "--no-local-images" => {
+                cli.no_local_images = true;
                 i += 1;
             }
             other if other.starts_with('-') && other != "-" => {

@@ -719,6 +719,7 @@ fn render_glyph(face: Face, ch: char, size: f32) -> markpop::raster::Bitmap {
             strike: false,
             letter_spacing: 0.0,
         })],
+        images: Vec::new(),
     };
     Rasterizer::new(1.0).rasterize(&scene, &fonts)
 }

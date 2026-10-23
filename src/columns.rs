@@ -142,6 +142,7 @@ pub(crate) fn build_scene(
             .background
             .map(|color| RectDraw::new(0.0, 0.0, theme.width, height).with_fill(color)),
         draws,
+        images: source.images.clone(),
     }
 }
 
@@ -315,6 +316,7 @@ mod tests {
                 crate::scene::Draw::Text(t) => t.x,
                 crate::scene::Draw::Rect(r) => r.x,
                 crate::scene::Draw::Line(l) => l.x1,
+                crate::scene::Draw::Image(_) => continue,
             };
             // x must fall inside one of the column slots.
             let mut inside = false;

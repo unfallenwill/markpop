@@ -45,6 +45,8 @@ Consequences:
   built-in table instead of a system font, so a document cannot reflow because of a missing font
   (and CJK is exact: one em per glyph).
 - **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
+  Local PNG/BMP images are read from disk and become part of the layout — standalone images
+  become centered figures, inline images sit on the text baseline and wrap like words.
 - **Complete Markdown.** CommonMark 0.31.2 in full (all 652 specification examples) plus the
   GitHub Flavored Markdown extensions (tables, strikethrough, autolink literals, task lists).
   Raw HTML is rendered by its meaning (spec-bounded: blocks, structure and inline styles) and
@@ -100,6 +102,10 @@ OPTIONS:
         --font <FILE>         TrueType font used for png/webp output
         --variation <TAG=VAL> Variable-font axis, e.g. wght=700 (repeatable)
         --toc                 Prepend a table of contents
+        --base-dir <DIR>      Directory relative image paths resolve
+                              against (default: the input file's directory)
+        --no-local-images     Never read local image files; render all
+                              images as labeled placeholders
     -h, --help                Print this help
     -V, --version             Print version information
 ```
@@ -291,7 +297,7 @@ page and may overflow. Split such tables in the source or raise `--page-height`.
 | Links | Inline `[text](url "title")`, reference `[text][label]` / collapsed / shortcut |
 | Link definitions | `[label]: url "title"` anywhere in the document, matched case-insensitively |
 | Autolinks | `<https://…>`, `<user@host>`, plus GFM literals (`www.`, `http://`, bare emails) |
-| Images | Inline and reference images, rendered as a placeholder figure with the URL |
+| Images | Local PNG/BMP: real 图文混排 — standalone images become centered figures, inline images are baseline-aligned unbreakable atoms; anything else (remote, JPEG, …) renders as a labeled placeholder |
 | Raw HTML | Block and inline HTML per the spec, rendered by meaning — structure (tables, lists, blockquotes, `<pre>`), inline styles (`<b>`, `<i>`, `<code>`, …), links, images; never executed |
 | Blockquotes | Arbitrarily nested, lazy continuation, fences inside |
 | Lists | Ordered/unordered, any start number, tight/loose, nested, lazy continuation |
@@ -304,9 +310,9 @@ page and may overflow. Split such tables in the source or raise `--page-height`.
 | Pagination | Opt-in fixed-height pages, block-aligned cuts |
 | Table of contents | Opt-in nested outline from headings |
 
-Not supported (by design): remote image fetching, executing HTML (including scripts and
-styles), CSS and `style` attributes, and syntax highlighting. Unrecognized input degrades to
-text rather than erroring — parsing is total.
+Not supported (by design): remote image fetching, JPEG/lossy-WebP decoding, executing HTML
+(including scripts and styles), CSS and `style` attributes, and syntax highlighting.
+Unrecognized input degrades to text rather than erroring — parsing is total.
 
 ### Fitting and overflow
 
@@ -426,7 +432,8 @@ for anything in between.
 
 Two deliberate differences from an HTML renderer: raw HTML is rendered by its meaning within
 the Markdown spec's boundary — no CSS, no scripts, unknown tags act as transparent containers
-— and images become labelled placeholders instead of remote fetches. Nothing is ever executed.
+— and remote images become labelled placeholders instead of network fetches. Nothing is ever
+executed.
 
 ## SVG compatibility
 

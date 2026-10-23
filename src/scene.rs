@@ -30,6 +30,8 @@ pub enum Draw {
     Rect(RectDraw),
     /// A straight line segment.
     Line(LineDraw),
+    /// A decoded image placed at a rectangle.
+    Image(ImageDraw),
 }
 
 /// Positioned text; `y` is the baseline of the first (only) line.
@@ -150,6 +152,23 @@ pub struct LineDraw {
     pub width: f32,
 }
 
+/// A decoded image placed at a rectangle; `image` indexes
+/// [`Scene::images`]. The rectangle may be a scaled version of the
+/// source; serializers preserve the aspect the layout computed.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ImageDraw {
+    /// Left edge.
+    pub x: f32,
+    /// Top edge.
+    pub y: f32,
+    /// Rendered width.
+    pub w: f32,
+    /// Rendered height.
+    pub h: f32,
+    /// Index into [`Scene::images`].
+    pub image: usize,
+}
+
 /// A complete, self-contained picture: canvas size plus ordered primitives.
 ///
 /// Coordinates are in *base* canvas units (pixels at 100% zoom). Zoom is
@@ -164,6 +183,26 @@ pub struct Scene {
     pub background: Option<RectDraw>,
     /// Ordered drawing primitives (bottom-to-top paint order).
     pub draws: Vec<Draw>,
+    /// Image payloads referenced by [`Draw::Image`] indexes. Kept in a
+    /// side table so primitives stay small and copyable.
+    pub images: Vec<SceneImage>,
+}
+
+/// One decoded image attached to a [`Scene`].
+///
+/// `pixels` is straight-alpha RGBA8 for the rasterizer; `embed` holds a
+/// complete PNG file (the original bytes when the source was PNG, a
+/// re-encode otherwise) for self-contained SVG data URIs.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SceneImage {
+    /// Pixel width.
+    pub width: u32,
+    /// Pixel height.
+    pub height: u32,
+    /// `width * height * 4` bytes, straight alpha.
+    pub pixels: Vec<u8>,
+    /// Complete PNG file bytes for the SVG data URI.
+    pub embed: Vec<u8>,
 }
 
 impl Draw {
@@ -190,6 +229,11 @@ impl Draw {
                 y2: l.y2 + dy,
                 ..l.clone()
             }),
+            Draw::Image(i) => Draw::Image(ImageDraw {
+                x: i.x + dx,
+                y: i.y + dy,
+                ..i.clone()
+            }),
         }
     }
 }
@@ -202,6 +246,7 @@ impl Scene {
             height,
             background: None,
             draws: Vec::new(),
+            images: Vec::new(),
         }
     }
 

@@ -12,10 +12,13 @@
 //!   wide characters, which are then greedily wrapped. All measurement goes
 //!   through [`Metrics`], so layout is deterministic.
 
+use std::collections::HashMap;
+use std::path::Path;
+
 use crate::ast::{Align, Block, CodeBlock, Document, ImageData, Inline, ListData, TableData};
 use crate::color::Color;
 use crate::html::{HtmlTag, HtmlToken, collapse_spaces, tokenize_html};
-use crate::scene::{Draw, FontKind, LineDraw, RectDraw, Scene, TextDraw};
+use crate::scene::{Draw, FontKind, ImageDraw, LineDraw, RectDraw, Scene, SceneImage, TextDraw};
 use crate::text::{Metrics, TextStyle, atomize};
 use crate::theme::Theme;
 
@@ -119,6 +122,17 @@ struct Frag {
     strike: bool,
     /// Rendered as an inline-code chip (background + padding).
     code: bool,
+    /// A local image rendered as an inline box, not as text.
+    image: Option<ImageFrag>,
+}
+
+/// An inline image box: [`Layout::images`] index plus the laid-out size
+/// (height follows the line's font size; width keeps the aspect ratio).
+#[derive(Debug, Clone, Copy, PartialEq)]
+struct ImageFrag {
+    index: usize,
+    w: f32,
+    h: f32,
 }
 
 impl Frag {
@@ -130,6 +144,7 @@ impl Frag {
             underline: false,
             strike: false,
             code: false,
+            image: None,
         }
     }
 }
@@ -214,6 +229,18 @@ impl BlockMark {
     }
 }
 
+/// Where local images come from and how large they may get.
+#[derive(Debug, Clone, Default)]
+pub(crate) struct ImageEnv {
+    /// Root for relative paths (the source file's directory).
+    pub base_dir: Option<std::path::PathBuf>,
+    /// Master switch; `false` restores all-placeholder behavior.
+    pub enabled: bool,
+    /// Cap for a standalone figure's height (the page's content height,
+    /// when paginating) so no image can ever overflow a page.
+    pub max_height: Option<f32>,
+}
+
 /// The flow engine.
 pub(crate) struct Layout<'a> {
     theme: &'a Theme,
@@ -223,17 +250,32 @@ pub(crate) struct Layout<'a> {
     y: f32,
     /// How many blockquotes enclose the current position (0 = top level).
     quote_depth: u32,
+    /// Decoded local images, referenced by index from draws and frags.
+    images: Vec<SceneImage>,
+    /// Resolved image URLs: `url -> images` index, or `None` when the
+    /// file is missing/unsupported (placeholder).
+    image_index: HashMap<String, Option<usize>>,
+    /// Where local images come from.
+    env: ImageEnv,
 }
 
 impl<'a> Layout<'a> {
     /// Creates a layout positioned at the theme's top padding.
     pub(crate) fn new(theme: &'a Theme) -> Layout<'a> {
+        Layout::with_image_env(theme, ImageEnv::default())
+    }
+
+    /// Creates a layout that renders local images it can find.
+    pub(crate) fn with_image_env(theme: &'a Theme, env: ImageEnv) -> Layout<'a> {
         Layout {
             theme,
             metrics: Metrics::new(),
             draws: Vec::new(),
             y: theme.padding,
             quote_depth: 0,
+            images: Vec::new(),
+            image_index: HashMap::new(),
+            env,
         }
     }
 
@@ -251,12 +293,19 @@ impl<'a> Layout<'a> {
                 .background
                 .map(|c| RectDraw::new(0.0, 0.0, self.theme.width, height).with_fill(c)),
             draws: self.draws,
+            images: self.images,
         };
         (scene, marks)
     }
 
     /// Lays out top-level blocks while recording their draw ranges.
     fn lay_top(&mut self, blocks: &[Block]) -> Vec<BlockMark> {
+        // Decode every referenced local image up front so flattening and
+        // figure layout can resolve URLs through a plain lookup.
+        let urls = collect_image_urls(blocks);
+        for url in urls {
+            self.resolve_image(&url);
+        }
         let x = self.theme.padding;
         let width = self.content_width();
         let mut marks = Vec::with_capacity(blocks.len());
@@ -803,6 +852,32 @@ impl<'a> Layout<'a> {
     }
 
     fn figure(&mut self, img: &ImageData, x: f32, width: f32) {
+        // A resolvable local image becomes a real, centered figure; the
+        // image speaks for itself, so no placeholder chrome is drawn.
+        if let Some(index) = self.image_index.get(&img.url).copied().flatten() {
+            let (native_w, native_h) = {
+                let src = &self.images[index];
+                (src.width as f32, src.height as f32)
+            };
+            let mut w = width.min(native_w).max(1.0);
+            let mut h = w * native_h / native_w;
+            if let Some(cap) = self.env.max_height
+                && h > cap {
+                    h = cap;
+                    w = (h * native_w / native_h).max(1.0);
+                }
+            let top = self.y;
+            self.draws.push(Draw::Image(ImageDraw {
+                x: x + (width - w) * 0.5,
+                y: top,
+                w,
+                h,
+                image: index,
+            }));
+            self.y = top + h;
+            return;
+        }
+
         let size = self.theme.font_size;
         let box_h = size * 3.2;
         let top = self.y;
@@ -960,18 +1035,39 @@ impl<'a> Layout<'a> {
                     self.flatten_into(text, s, out);
                 }
                 Inline::Image(img) => {
-                    let label = if img.alt.is_empty() {
-                        "image"
+                    // A resolvable local image becomes an inline box
+                    // (height follows the font size, aspect preserved);
+                    // everything else falls back to the labeled chip.
+                    if let Some(index) = self.image_index.get(&img.url).copied().flatten() {
+                        let (native_w, native_h) = {
+                            let src = &self.images[index];
+                            ((src.width as f32).max(1.0), (src.height as f32).max(1.0))
+                        };
+                        let h = flow.style.size * 1.2;
+                        let w = h * native_w / native_h;
+                        out.push(Frag {
+                            text: String::new(),
+                            style: self.text_style(flow.style.size, FontKind::Sans),
+                            color: flow.style.color,
+                            underline: false,
+                            strike: false,
+                            code: false,
+                            image: Some(ImageFrag { index, w, h }),
+                        });
                     } else {
-                        &img.alt
-                    };
-                    let mut frag = Frag::new(
-                        format!("[{label}]"),
-                        self.text_style(self.theme.code_size(), FontKind::Mono),
-                        self.theme.muted,
-                    );
-                    frag.code = true;
-                    out.push(frag);
+                        let label = if img.alt.is_empty() {
+                            "image"
+                        } else {
+                            &img.alt
+                        };
+                        let mut frag = Frag::new(
+                            format!("[{label}]"),
+                            self.text_style(self.theme.code_size(), FontKind::Mono),
+                            self.theme.muted,
+                        );
+                        frag.code = true;
+                        out.push(frag);
+                    }
                 }
                 Inline::Break => out.push(Frag::new(
                     "\n",
@@ -1103,6 +1199,58 @@ impl<'a> Layout<'a> {
         }
     }
 
+    /// Reads (and caches) one local image. Returns the `images` index.
+    /// Remote URLs, missing files and unsupported formats all yield
+    /// `None`; the caller falls back to the placeholder it has always
+    /// drawn. Never touches the network, never panics on bad data.
+    fn load_image(&mut self, url: &str) -> Option<usize> {
+        if !self.env.enabled {
+            return None;
+        }
+        let lowered = url.to_ascii_lowercase();
+        if lowered.starts_with("http://")
+            || lowered.starts_with("https://")
+            || lowered.starts_with("data:")
+        {
+            return None;
+        }
+        let path = Path::new(url);
+        let path = if path.is_absolute() {
+            path.to_path_buf()
+        } else {
+            self.env
+                .base_dir
+                .as_ref()
+                .map(|base| base.join(url))
+                .unwrap_or_else(|| Path::new(url).to_path_buf())
+        };
+        let bytes = std::fs::read(&path).ok()?;
+        let decoded = crate::decode::decode(&bytes)?;
+        // SVG embeds the original PNG bytes when it can; other formats
+        // are re-encoded to PNG with our own encoder.
+        let embed = if crate::decode::mime(&bytes) == Some("image/png") {
+            bytes
+        } else {
+            crate::encode::png::encode(decoded.width, decoded.height, &decoded.pixels)
+        };
+        let index = self.images.len();
+        self.images.push(SceneImage {
+            width: decoded.width,
+            height: decoded.height,
+            pixels: decoded.pixels,
+            embed,
+        });
+        Some(index)
+    }
+
+    /// Resolves a URL once, memoizing the result per URL.
+    fn resolve_image(&mut self, url: &str) {
+        if !self.image_index.contains_key(url) {
+            let index = self.load_image(url);
+            self.image_index.insert(url.to_string(), index);
+        }
+    }
+
     /// Breaks an inline sequence into wrapped lines.
     fn compose(&self, inlines: &[Inline], max_width: f32, style: InlineStyle) -> Vec<Line> {
         self.compose_padded(inlines, max_width, style)
@@ -1121,6 +1269,19 @@ impl<'a> Layout<'a> {
     fn atomize(&self, frags: &[Frag], max_width: f32) -> Vec<Atom> {
         let mut atoms = Vec::new();
         for frag in frags {
+            if let Some(image) = frag.image {
+                // An image is an unbreakable atom; `wrap` naturally puts
+                // it on the next line when it does not fit.
+                atoms.push(Atom {
+                    frag: frag.clone(),
+                    text: String::new(),
+                    width: image.w,
+                    pad: 0.0,
+                    space: false,
+                    hard_break: false,
+                });
+                continue;
+            }
             if frag.text == "\n" {
                 atoms.push(Atom {
                     frag: frag.clone(),
@@ -1255,6 +1416,27 @@ impl<'a> Layout<'a> {
             let mut run_x = b.x + offset;
             let mut i = 0usize;
             while i < line.atoms.len() {
+                let atom = &line.atoms[i];
+                // An inline image sits on the baseline as its own box;
+                // it never joins a text run.
+                if let Some(image) = atom.frag.image {
+                    let (w, h) = if image.w > b.avail && image.w > 0.0 {
+                        let w = b.avail;
+                        (w, image.h * w / image.w)
+                    } else {
+                        (image.w, image.h)
+                    };
+                    self.draws.push(Draw::Image(ImageDraw {
+                        x: run_x,
+                        y: baseline - h,
+                        w,
+                        h,
+                        image: image.index,
+                    }));
+                    run_x += image.w;
+                    i += 1;
+                    continue;
+                }
                 let frag = &line.atoms[i].frag;
                 let start = run_x;
                 let mut text = String::new();
@@ -1429,6 +1611,46 @@ fn same_frag(a: &Frag, b: &Frag) -> bool {
         && a.underline == b.underline
         && a.strike == b.strike
         && a.code == b.code
+        && a.image == b.image
+}
+
+/// Collects every image URL referenced by the document, in order.
+fn collect_image_urls(blocks: &[Block]) -> Vec<String> {
+    let mut urls = Vec::new();
+    fn walk_blocks(blocks: &[Block], urls: &mut Vec<String>) {
+        for block in blocks {
+            match block {
+                Block::Paragraph(v) | Block::Heading { inlines: v, .. } => walk_inlines(v, urls),
+                Block::Figure(img) => urls.push(img.url.clone()),
+                Block::Quote(inner) => walk_blocks(inner, urls),
+                Block::List(list) => {
+                    for item in &list.items {
+                        walk_blocks(&item.blocks, urls);
+                    }
+                }
+                Block::Table(t) => {
+                    for cells in t.head.iter().chain(t.rows.iter().flatten()) {
+                        walk_inlines(cells, urls);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    fn walk_inlines(inlines: &[Inline], urls: &mut Vec<String>) {
+        for inline in inlines {
+            match inline {
+                Inline::Image(img) => urls.push(img.url.clone()),
+                Inline::Emph(c) | Inline::Strong(c) | Inline::Strike(c) | Inline::Underline(c) => {
+                    walk_inlines(c, urls)
+                }
+                Inline::Link { text, .. } => walk_inlines(text, urls),
+                _ => {}
+            }
+        }
+    }
+    walk_blocks(blocks, &mut urls);
+    urls
 }
 
 #[cfg(test)]
