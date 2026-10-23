@@ -1433,7 +1433,7 @@ impl<'a> Layout<'a> {
                         h,
                         image: image.index,
                     }));
-                    run_x += image.w;
+                    run_x += w;
                     i += 1;
                     continue;
                 }

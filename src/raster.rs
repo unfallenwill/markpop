@@ -1808,6 +1808,78 @@ mod tests {
     }
 
 
+    
+    #[test]
+    fn image_downscale_averages_a_checkerboard() {
+        let Some(fonts) = test_fonts() else { return };
+        // 4x4 checkerboard drawn at 2x2: every destination pixel averages
+        // two black and two white samples into a mid gray.
+        let mut px = Vec::new();
+        for y in 0..4i32 {
+            for x in 0..4i32 {
+                let v = if (x + y) % 2 == 0 { 0 } else { 255 };
+                px.extend_from_slice(&[v, v, v, 255]);
+            }
+        }
+        let scene = Scene {
+            width: 8.0,
+            height: 8.0,
+            background: Some(RectDraw::new(0.0, 0.0, 8.0, 8.0).with_fill(Color::WHITE)),
+            draws: vec![Draw::Image(crate::scene::ImageDraw {
+                x: 0.0,
+                y: 0.0,
+                w: 2.0,
+                h: 2.0,
+                image: 0,
+            })],
+            images: vec![crate::scene::SceneImage {
+                width: 4,
+                height: 4,
+                pixels: px,
+                embed: Vec::new(),
+            }],
+        };
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
+        for (x, y) in [(0, 0), (1, 1)] {
+            let p = bmp.pixel(x, y);
+            assert!(
+                p[0] > 110 && p[0] < 145 && (p[0] == p[1]) && (p[1] == p[2]),
+                "checkerboard averages to neutral gray: {p:?} at {x},{y}"
+            );
+        }
+    }
+
+    #[test]
+    fn image_alpha_blends_with_the_background() {
+        let Some(fonts) = test_fonts() else { return };
+        // Half-transparent red over white: the result sits between.
+        let scene = Scene {
+            width: 2.0,
+            height: 2.0,
+            background: Some(RectDraw::new(0.0, 0.0, 2.0, 2.0).with_fill(Color::WHITE)),
+            draws: vec![Draw::Image(crate::scene::ImageDraw {
+                x: 0.0,
+                y: 0.0,
+                w: 2.0,
+                h: 2.0,
+                image: 0,
+            })],
+            images: vec![crate::scene::SceneImage {
+                width: 1,
+                height: 1,
+                pixels: vec![255, 0, 0, 128],
+                embed: Vec::new(),
+            }],
+        };
+        let bmp = Rasterizer::new(1.0).rasterize(&scene, &fonts);
+        let p = bmp.pixel(0, 0);
+        assert!(
+            p[0] > 200 && p[1] > 80 && p[1] < 180 && p[2] > 80 && p[2] < 180,
+            "half-transparent red on white is pink: {p:?}"
+        );
+    }
+
+
     #[test]
     fn bold_text_is_heavier_than_regular() {
         let Some(fonts) = test_fonts() else { return };

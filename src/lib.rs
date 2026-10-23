@@ -263,7 +263,13 @@ pub fn to_scene(markdown: &str, theme: &Theme) -> Scene {
     }
 }
 
-fn to_scene_with_options(markdown: &str, options: &Options) -> Scene {
+/// Lays Markdown out into a [`Scene`] honouring every option except
+/// pagination (a single image never paginates, but it does honour
+/// columns).
+///
+/// The geometry-only counterpart of [`render_bytes`]: useful for tests,
+/// alternate renderers, and inspecting exact positions.
+pub fn to_scene_with_options(markdown: &str, options: &Options) -> Scene {
     // A single image never paginates, but it does honour columns.
     let mut single = options.clone();
     single.page_height = None;
