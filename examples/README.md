@@ -55,6 +55,7 @@ not the system font, so the page count and the line breaks are the same everywhe
 | 打印稿 | [`zh-print/source.md`](zh-print/source.md) | `--theme print` | `zh-print.{svg,png,webp}` |
 | 双栏排版 | [`zh-magazine/source.md`](zh-magazine/source.md) | `--columns 2` | `zh-magazine.{svg,png,webp}` |
 | 移动端长图 | [`zh-mobile/source.md`](zh-mobile/source.md) | `--canvas mobile` | `zh-mobile.{svg,png,webp}` |
+| 项目公告长图 | [`zh-announcement/source.md`](zh-announcement/source.md) | `--canvas mobile`（位图 `--zoom 200`） | `zh-announcement.{svg,png@2x,webp@2x}` |
 
 中文文档按全角（1 em）度量、逐字断行，中英混排不会溢出画布——下面几例都是真实
 渲染结果，不是示意图。
@@ -64,7 +65,7 @@ not the system font, so the page count and the line breaks are the same everywhe
 ## Feature showcase
 
 The full syntax surface in one document: headings, emphasis, code, tables, task lists,
-blockquotes, images, and the deliberate gaps.
+blockquotes, images, spec-bounded HTML rendering, and the deliberate gaps.
 
 ```bash
 markpop examples/showcase/source.md -o showcase.svg

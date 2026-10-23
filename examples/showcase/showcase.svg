@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="3737.66" viewBox="0 0 800 3737.66" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
-  <rect x="0" y="0" width="800" height="3737.66" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" role="img" width="800" height="3979.47" viewBox="0 0 800 3979.47" font-family="Segoe UI, -apple-system, Helvetica, Arial, PingFang SC, Hiragino Sans GB, Microsoft YaHei, sans-serif">
+  <rect x="0" y="0" width="800" height="3979.47" fill="#ffffff"/>
   <text x="48" y="78.4" font-size="32" fill="#05503d" xml:space="preserve" font-weight="bold">MarkPop</text>
   <line x1="48" y1="100.8" x2="752" y2="100.8" stroke="#d8dee4" stroke-width="2"/>
   <text x="48" y="133.4" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">MarkPop</text>
@@ -95,7 +95,7 @@
   <line x1="48" y1="897.67" x2="752" y2="897.67" stroke="#d8dee4" stroke-width="1"/>
   <text x="58" y="920.86" font-size="14.72" fill="#1f2328" xml:space="preserve">HTML</text>
   <text x="137.4" y="920.86" font-size="14.72" fill="#1f2328" xml:space="preserve">✅</text>
-  <text x="188.54" y="920.86" font-size="14.72" fill="#1f2328" xml:space="preserve">块级 / 行内原样保留，只当文本展示，从不执行</text>
+  <text x="188.54" y="920.86" font-size="14.72" fill="#1f2328" xml:space="preserve">块级 / 行内按语义渲染（表格、列表、引用、行内样式），不执行、无 CSS</text>
   <line x1="48" y1="935.22" x2="752" y2="935.22" stroke="#d8dee4" stroke-width="1"/>
   <text x="58" y="958.42" font-size="14.72" fill="#1f2328" xml:space="preserve">任务列</text>
   <text x="58" y="981.97" font-size="14.72" fill="#1f2328" xml:space="preserve">表</text>
@@ -214,92 +214,121 @@
   <text x="58" y="2041.1" font-size="14.72" fill="#1f2328" xml:space="preserve">实体</text>
   <text x="153.6" y="2041.1" font-size="14.72" fill="#1f2328" xml:space="preserve">©   ¥ … 😀</text>
   <line x1="48" y1="2055.46" x2="523.69" y2="2055.46" stroke="#d8dee4" stroke-width="1"/>
-  <rect x="48" y="2071.46" width="704" height="58.4" rx="6" fill="#f1f3f6"/>
-  <text x="713.12" y="2085.42" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">html</text>
-  <text x="60" y="2113.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">&lt;div align=&quot;center&quot;&gt;原样展示，不执行&lt;/div&gt;</text>
-  <text x="48" y="2175.06" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">用法</text>
-  <line x1="48" y1="2191.86" x2="752" y2="2191.86" stroke="#d8dee4" stroke-width="1"/>
-  <rect x="48" y="2210.86" width="704" height="507.2" rx="6" fill="#f1f3f6"/>
-  <text x="713.12" y="2224.82" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
-  <text x="60" y="2253.14" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 标准输入 / 输出</text>
-  <text x="60" y="2273.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cat README.md | markpop &gt; README.svg</text>
-  <text x="60" y="2314.34" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 指定文件、主题与缩放</text>
-  <text x="60" y="2334.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --theme dark --zoom 150 -o doc.svg</text>
-  <text x="60" y="2375.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 自定义画布宽度</text>
-  <text x="60" y="2395.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --width 1200 -o doc.svg</text>
-  <text x="60" y="2436.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 分页 + 目录（输出 page-1.svg、page-2.svg…）</text>
-  <text x="60" y="2457.14" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --toc --page-height 1123 -o page.svg</text>
-  <text x="60" y="2497.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）</text>
-  <text x="60" y="2518.34" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --format png -o doc.png</text>
-  <text x="60" y="2538.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --format webp -o doc.webp</text>
-  <text x="60" y="2579.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 排版配置：字号 / 字距 / 行距 / 字体 / 列数</text>
-  <text x="60" y="2599.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  </text>
-  <text x="60" y="2620.34" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--font-family &quot;Georgia, serif&quot; --columns 2 -o doc.svg</text>
-  <text x="60" y="2661.14" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 画布预设：A4 自动分页 / 移动端长图</text>
-  <text x="60" y="2681.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --canvas a4 -o page.svg</text>
-  <text x="60" y="2701.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --canvas mobile -o long.svg</text>
-  <text x="48" y="2751.66" font-size="16" fill="#1f2328" xml:space="preserve">作为库使用：</text>
-  <rect x="48" y="2775.66" width="704" height="160.4" rx="6" fill="#f1f3f6"/>
-  <text x="713.12" y="2789.62" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
-  <text x="60" y="2817.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render(&quot;# Hello\n\nWorld&quot;);</text>
-  <text x="60" y="2858.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let opts = markpop::Options::default()</text>
-  <text x="60" y="2879.14" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_theme(markpop::Theme::dark())</text>
-  <text x="60" y="2899.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_zoom(1.5);</text>
-  <text x="60" y="2919.94" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render_with(&quot;# Hi&quot;, &amp;opts).unwrap();</text>
-  <text x="48" y="2981.26" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">架构</text>
-  <line x1="48" y1="2998.06" x2="752" y2="2998.06" stroke="#d8dee4" stroke-width="1"/>
-  <rect x="48" y="3017.06" width="704" height="101.6" rx="6" fill="#f1f3f6"/>
-  <text x="60" y="3041.34" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown</text>
-  <text x="60" y="3061.74" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → parse     (ast::Document)   块级 / 行内</text>
-  <text x="60" y="3082.14" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → layout    (scene::Scene)    几何图元</text>
-  <text x="60" y="3102.54" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → svg       (String)          纯序列化</text>
-  <text x="48" y="3152.26" font-size="16" fill="#1f2328" xml:space="preserve">每一层都是纯函数，可以单独断言：</text>
-  <rect x="57.44" y="3181.7" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3193.86" font-size="16" fill="#1f2328" xml:space="preserve">解析层断言 AST</text>
-  <rect x="57.44" y="3207.3" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3219.46" font-size="16" fill="#1f2328" xml:space="preserve">布局层断言坐标与图元</text>
-  <rect x="57.44" y="3232.9" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3245.06" font-size="16" fill="#1f2328" xml:space="preserve">序列化层断言标记</text>
-  <text x="48" y="3291.26" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">扩展点</text>
-  <rect x="57.44" y="3319.7" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3331.86" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">主题</text>
-  <text x="104.64" y="3331.86" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
-  <rect x="121.14" y="3317.54" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="124.72" y="3331.86" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme</text>
-  <text x="169.6" y="3331.86" font-size="16" fill="#1f2328" xml:space="preserve"> 是纯数据，从</text>
-  <rect x="275.06" y="3317.54" width="121.4" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="278.64" y="3331.86" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme::light()</text>
-  <text x="396.96" y="3331.86" font-size="16" fill="#1f2328" xml:space="preserve"> 改字段即可</text>
-  <rect x="57.44" y="3345.3" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3357.46" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">语法</text>
-  <text x="104.64" y="3357.46" font-size="16" fill="#1f2328" xml:space="preserve">：新增</text>
-  <rect x="157.62" y="3343.14" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="161.2" y="3357.46" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Block</text>
-  <text x="206.08" y="3357.46" font-size="16" fill="#1f2328" xml:space="preserve"> /</text>
-  <rect x="221.3" y="3343.14" width="56.12" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="224.88" y="3357.46" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Inline</text>
-  <text x="277.92" y="3357.46" font-size="16" fill="#1f2328" xml:space="preserve"> 变体，解析与布局各加一个分支</text>
-  <rect x="57.44" y="3370.9" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3383.06" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">输出格式</text>
-  <text x="137.28" y="3383.06" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
-  <rect x="153.78" y="3368.74" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="157.36" y="3383.06" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Scene</text>
-  <text x="202.24" y="3383.06" font-size="16" fill="#1f2328" xml:space="preserve"> 只有几何，另写一个序列化器即可</text>
-  <rect x="57.44" y="3396.5" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3408.66" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">字体度量</text>
-  <text x="137.28" y="3408.66" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
-  <rect x="153.78" y="3394.34" width="113.24" height="19.04" rx="3" fill="#f1f3f6"/>
-  <text x="157.36" y="3408.66" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">text::Metrics</text>
-  <text x="267.52" y="3408.66" font-size="16" fill="#1f2328" xml:space="preserve"> 是唯一的宽度来源</text>
-  <text x="48" y="3461.86" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">限制</text>
-  <line x1="48" y1="3478.66" x2="752" y2="3478.66" stroke="#d8dee4" stroke-width="1"/>
-  <rect x="57.44" y="3503.1" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3515.26" font-size="16" fill="#1f2328" xml:space="preserve">不下载远程图片，也不解析图片内容（输出始终自包含）</text>
-  <rect x="57.44" y="3528.7" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3540.86" font-size="16" fill="#1f2328" xml:space="preserve">HTML 只作为文本展示：不执行脚本、不加载任何外部资源</text>
-  <rect x="57.44" y="3554.3" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
-  <text x="72" y="3566.46" font-size="16" fill="#1f2328" xml:space="preserve">超出画布宽度的单个长段落无法在不重排文本的前提下切分（列表、引用、表格、代码块都会</text>
-  <text x="72" y="3592.06" font-size="16" fill="#1f2328" xml:space="preserve">自动拆分）</text>
-  <line x1="48" y1="3632.06" x2="752" y2="3632.06" stroke="#d8dee4" stroke-width="2"/>
-  <text x="48" y="3681.66" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">由 markpop 自身渲染生成，100% 缩放。</text>
+  <text x="48" y="2093.66" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">HTML 渲染</text>
+  <text x="48" y="2130.26" font-size="16" fill="#1f2328" xml:space="preserve">规范承认的 HTML 按语义渲染，标签本身不出现在输出里：</text>
+  <rect x="48" y="2154.26" width="474.49" height="37.55" fill="#f2f4f7"/>
+  <text x="58" y="2177.46" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">写法</text>
+  <text x="305.31" y="2177.46" font-size="14.72" fill="#1f2328" xml:space="preserve" font-weight="bold">渲染为</text>
+  <line x1="48" y1="2154.26" x2="522.49" y2="2154.26" stroke="#d8dee4" stroke-width="1"/>
+  <line x1="48" y1="2191.82" x2="522.49" y2="2191.82" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="2215.01" font-size="14.72" fill="#1f2328" xml:space="preserve">&lt;table&gt; &lt;ul&gt; &lt;blockquote&gt; &lt;hr&gt;</text>
+  <text x="305.31" y="2215.01" font-size="14.72" fill="#1f2328" xml:space="preserve">真实表格 / 列表 / 引用 / 分隔线</text>
+  <line x1="48" y1="2229.37" x2="522.49" y2="2229.37" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="2252.56" font-size="14.72" fill="#1f2328" xml:space="preserve">&lt;pre&gt; 与 &lt;h1&gt;…&lt;h6&gt;</text>
+  <text x="305.31" y="2252.56" font-size="14.72" fill="#1f2328" xml:space="preserve">代码块（含语言标签）与标题</text>
+  <line x1="48" y1="2266.92" x2="522.49" y2="2266.92" stroke="#d8dee4" stroke-width="1"/>
+  <text x="58" y="2290.11" font-size="14.72" fill="#1f2328" xml:space="preserve">&lt;div&gt; 与未知标签</text>
+  <text x="305.31" y="2290.11" font-size="14.72" fill="#1f2328" xml:space="preserve">透明容器，内容正常排版</text>
+  <line x1="48" y1="2304.47" x2="522.49" y2="2304.47" stroke="#d8dee4" stroke-width="1"/>
+  <text x="48" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">上面这张表格就是 HTML —— 行内标签与 Markdown 混排：</text>
+  <text x="467.84" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">加粗</text>
+  <text x="500.48" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">、</text>
+  <text x="516.48" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">斜体</text>
+  <text x="548.48" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">、</text>
+  <rect x="564.98" y="2323.75" width="61.56" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="568.56" y="2338.07" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">行内代码</text>
+  <text x="627.04" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">、</text>
+  <text x="643.04" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">删除线</text>
+  <line x1="643.04" y1="2333.59" x2="691.04" y2="2333.59" stroke="#1f2328" stroke-width="1"/>
+  <text x="691.04" y="2338.07" font-size="16" fill="#1f2328" xml:space="preserve">、</text>
+  <text x="707.04" y="2338.07" font-size="16" fill="#0969da" xml:space="preserve">链</text>
+  <line x1="707.04" y1="2340.15" x2="723.04" y2="2340.15" stroke="#0969da" stroke-width="1"/>
+  <text x="48" y="2363.67" font-size="16" fill="#0969da" xml:space="preserve">接</text>
+  <line x1="48" y1="2365.75" x2="64" y2="2365.75" stroke="#0969da" stroke-width="1"/>
+  <text x="64" y="2363.67" font-size="16" fill="#1f2328" xml:space="preserve">。</text>
+  <text x="48" y="2416.87" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">用法</text>
+  <line x1="48" y1="2433.67" x2="752" y2="2433.67" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="48" y="2452.67" width="704" height="507.2" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="2466.63" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">bash</text>
+  <text x="60" y="2494.95" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 标准输入 / 输出</text>
+  <text x="60" y="2515.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">cat README.md | markpop &gt; README.svg</text>
+  <text x="60" y="2556.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 指定文件、主题与缩放</text>
+  <text x="60" y="2576.55" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --theme dark --zoom 150 -o doc.svg</text>
+  <text x="60" y="2617.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 自定义画布宽度</text>
+  <text x="60" y="2637.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --width 1200 -o doc.svg</text>
+  <text x="60" y="2678.55" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 分页 + 目录（输出 page-1.svg、page-2.svg…）</text>
+  <text x="60" y="2698.95" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --toc --page-height 1123 -o page.svg</text>
+  <text x="60" y="2739.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 位图输出：PNG / 无损 WebP（内置软件光栅化，不用浏览器）</text>
+  <text x="60" y="2760.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --format png -o doc.png</text>
+  <text x="60" y="2780.55" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --format webp -o doc.webp</text>
+  <text x="60" y="2821.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 排版配置：字号 / 字距 / 行距 / 字体 / 列数</text>
+  <text x="60" y="2841.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --font-size 17 --line-height 1.75 --letter-spacing 0.01 \n  </text>
+  <text x="60" y="2862.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">--font-family &quot;Georgia, serif&quot; --columns 2 -o doc.svg</text>
+  <text x="60" y="2902.95" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace"># 画布预设：A4 自动分页 / 移动端长图</text>
+  <text x="60" y="2923.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --canvas a4 -o page.svg</text>
+  <text x="60" y="2943.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markpop doc.md --canvas mobile -o long.svg</text>
+  <text x="48" y="2993.47" font-size="16" fill="#1f2328" xml:space="preserve">作为库使用：</text>
+  <rect x="48" y="3017.47" width="704" height="160.4" rx="6" fill="#f1f3f6"/>
+  <text x="713.12" y="3031.43" font-size="11.2" fill="#5b636c" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">rust</text>
+  <text x="60" y="3059.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render(&quot;# Hello\n\nWorld&quot;);</text>
+  <text x="60" y="3100.55" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let opts = markpop::Options::default()</text>
+  <text x="60" y="3120.95" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_theme(markpop::Theme::dark())</text>
+  <text x="60" y="3141.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">    .with_zoom(1.5);</text>
+  <text x="60" y="3161.75" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">let svg = markpop::render_with(&quot;# Hi&quot;, &amp;opts).unwrap();</text>
+  <text x="48" y="3223.07" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">架构</text>
+  <line x1="48" y1="3239.87" x2="752" y2="3239.87" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="48" y="3258.87" width="704" height="101.6" rx="6" fill="#f1f3f6"/>
+  <text x="60" y="3283.15" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Markdown</text>
+  <text x="60" y="3303.55" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → parse     (ast::Document)   块级 / 行内</text>
+  <text x="60" y="3323.95" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → layout    (scene::Scene)    几何图元</text>
+  <text x="60" y="3344.35" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">  → svg       (String)          纯序列化</text>
+  <text x="48" y="3394.07" font-size="16" fill="#1f2328" xml:space="preserve">每一层都是纯函数，可以单独断言：</text>
+  <rect x="57.44" y="3423.51" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3435.67" font-size="16" fill="#1f2328" xml:space="preserve">解析层断言 AST</text>
+  <rect x="57.44" y="3449.11" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3461.27" font-size="16" fill="#1f2328" xml:space="preserve">布局层断言坐标与图元</text>
+  <rect x="57.44" y="3474.71" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3486.87" font-size="16" fill="#1f2328" xml:space="preserve">序列化层断言标记</text>
+  <text x="48" y="3533.07" font-size="20" fill="#05503d" xml:space="preserve" font-weight="bold">扩展点</text>
+  <rect x="57.44" y="3561.51" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3573.67" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">主题</text>
+  <text x="104.64" y="3573.67" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="121.14" y="3559.35" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="124.72" y="3573.67" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme</text>
+  <text x="169.6" y="3573.67" font-size="16" fill="#1f2328" xml:space="preserve"> 是纯数据，从</text>
+  <rect x="275.06" y="3559.35" width="121.4" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="278.64" y="3573.67" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Theme::light()</text>
+  <text x="396.96" y="3573.67" font-size="16" fill="#1f2328" xml:space="preserve"> 改字段即可</text>
+  <rect x="57.44" y="3587.11" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3599.27" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">语法</text>
+  <text x="104.64" y="3599.27" font-size="16" fill="#1f2328" xml:space="preserve">：新增</text>
+  <rect x="157.62" y="3584.95" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="161.2" y="3599.27" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Block</text>
+  <text x="206.08" y="3599.27" font-size="16" fill="#1f2328" xml:space="preserve"> /</text>
+  <rect x="221.3" y="3584.95" width="56.12" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="224.88" y="3599.27" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Inline</text>
+  <text x="277.92" y="3599.27" font-size="16" fill="#1f2328" xml:space="preserve"> 变体，解析与布局各加一个分支</text>
+  <rect x="57.44" y="3612.71" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3624.87" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">输出格式</text>
+  <text x="137.28" y="3624.87" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="153.78" y="3610.55" width="47.96" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="157.36" y="3624.87" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">Scene</text>
+  <text x="202.24" y="3624.87" font-size="16" fill="#1f2328" xml:space="preserve"> 只有几何，另写一个序列化器即可</text>
+  <rect x="57.44" y="3638.31" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3650.47" font-size="16" fill="#1f2328" xml:space="preserve" font-weight="bold">字体度量</text>
+  <text x="137.28" y="3650.47" font-size="16" fill="#1f2328" xml:space="preserve">：</text>
+  <rect x="153.78" y="3636.15" width="113.24" height="19.04" rx="3" fill="#f1f3f6"/>
+  <text x="157.36" y="3650.47" font-size="13.6" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">text::Metrics</text>
+  <text x="267.52" y="3650.47" font-size="16" fill="#1f2328" xml:space="preserve"> 是唯一的宽度来源</text>
+  <text x="48" y="3703.67" font-size="24" fill="#05503d" xml:space="preserve" font-weight="bold">限制</text>
+  <line x1="48" y1="3720.47" x2="752" y2="3720.47" stroke="#d8dee4" stroke-width="1"/>
+  <rect x="57.44" y="3744.91" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3757.07" font-size="16" fill="#1f2328" xml:space="preserve">不下载远程图片，也不解析图片内容（输出始终自包含）</text>
+  <rect x="57.44" y="3770.51" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3782.67" font-size="16" fill="#1f2328" xml:space="preserve">HTML 按规范边界渲染：不执行脚本、无 CSS、不加载任何外部资源，未知标签为透明容器</text>
+  <rect x="57.44" y="3796.11" width="5.12" height="5.12" rx="2.56" fill="#33383f"/>
+  <text x="72" y="3808.27" font-size="16" fill="#1f2328" xml:space="preserve">超出画布宽度的单个长段落无法在不重排文本的前提下切分（列表、引用、表格、代码块都会</text>
+  <text x="72" y="3833.87" font-size="16" fill="#1f2328" xml:space="preserve">自动拆分）</text>
+  <line x1="48" y1="3873.87" x2="752" y2="3873.87" stroke="#d8dee4" stroke-width="2"/>
+  <text x="48" y="3923.47" font-size="16" fill="#1f2328" xml:space="preserve" font-style="italic">由 markpop 自身渲染生成，100% 缩放。</text>
 </svg>

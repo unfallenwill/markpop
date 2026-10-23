@@ -24,7 +24,7 @@
 | 代码块 | ✅ | 围栏式 + 缩进式，附语言标签 |
 | 链接 | ✅ | 行内式、引用式 `[text][label]`、自动链接 `<https://…>`、GFM 字面量 `www.` / 邮箱 |
 | 引用定义 | ✅ | `[label]: url "title"`，可出现在文档任意位置 |
-| HTML | ✅ | 块级 / 行内原样保留，只当文本展示，从不执行 |
+| HTML | ✅ | 块级 / 行内按语义渲染（表格、列表、引用、行内样式），不执行、无 CSS |
 | 任务列表 | ✅ | GFM `- [ ]` / `- [x]`，绘制复选框 |
 | 实体 | ✅ | 全部 HTML5 命名字符引用与数字引用 |
 | 图片 | ✅ | 渲染为占位图框 + URL 标题 |
@@ -66,9 +66,20 @@
 
 [spec]: https://spec.commonmark.org "CommonMark 0.31.2"
 
-```html
-<div align="center">原样展示，不执行</div>
-```
+### HTML 渲染
+
+规范承认的 HTML 按语义渲染，标签本身不出现在输出里：
+
+<table>
+  <thead><tr><th align="left">写法</th><th align="left">渲染为</th></tr></thead>
+  <tbody>
+    <tr><td>&lt;table&gt; &lt;ul&gt; &lt;blockquote&gt; &lt;hr&gt;</td><td>真实表格 / 列表 / 引用 / 分隔线</td></tr>
+    <tr><td>&lt;pre&gt; 与 &lt;h1&gt;…&lt;h6&gt;</td><td>代码块（含语言标签）与标题</td></tr>
+    <tr><td>&lt;div&gt; 与未知标签</td><td>透明容器，内容正常排版</td></tr>
+  </tbody>
+</table>
+
+上面这张表格就是 HTML —— 行内标签与 Markdown 混排：<b>加粗</b>、<i>斜体</i>、<code>行内代码</code>、<s>删除线</s>、<a href="https://spec.commonmark.org">链接</a>。
 
 ## 用法
 
@@ -133,7 +144,7 @@ Markdown
 ## 限制
 
 - 不下载远程图片，也不解析图片内容（输出始终自包含）
-- HTML 只作为文本展示：不执行脚本、不加载任何外部资源
+- HTML 按规范边界渲染：不执行脚本、无 CSS、不加载任何外部资源，未知标签为透明容器
 - 超出画布宽度的单个长段落无法在不重排文本的前提下切分（列表、引用、表格、代码块都会自动拆分）
 
 ---

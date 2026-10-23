@@ -6,7 +6,7 @@
   <text x="32" y="215" font-size="24" fill="#1f2328" xml:space="preserve">不开浏览器、不截屏、零第三方依赖。</text>
   <rect x="32" y="251" width="686" height="50.6" rx="6" fill="#f1f3f6"/>
   <text x="44" y="282.42" font-size="20.4" fill="#24292e" xml:space="preserve" font-family="Cascadia Code, Consolas, Menlo, Monaco, &apos;Courier New&apos;, monospace">markdown → parse → layout → SVG | PNG | WebP</text>
-  <text x="32" y="352" font-size="24" fill="#1f2328" xml:space="preserve">纯 Rust 实现，429 个测试，编译产物单个二进制。</text>
+  <text x="32" y="352" font-size="24" fill="#1f2328" xml:space="preserve">纯 Rust 实现，480+ 个测试，编译产物单个二进制。</text>
   <text x="32" y="431.8" font-size="36" fill="#05503d" xml:space="preserve" font-weight="bold">为什么要扔掉截图流水线</text>
   <line x1="32" y1="457" x2="718" y2="457" stroke="#d8dee4" stroke-width="1"/>
   <text x="32" y="504.4" font-size="24" fill="#1f2328" xml:space="preserve">常规做法是</text>

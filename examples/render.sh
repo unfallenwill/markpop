@@ -69,6 +69,9 @@ render zh-print     zh-print     --theme print
 render zh-magazine  zh-magazine  --columns 2 --column-gap 28
 render zh-mobile    zh-mobile    --canvas mobile
 render zh-announcement zh-announcement --canvas mobile
+# 位图以 2x 渲染：长图主要在手机高 DPI 屏上查看；SVG 保持 1x 矢量。
+"$bin" examples/zh-announcement/source.md --canvas mobile --zoom 200 -f png  -o examples/zh-announcement/zh-announcement.png
+"$bin" examples/zh-announcement/source.md --canvas mobile --zoom 200 -f webp -o examples/zh-announcement/zh-announcement.webp
 
 render zh-handbook page --canvas a4
 

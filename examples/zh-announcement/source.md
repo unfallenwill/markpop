@@ -8,7 +8,7 @@
 markdown → parse → layout → SVG | PNG | WebP
 ```
 
-纯 Rust 实现，429 个测试，编译产物单个二进制。
+纯 Rust 实现，480+ 个测试，编译产物单个二进制。
 
 ## 为什么要扔掉截图流水线
 
