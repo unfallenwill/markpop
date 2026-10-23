@@ -122,6 +122,9 @@ pub enum Inline {
     Strong(Vec<Inline>),
     /// Strikethrough (`~~x~~`).
     Strike(Vec<Inline>),
+    /// Underline; only produced when rendering raw HTML (`<u>`, `<ins>`),
+    /// never by Markdown syntax itself.
+    Underline(Vec<Inline>),
     /// A hyperlink.
     Link {
         /// The visible text (may itself contain styled inlines).
@@ -148,7 +151,9 @@ impl Inline {
     pub fn plain_text(&self) -> String {
         match self {
             Inline::Text(s) | Inline::Code(s) => s.clone(),
-            Inline::Emph(c) | Inline::Strong(c) | Inline::Strike(c) => plain_text_of(c),
+            Inline::Emph(c) | Inline::Strong(c) | Inline::Strike(c) | Inline::Underline(c) => {
+                plain_text_of(c)
+            }
             Inline::Link { text, .. } => plain_text_of(text),
             Inline::Image(img) => img.alt.clone(),
             Inline::Break => String::new(),

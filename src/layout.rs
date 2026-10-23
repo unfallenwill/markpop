@@ -14,9 +14,13 @@
 
 use crate::ast::{Align, Block, CodeBlock, Document, ImageData, Inline, ListData, TableData};
 use crate::color::Color;
+use crate::html::{HtmlTag, HtmlToken, collapse_spaces, tokenize_html};
 use crate::scene::{Draw, FontKind, LineDraw, RectDraw, Scene, TextDraw};
 use crate::text::{Metrics, TextStyle, atomize};
 use crate::theme::Theme;
+
+mod html;
+use html::html_blocks;
 
 /// Vertical rhythm constants, expressed in multiples of the base font size.
 mod space {
@@ -94,6 +98,15 @@ impl InlineStyle {
             strike: false,
         }
     }
+}
+
+/// Mutable state carried across raw inline HTML tags inside one inline
+/// sequence: the current text style, whether runs render as inline code,
+/// and the saved states of open tags (restored by their close tags).
+struct HtmlFlow {
+    style: InlineStyle,
+    code: bool,
+    open: Vec<(String, InlineStyle, bool)>,
 }
 
 /// A styled span of text, after inline flattening.
@@ -282,6 +295,18 @@ impl<'a> Layout<'a> {
     /// The first block's top margin and the last block's bottom margin are
     /// dropped: containers provide their own padding.
     fn blocks(&mut self, blocks: &[Block], x: f32, width: f32, tight: bool) {
+        // Raw HTML blocks are interpreted into ordinary blocks first, so
+        // each converted piece gets its own margins.
+        if blocks.iter().any(|b| matches!(b, Block::Html(_))) {
+            let expanded: Vec<Block> = blocks
+                .iter()
+                .flat_map(|b| match b {
+                    Block::Html(raw) => html_blocks(raw),
+                    other => vec![other.clone()],
+                })
+                .collect();
+            return self.blocks(&expanded, x, width, tight);
+        }
         let mut prev_after: Option<f32> = None;
         for block in blocks {
             let (before, after) = self.margins(block, tight);
@@ -331,15 +356,14 @@ impl<'a> Layout<'a> {
             Block::Table(t) => self.table(t, x, width),
             Block::Figure(img) => self.figure(img, x, width),
             Block::ThematicBreak => self.rule(x, width),
-            // HTML blocks are shown as literal text, never executed.
-            Block::Html(raw) => self.code_block(
-                &CodeBlock {
-                    info: String::new(),
-                    lines: raw.lines().map(str::to_string).collect(),
-                },
-                x,
-                width,
-            ),
+            // Raw HTML blocks: interpreted into ordinary blocks (per
+            // CommonMark §4.6 they pass through verbatim; rendering means
+            // drawing that markup). Never executed.
+            Block::Html(raw) => {
+                for block in html_blocks(raw) {
+                    self.block(&block, x, width);
+                }
+            }
         }
     }
 
@@ -877,24 +901,27 @@ impl<'a> Layout<'a> {
     }
 
     fn flatten_into(&self, inlines: &[Inline], style: InlineStyle, out: &mut Vec<Frag>) {
+        let mut flow = HtmlFlow {
+            style,
+            code: false,
+            open: Vec::new(),
+        };
+        self.flatten_flow(inlines, &mut flow, out);
+    }
+
+    /// Walks one inline sequence, interpreting raw HTML tags as style
+    /// state along the way.
+    ///
+    /// Styling nodes (`Emph`, `Strong`, …) recurse with a fresh
+    /// [`HtmlFlow`], so an HTML tag opened inside one Markdown node stays
+    /// scoped to it — a `</b>` outside that node is simply ignored,
+    /// mirroring how a stray close tag behaves in a browser.
+    fn flatten_flow(&self, inlines: &[Inline], flow: &mut HtmlFlow, out: &mut Vec<Frag>) {
         for inline in inlines {
             match inline {
                 Inline::Text(s) => {
                     if !s.is_empty() {
-                        let mut frag = Frag::new(
-                            s.clone(),
-                            TextStyle {
-                                size: style.size,
-                                family: FontKind::Sans,
-                                bold: style.bold,
-                                italic: style.italic,
-                                letter_spacing: self.theme.letter_spacing,
-                            },
-                            style.color,
-                        );
-                        frag.underline = style.underline;
-                        frag.strike = style.strike;
-                        out.push(frag);
+                        self.push_flow_text(s, flow, out);
                     }
                 }
                 Inline::Code(code) => {
@@ -907,22 +934,27 @@ impl<'a> Layout<'a> {
                     out.push(frag);
                 }
                 Inline::Emph(inner) => {
-                    let mut s = style;
+                    let mut s = flow.style;
                     s.italic = true;
                     self.flatten_into(inner, s, out);
                 }
                 Inline::Strong(inner) => {
-                    let mut s = style;
+                    let mut s = flow.style;
                     s.bold = true;
                     self.flatten_into(inner, s, out);
                 }
                 Inline::Strike(inner) => {
-                    let mut s = style;
+                    let mut s = flow.style;
                     s.strike = true;
                     self.flatten_into(inner, s, out);
                 }
+                Inline::Underline(inner) => {
+                    let mut s = flow.style;
+                    s.underline = true;
+                    self.flatten_into(inner, s, out);
+                }
                 Inline::Link { text, .. } => {
-                    let mut s = style;
+                    let mut s = flow.style;
                     s.color = self.theme.link;
                     s.underline = true;
                     self.flatten_into(text, s, out);
@@ -943,21 +975,131 @@ impl<'a> Layout<'a> {
                 }
                 Inline::Break => out.push(Frag::new(
                     "\n",
-                    self.text_style(style.size, FontKind::Sans),
-                    style.color,
+                    self.text_style(flow.style.size, FontKind::Sans),
+                    flow.style.color,
                 )),
                 Inline::SoftBreak => out.push(Frag::new(
                     " ",
-                    self.text_style(style.size, FontKind::Sans),
-                    style.color,
+                    self.text_style(flow.style.size, FontKind::Sans),
+                    flow.style.color,
                 )),
-                // Raw HTML is shown literally: SVG output never executes it.
-                Inline::Html(raw) => out.push(Frag::new(
-                    raw.clone(),
+                // Raw inline HTML: interpreted as markup per CommonMark
+                // §6.6 ("rendered without escaping"). Never executed.
+                Inline::Html(raw) => self.apply_html(raw, flow, out),
+            }
+        }
+    }
+
+    /// Emits one text run under the current HTML flow state.
+    fn push_flow_text(&self, text: &str, flow: &HtmlFlow, out: &mut Vec<Frag>) {
+        if text.is_empty() {
+            return;
+        }
+        if flow.code {
+            let mut frag = Frag::new(
+                text.to_string(),
+                self.text_style(self.theme.code_size(), FontKind::Mono),
+                self.theme.code_text,
+            );
+            frag.code = true;
+            out.push(frag);
+            return;
+        }
+        let style = &flow.style;
+        let mut frag = Frag::new(
+            text.to_string(),
+            TextStyle {
+                size: style.size,
+                family: FontKind::Sans,
+                bold: style.bold,
+                italic: style.italic,
+                letter_spacing: self.theme.letter_spacing,
+            },
+            style.color,
+        );
+        frag.underline = style.underline;
+        frag.strike = style.strike;
+        out.push(frag);
+    }
+
+    /// Interprets one raw inline HTML construct (a tag, comment, …) as
+    /// markup: styling tags mutate the flow, `br` breaks the line, `img`
+    /// renders as a labeled chip, comments vanish, unknown tags are
+    /// transparent containers.
+    fn apply_html(&self, raw: &str, flow: &mut HtmlFlow, out: &mut Vec<Frag>) {
+        for token in tokenize_html(raw) {
+            match token {
+                HtmlToken::Text(text) => {
+                    let text = collapse_spaces(&text);
+                    self.push_flow_text(&text, flow, out);
+                }
+                HtmlToken::End(name) => {
+                    // A close tag restores the state saved when its open
+                    // tag was seen; unmatched close tags are ignored.
+                    if let Some(pos) = flow.open.iter().rposition(|(tag, ..)| *tag == name) {
+                        let (_, style, code) = flow.open.remove(pos);
+                        flow.style = style;
+                        flow.code = code;
+                    }
+                }
+                HtmlToken::Start(tag) => self.apply_html_tag(tag, flow, out),
+            }
+        }
+    }
+
+    /// Applies one start tag to the flow. Every tag pushes a state
+    /// snapshot so its close tag restores exactly the pre-tag state,
+    /// even for transparent containers.
+    fn apply_html_tag(&self, tag: HtmlTag, flow: &mut HtmlFlow, out: &mut Vec<Frag>) {
+        fn save(flow: &mut HtmlFlow, name: String) {
+            flow.open.push((name, flow.style, flow.code));
+        }
+        match tag.name.as_str() {
+            "br" => out.push(Frag::new(
+                "\n",
+                self.text_style(flow.style.size, FontKind::Sans),
+                flow.style.color,
+            )),
+            "img" => {
+                let alt = tag.attr("alt").unwrap_or_default();
+                let label = if alt.is_empty() { "image" } else { alt };
+                let mut frag = Frag::new(
+                    format!("[{label}]"),
                     self.text_style(self.theme.code_size(), FontKind::Mono),
                     self.theme.muted,
-                )),
+                );
+                frag.code = true;
+                out.push(frag);
             }
+            "b" | "strong" => {
+                save(flow, tag.name);
+                flow.style.bold = true;
+            }
+            "i" | "em" | "cite" | "var" | "dfn" => {
+                save(flow, tag.name);
+                flow.style.italic = true;
+            }
+            "del" | "s" | "strike" => {
+                save(flow, tag.name);
+                flow.style.strike = true;
+            }
+            "u" | "ins" => {
+                save(flow, tag.name);
+                flow.style.underline = true;
+            }
+            "a" => {
+                save(flow, tag.name);
+                flow.style.color = self.theme.link;
+                flow.style.underline = true;
+            }
+            "code" | "kbd" | "samp" | "tt" => {
+                save(flow, tag.name);
+                flow.code = true;
+            }
+            // Transparent containers (`span`, `font`, unknown/custom
+            // tags): no visual effect, but still scoped so the matching
+            // close tag behaves.
+            _ => save(flow, tag.name),
         }
     }
 
@@ -1890,24 +2032,207 @@ mod tests {
     }
 
     #[test]
-    fn inline_html_is_shown_literally() {
+    fn inline_html_kbd_renders_as_code_chip() {
         let s = scene("press <kbd>Ctrl</kbd> now");
         let all = texts(&s).join("");
-        assert!(all.contains("<kbd>"), "{all}");
+        // The tag itself never appears; its content is drawn as code.
+        assert!(!all.contains("<kbd>"), "{all}");
         assert!(all.contains("Ctrl"), "{all}");
+        assert!(all.contains("press"), "{all}");
+        let chips = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Text(t) if t.family == FontKind::Mono))
+            .count();
+        assert!(chips >= 1, "kbd content renders in mono: {all}");
     }
 
     #[test]
-    fn html_blocks_render_as_literal_code() {
+    fn inline_html_styling_tags_map_to_text_styles() {
+        let s = scene("<b>bold</b> <i>it</i> <s>gone</s> <u>line</u>");
+        let has = |pred: &dyn Fn(&Draw) -> bool| s.draws.iter().any(pred);
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.bold && t.text == "bold")));
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.italic && t.text == "it")));
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.strike && t.text == "gone")));
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.underline && t.text == "line")));
+    }
+
+    #[test]
+    fn inline_html_strong_and_em_work_too() {
+        let s = scene("<strong>s</strong> and <em>e</em>");
+        let has = |pred: &dyn Fn(&Draw) -> bool| s.draws.iter().any(pred);
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.bold && t.text == "s")));
+        assert!(has(&|d| matches!(d, Draw::Text(t) if t.italic && t.text == "e")));
+    }
+
+    #[test]
+    fn inline_html_br_breaks_the_line() {
+        let s = scene("one<br>two");
+        let all = texts(&s).join("");
+        assert!(all.contains("one"), "{all}");
+        assert!(all.contains("two"), "{all}");
+        // The break becomes an empty frag that forces a new line: "two"
+        // must start a fresh text run at a lower baseline.
+        let ys: Vec<_> = s
+            .draws
+            .iter()
+            .filter_map(|d| match d {
+                Draw::Text(t) if t.text == "one" || t.text == "two" => Some(t.y),
+                _ => None,
+            })
+            .collect();
+        assert_eq!(ys.len(), 2);
+        assert!(ys[1] > ys[0], "two sits below one: {ys:?}");
+    }
+
+    #[test]
+    fn inline_html_img_renders_as_chip() {
+        let s = scene("see <img src=\"x.png\" alt=\"chart\" /> here");
+        let all = texts(&s).join("");
+        assert!(all.contains("[chart]"), "{all}");
+        assert!(!all.contains("<img"), "{all}");
+    }
+
+    #[test]
+    fn inline_html_anchor_uses_link_style() {
+        let s = scene("<a href=\"https://example.com\">site</a>");
+        let links = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Text(t) if t.underline && t.text == "site"))
+            .count();
+        assert!(links >= 1, "anchor text is link-styled");
+    }
+
+    #[test]
+    fn inline_html_comments_vanish() {
+        let s = scene("a<!-- hidden -->b");
+        let all = texts(&s).join("");
+        assert!(all.contains("ab"), "{all}");
+        assert!(!all.contains("hidden"), "{all}");
+    }
+
+    #[test]
+    fn inline_html_unknown_tag_is_transparent() {
+        let s = scene("<my-widget>content</my-widget>");
+        let all = texts(&s).join("");
+        assert!(all.contains("content"), "{all}");
+        assert!(!all.contains("<my-widget>"), "{all}");
+    }
+
+    #[test]
+    fn inline_html_open_close_scopes_across_markdown_nodes() {
+        // The <b> opens before a Markdown strong and closes after it; the
+        // style applies to the text between the tags.
+        let s = scene("<b>goes **with** markdown</b>");
+        let bold: Vec<&str> = s
+            .draws
+            .iter()
+            .filter_map(|d| match d {
+                Draw::Text(t) if t.bold => Some(t.text.as_str()),
+                _ => None,
+            })
+            .collect();
+        let joined = bold.join("");
+        assert!(joined.contains("goes"), "{joined}");
+        assert!(joined.contains("with"), "{joined}");
+        assert!(joined.contains("markdown"), "{joined}");
+    }
+
+    #[test]
+    fn inline_html_entities_decode() {
+        let s = scene("<b>a &amp; b</b>");
+        let all = texts(&s).join("");
+        assert!(all.contains("a & b"), "{all}");
+    }
+
+    #[test]
+    fn html_block_renders_content_not_tags() {
         let s = scene("<div class=\"x\">\n  <p>hi</p>\n</div>");
         let all = texts(&s).join("\n");
-        assert!(all.contains("<div class=\"x\">"), "{all}");
-        // Nothing is executed, so no drawing carries the tag name in a fill.
-        assert!(
-            s.draws
-                .iter()
-                .all(|d| !matches!(d, Draw::Rect(r) if r.w < 1.0)),
-            "unexpected tiny rects"
+        assert!(all.contains("hi"), "{all}");
+        assert!(!all.contains("<div"), "{all}");
+        assert!(!all.contains("<p>"), "{all}");
+    }
+
+    #[test]
+    fn html_block_table_draws_grid() {
+        let s = scene("<table><tr><td>a</td><td>b</td></tr></table>");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("a") && all.contains("b"), "{all}");
+        let rules = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Line(_)))
+            .count();
+        assert!(rules >= 2, "table needs ruling lines: {rules}");
+    }
+
+    #[test]
+    fn html_block_heading_hr_list_quote() {
+        let s = scene(
+            "<h3>T</h3><hr><ul><li>one</li></ul><blockquote><p>q</p></blockquote>",
         );
+        let all = texts(&s).join(" ");
+        assert!(all.contains("T"), "{all}");
+        assert!(all.contains("one"), "{all}");
+        assert!(all.contains("q"), "{all}");
+        assert!(!all.contains("<li>"), "{all}");
+        // hr adds a line, plus table/quote rules; at least the hr here.
+        assert!(s.draws.iter().any(|d| matches!(d, Draw::Line(_))));
+    }
+
+    #[test]
+    fn html_block_pre_renders_as_code_block() {
+        let s = scene("<pre><code>x = 1</code></pre>");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("x = 1"), "{all}");
+        let mono = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Text(t) if t.family == FontKind::Mono))
+            .count();
+        assert!(mono >= 1, "pre content is mono");
+    }
+
+    #[test]
+    fn html_block_interleaves_with_markdown() {
+        let s = scene("before\n\n<div><p>inside</p></div>\n\nafter");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("before"), "{all}");
+        assert!(all.contains("inside"), "{all}");
+        assert!(all.contains("after"), "{all}");
+        // Vertical order: before < inside < after.
+        let ys: Vec<f32> = s
+            .draws
+            .iter()
+            .filter_map(|d| match d {
+                Draw::Text(t) if ["before", "inside", "after"].contains(&t.text.as_str()) => {
+                    Some(t.y)
+                }
+                _ => None,
+            })
+            .collect();
+        assert_eq!(ys.len(), 3, "{ys:?}");
+        assert!(ys[0] < ys[1] && ys[1] < ys[2], "{ys:?}");
+    }
+
+    #[test]
+    fn html_block_inside_blockquote_nests() {
+        let s = scene("> quote\n>\n> <table><tr><td>cell</td></tr></table>");
+        let all = texts(&s).join(" ");
+        assert!(all.contains("quote"), "{all}");
+        assert!(all.contains("cell"), "{all}");
+    }
+
+    #[test]
+    fn html_block_u_tag_underlines() {
+        let s = scene("<p><u>kept</u></p>");
+        let underlined = s
+            .draws
+            .iter()
+            .filter(|d| matches!(d, Draw::Text(t) if t.underline && t.text == "kept"))
+            .count();
+        assert!(underlined >= 1, "u renders underline");
     }
 }

@@ -138,6 +138,12 @@ pub fn html_of_inlines(inlines: &[Inline], out: &mut String, gfm: bool) {
                 html_of_inlines(children, out, gfm);
                 out.push_str("</del>");
             }
+            // Only produced when rendering raw HTML, never by the parser.
+            Inline::Underline(children) => {
+                out.push_str("<u>");
+                html_of_inlines(children, out, gfm);
+                out.push_str("</u>");
+            }
             Inline::Link { text, url, title } => {
                 match title {
                     Some(title) => {
