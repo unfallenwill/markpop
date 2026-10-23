@@ -47,7 +47,8 @@ Consequences:
 - **Self-contained.** Remote images are never fetched; they render as labeled placeholders.
 - **Complete Markdown.** CommonMark 0.31.2 in full (all 652 specification examples) plus the
   GitHub Flavored Markdown extensions (tables, strikethrough, autolink literals, task lists).
-  Raw HTML is kept as data and never executed.
+  Raw HTML is rendered by its meaning (spec-bounded: blocks, structure and inline styles) and
+  never executed.
 
 ## Output formats
 
@@ -291,7 +292,7 @@ page and may overflow. Split such tables in the source or raise `--page-height`.
 | Link definitions | `[label]: url "title"` anywhere in the document, matched case-insensitively |
 | Autolinks | `<https://…>`, `<user@host>`, plus GFM literals (`www.`, `http://`, bare emails) |
 | Images | Inline and reference images, rendered as a placeholder figure with the URL |
-| Raw HTML | Block and inline HTML kept verbatim as data, rendered literally, never executed |
+| Raw HTML | Block and inline HTML per the spec, rendered by meaning — structure (tables, lists, blockquotes, `<pre>`), inline styles (`<b>`, `<i>`, `<code>`, …), links, images; never executed |
 | Blockquotes | Arbitrarily nested, lazy continuation, fences inside |
 | Lists | Ordered/unordered, any start number, tight/loose, nested, lazy continuation |
 | Task lists | GFM `- [ ]` / `- [x]`, drawn as real checkboxes |
@@ -304,8 +305,8 @@ page and may overflow. Split such tables in the source or raise `--page-height`.
 | Table of contents | Opt-in nested outline from headings |
 
 Not supported (by design): remote image fetching, executing HTML (including scripts and
-styles), and syntax highlighting. Unrecognized input degrades to text rather than erroring —
-parsing is total.
+styles), CSS and `style` attributes, and syntax highlighting. Unrecognized input degrades to
+text rather than erroring — parsing is total.
 
 ### Fitting and overflow
 
@@ -341,7 +342,10 @@ src/
     inline.rs     delimiter algorithm, links, autolinks, entities, code spans
     entities.rs   generated HTML5 character reference table
   text.rs         deterministic advance table + greedy line breaking
+  html.rs         raw HTML → node tree/token stream (spec-bounded)
   layout.rs       flow engine: margins, atoms, wrapping, decorations
+    layout/
+      html.rs     raw HTML blocks/inlines → AST nodes for rendering
   columns.rs      multi-column flow (balanced or paginated)
   split.rs        splits oversized blocks (code/lists/quotes/tables)
   canvas.rs       canvas presets: web, A4, A4-large, mobile
@@ -400,7 +404,7 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
 - 300 pseudo-random inputs that must never panic or emit broken markup
 - Markdown conformance: every one of the **652 CommonMark 0.31.2 examples** and all **24 GFM
   extension examples** parse to the structure the specifications prescribe (see below)
-- task lists draw real checkboxes, autolink literals become links, HTML is shown literally
+- task lists draw real checkboxes, autolink literals become links, HTML renders as markup
 
 Current coverage: **94% of lines** across 429 tests (`cargo llvm-cov`), including the two
 specification corpora.
@@ -420,9 +424,9 @@ The GFM dialect is the default. Strict CommonMark is available as `parse::parse_
 (no autolink literals, no task lists), and `parse::parse_with` takes an `Extensions` value
 for anything in between.
 
-Two deliberate differences from an HTML renderer: raw HTML is preserved as data but rendered
-literally (SVG output never executes it or loads its resources), and images become labelled
-placeholders instead of remote fetches.
+Two deliberate differences from an HTML renderer: raw HTML is rendered by its meaning within
+the Markdown spec's boundary — no CSS, no scripts, unknown tags act as transparent containers
+— and images become labelled placeholders instead of remote fetches. Nothing is ever executed.
 
 ## SVG compatibility
 
