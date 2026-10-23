@@ -98,7 +98,7 @@ impl Bitmap {
         if x >= self.width as usize || y >= self.height as usize {
             return;
         }
-        let sa = (color.a as f32 / 255.0) * coverage.clamp(0.0, 1.0);
+        let sa = (color.a as f32 / 255.0) * aa_contrast(coverage);
         if sa <= 0.0 {
             return;
         }
@@ -117,6 +117,23 @@ impl Bitmap {
         }
         self.data[i + 3] = (out_a * 255.0).round().clamp(0.0, 255.0) as u8;
     }
+}
+
+/// Contrast applied to antialiasing coverage before blending.
+///
+/// A linear coverage→alpha mapping renders a half-covered edge pixel as
+/// half-ink gray, which reads as soft compared to browser rasterizers
+/// (DirectWrite/Skia apply a text-contrast stage of their own). Pushing
+/// coverage away from 0.5 toward both ends narrows the visible
+/// transition band without breaking either polarity: dark text gets
+/// crisper on light backgrounds, light text on dark. The map is
+/// monotonic and fixes 0.0, 0.5 and 1.0; `1.0` disables it.
+const AA_CONTRAST: f32 = 2.0;
+
+/// Applies the antialiasing contrast curve to one coverage value.
+fn aa_contrast(coverage: f32) -> f32 {
+    let a = coverage.clamp(0.0, 1.0);
+    (0.5 + (a - 0.5) * AA_CONTRAST).clamp(0.0, 1.0)
 }
 
 /// Rasterizes scenes at a given scale.
@@ -1456,6 +1473,40 @@ mod tests {
             "half coverage should be mid grey: {p:?}"
         );
         assert_eq!(p[3], 255);
+    }
+
+    #[test]
+    fn aa_contrast_preserves_landmarks() {
+        // Endpoints and the midpoint are fixed points; the curve only
+        // shapes the transition band between them.
+        assert_eq!(aa_contrast(0.0), 0.0);
+        assert_eq!(aa_contrast(0.5), 0.5);
+        assert_eq!(aa_contrast(1.0), 1.0);
+    }
+
+    #[test]
+    fn aa_contrast_is_monotonic_with_flat_toe() {
+        // The contrast stage flattens the faintest coverages to zero —
+        // they would render as near-invisible gray anyway, which is part
+        // of why edges read as crisp. Everything above that toe must be
+        // monotonic.
+        assert_eq!(aa_contrast(0.0), 0.0);
+        assert_eq!(aa_contrast(0.1), 0.0, "faint coverage flattens to zero");
+        let mut prev = 0.0;
+        for step in 1..=100 {
+            let a = step as f32 / 100.0;
+            let c = aa_contrast(a);
+            assert!(c >= prev, "must not decrease at coverage {a}");
+            prev = c;
+        }
+    }
+
+    #[test]
+    fn aa_contrast_sharpens_both_polarities() {
+        // Coverage below half is pushed toward 0, above half toward 1,
+        // so dark-on-light and light-on-dark edges both gain contrast.
+        assert!(aa_contrast(0.3) < 0.3);
+        assert!(aa_contrast(0.7) > 0.7);
     }
 
     #[test]
