@@ -891,6 +891,67 @@ mod tests {
     }
 
     #[test]
+    fn run_writes_a_word_document() {
+        let input = scratch("docx.md");
+        let output = scratch("docx-out.docx");
+        std::fs::write(&input, "# Hi\n\nBody text").unwrap();
+        let cli = parse_args(&args(&[
+            input.to_str().unwrap(),
+            "--format",
+            "docx",
+            "-o",
+            output.to_str().unwrap(),
+        ]))
+        .unwrap();
+
+        run(&cli).unwrap();
+
+        let bytes = std::fs::read(&output).unwrap();
+        assert_eq!(&bytes[..4], b"PK\x03\x04");
+        assert!(bytes.len() > 500);
+        let _ = std::fs::remove_file(&input);
+        let _ = std::fs::remove_file(&output);
+    }
+
+    #[test]
+    fn a_word_document_is_never_split_into_pages() {
+        let input = scratch("docx-pages.md");
+        let output = scratch("docx-pages.docx");
+        let body = "paragraph with a few words\n\n".repeat(80);
+        std::fs::write(&input, body).unwrap();
+        let cli = parse_args(&args(&[
+            input.to_str().unwrap(),
+            "--format",
+            "docx",
+            "--page-height",
+            "400",
+            "-o",
+            output.to_str().unwrap(),
+        ]))
+        .unwrap();
+
+        run(&cli).unwrap();
+
+        // Word paginates the flow itself, so exactly one file is written.
+        assert!(std::path::Path::new(output.to_str().unwrap()).exists());
+        assert!(!std::path::Path::new(&numbered_path(output.to_str().unwrap(), 1, "docx")).exists());
+        let _ = std::fs::remove_file(&input);
+        let _ = std::fs::remove_file(&output);
+    }
+
+    #[test]
+    fn the_format_flag_accepts_docx() {
+        assert_eq!(
+            parse_args(&args(&["--format", "docx"])).unwrap().format,
+            OutputFormat::Docx
+        );
+        assert_eq!(
+            parse_args(&args(&["--format", "DOCX"])).unwrap().format,
+            OutputFormat::Docx
+        );
+    }
+
+    #[test]
     fn font_unavailable_is_reported_with_a_hint() {
         let msg = render_message(RenderError::FontUnavailable);
         assert!(msg.contains("font") && msg.contains("--font"), "{msg}");
