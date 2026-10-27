@@ -201,6 +201,8 @@ pub enum RenderError {
     FontUnavailable,
     /// The generated package would be larger than a ZIP entry can describe.
     PackageTooLarge,
+    /// The format is written from the document, not from a laid-out scene.
+    DocumentFormat(OutputFormat),
 }
 
 impl std::fmt::Display for RenderError {
@@ -232,6 +234,11 @@ impl std::fmt::Display for RenderError {
             RenderError::PackageTooLarge => write!(
                 f,
                 "the generated package is too large for a single ZIP entry"
+            ),
+            RenderError::DocumentFormat(format) => write!(
+                f,
+                "the `{:?}` format is written from the document, not from a laid-out scene",
+                format
             ),
         }
     }

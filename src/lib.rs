@@ -11,6 +11,10 @@
 //!   → engine     (src/engine)  → SVG | PNG | WebP bytes
 //! ```
 //!
+//! A Word document is the one format that is not a picture: it is written
+//! from the document itself (`src/docx`), because a Word file is
+//! structure — headings, tables, lists — rather than geometry.
+//!
 //! SVG is serialized directly. Bitmap formats go through a software
 //! rasterizer (`src/raster.rs`) fed by our own TrueType parser
 //! (`src/font.rs`), and are compressed by our own PNG and VP8L encoders —
@@ -176,9 +180,13 @@ pub fn render_pages(markdown: &str, options: &Options) -> Result<Vec<String>, Re
 ///
 /// SVG is produced by the vector engine; PNG and WebP are produced by the
 /// software rasterizer and need a TrueType font (discovered automatically
-/// or supplied via [`Options::font_file`]).
+/// or supplied via [`Options::font_file`]). DOCX is produced from the
+/// document itself, not from a laid-out scene.
 pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, RenderError> {
     options.validate()?;
+    if options.format == OutputFormat::Docx {
+        return docx::render_bytes(markdown, options);
+    }
     let scene = to_scene_with_options(markdown, options);
     let engine = engine::engine_for_render(
         options.format,
@@ -190,8 +198,14 @@ pub fn render_bytes(markdown: &str, options: &Options) -> Result<Vec<u8>, Render
 }
 
 /// Renders one image per page, in the format selected by [`Options::format`].
+///
+/// A Word document is always a single file: Word paginates the flow
+/// itself, so [`Options::page_height`] does not split it.
 pub fn render_bytes_pages(markdown: &str, options: &Options) -> Result<Vec<Vec<u8>>, RenderError> {
     options.validate()?;
+    if options.format == OutputFormat::Docx {
+        return Ok(vec![docx::render_bytes(markdown, options)?]);
+    }
     let engine = engine::engine_for_render(
         options.format,
         options.font_file.as_deref(),
@@ -202,6 +216,21 @@ pub fn render_bytes_pages(markdown: &str, options: &Options) -> Result<Vec<Vec<u
         .iter()
         .map(|scene| engine.encode(scene, &options.theme, options.zoom))
         .collect())
+}
+
+/// Renders Markdown as a Microsoft Word document.
+///
+/// The document uses Word's built-in styles, so the theme does not affect
+/// how it looks — it reads like a file authored in Word. Word paginates
+/// the flow itself, so the canvas options do not apply.
+///
+/// ```
+/// let bytes = markpop::render_docx("# Hello", &markpop::Options::default()).unwrap();
+/// assert_eq!(&bytes[..4], b"PK\x03\x04");
+/// ```
+pub fn render_docx(markdown: &str, options: &Options) -> Result<Vec<u8>, RenderError> {
+    options.validate()?;
+    docx::render_bytes(markdown, options)
 }
 
 /// Lays Markdown out into scenes, one per page, without serializing.
@@ -332,6 +361,29 @@ mod tests {
         // `render_with` is the SVG-text API and ignores the format field.
         let opts = Options::default().with_format(OutputFormat::Png);
         assert!(render_with("x", &opts).unwrap().starts_with("<svg"));
+    }
+
+    #[test]
+    fn render_docx_produces_a_zip() {
+        let bytes = crate::render_docx("# Hi", &Options::default()).unwrap();
+        assert_eq!(&bytes[..4], &[0x50, 0x4b, 0x03, 0x04]);
+    }
+
+    #[test]
+    fn the_byte_api_honours_the_docx_format() {
+        let opts = Options::default().with_format(OutputFormat::Docx);
+        let bytes = crate::render_bytes("# Hi", &opts).unwrap();
+        assert_eq!(&bytes[..4], &[0x50, 0x4b, 0x03, 0x04]);
+    }
+
+    #[test]
+    fn a_word_document_is_never_paginated() {
+        // Word paginates the flow itself, so the page count stays one.
+        let opts = Options::default()
+            .with_format(OutputFormat::Docx)
+            .with_page_height(400.0);
+        let pages = crate::render_bytes_pages(&"paragraph\n\n".repeat(40), &opts).unwrap();
+        assert_eq!(pages.len(), 1);
     }
 
     #[test]

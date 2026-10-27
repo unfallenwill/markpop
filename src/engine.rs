@@ -33,6 +33,11 @@ pub enum OutputFormat {
     Png,
     /// Raster lossless WebP: smallest files for a bitmap.
     Webp,
+    /// A Microsoft Word document (OOXML).
+    ///
+    /// Unlike the other formats this one is written from the document,
+    /// not from a laid-out scene, so it never reaches the scene engines.
+    Docx,
 }
 
 impl OutputFormat {
@@ -42,6 +47,7 @@ impl OutputFormat {
             "svg" => Some(OutputFormat::Svg),
             "png" => Some(OutputFormat::Png),
             "webp" | "webp-lossless" => Some(OutputFormat::Webp),
+            "docx" => Some(OutputFormat::Docx),
             _ => None,
         }
     }
@@ -52,6 +58,7 @@ impl OutputFormat {
             OutputFormat::Svg => "svg",
             OutputFormat::Png => "png",
             OutputFormat::Webp => "webp",
+            OutputFormat::Docx => "docx",
         }
     }
 
@@ -61,12 +68,15 @@ impl OutputFormat {
             OutputFormat::Svg => "image/svg+xml",
             OutputFormat::Png => "image/png",
             OutputFormat::Webp => "image/webp",
+            OutputFormat::Docx => {
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            }
         }
     }
 
     /// Whether this format is raster (needs fonts).
     pub fn is_raster(self) -> bool {
-        !matches!(self, OutputFormat::Svg)
+        !matches!(self, OutputFormat::Svg | OutputFormat::Docx)
     }
 }
 
@@ -129,7 +139,9 @@ impl BitmapEngine {
         mono_family: Option<&str>,
         variations: &[(String, f32)],
     ) -> Result<BitmapEngine, RenderError> {
-        debug_assert!(format.is_raster());
+        if !format.is_raster() {
+            return Err(RenderError::DocumentFormat(format));
+        }
         Ok(BitmapEngine {
             format,
             fonts: load_fonts(font_file, sans_family, mono_family, variations)?,
@@ -167,6 +179,7 @@ impl Engine for BitmapEngine {
             OutputFormat::Png => png::encode(bmp.width, bmp.height, &bmp.data),
             OutputFormat::Webp => webp::encode(bmp.width, bmp.height, &bmp.data),
             OutputFormat::Svg => unreachable!("handled above"),
+            OutputFormat::Docx => unreachable!("a Word document is not written from a scene"),
         }
     }
 }
@@ -198,6 +211,7 @@ pub fn engine_for_render(
 ) -> Result<Box<dyn Engine>, RenderError> {
     match format {
         OutputFormat::Svg => Ok(Box::new(SvgEngine)),
+        OutputFormat::Docx => Err(RenderError::DocumentFormat(format)),
         format => {
             let sans = theme.map(|t| t.sans_family.as_str());
             let mono = theme.map(|t| t.mono_family.as_str());
@@ -284,6 +298,26 @@ mod tests {
             assert_eq!(name.to_ascii_lowercase(), format.extension());
         }
         assert_eq!(OutputFormat::by_name("jpeg"), None);
+    }
+
+    #[test]
+    fn docx_is_a_known_format() {
+        assert_eq!(OutputFormat::by_name("docx"), Some(OutputFormat::Docx));
+        assert_eq!(OutputFormat::Docx.extension(), "docx");
+        assert!(!OutputFormat::Docx.is_raster());
+        assert!(OutputFormat::Docx.mime().contains("wordprocessingml"));
+    }
+
+    #[test]
+    fn a_word_document_is_not_written_from_a_scene() {
+        let Err(err) = engine_for(OutputFormat::Docx, None) else {
+            panic!("a Word document must not come from the scene engines");
+        };
+        assert_eq!(err, RenderError::DocumentFormat(OutputFormat::Docx));
+        let Err(err) = BitmapEngine::new(OutputFormat::Docx, None) else {
+            panic!("a Word document must not come from the scene engines");
+        };
+        assert_eq!(err, RenderError::DocumentFormat(OutputFormat::Docx));
     }
 
     #[test]

@@ -20,7 +20,7 @@ ARGS:
 
 OPTIONS:
     -o, --output <FILE>       Write the output to FILE instead of stdout
-    -f, --format <NAME>       Output format: svg (default), png or webp
+    -f, --format <NAME>       Output format: svg (default), png, webp or docx
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
         --canvas <NAME>       Canvas: web (default), a4, a4-large or mobile
@@ -48,6 +48,7 @@ EXAMPLES:
     markpop README.md -o README.svg
     markpop README.md --format png -o README.png
     markpop README.md --format webp -o README.webp
+    markpop README.md --format docx -o README.docx
     markpop doc.md --theme print --page-height 1123 -o page.svg
     cat doc.md | markpop --theme dark --zoom 150 > doc.svg
 ";
@@ -292,6 +293,9 @@ fn render_message(err: RenderError) -> String {
         RenderError::PackageTooLarge => {
             format!("{err}\n      hint: split the document, or remove its largest image")
         }
+        RenderError::DocumentFormat(_) => {
+            format!("{err}\n      hint: this format is written from the document, not from an image")
+        }
     }
 }
 
@@ -386,7 +390,7 @@ fn parse_args(args: &[String]) -> Result<Cli, String> {
             "-f" | "--format" => {
                 let raw = take_value(args, &mut i, arg)?;
                 cli.format = OutputFormat::by_name(&raw)
-                    .ok_or_else(|| format!("unknown format `{raw}` (expected svg, png or webp)"))?;
+                    .ok_or_else(|| format!("unknown format `{raw}` (expected svg, png, webp or docx)"))?;
             }
             "--font" => {
                 cli.font = Some(take_value(args, &mut i, arg)?);
