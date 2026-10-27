@@ -89,8 +89,9 @@ pub struct RunProps {
 /// An inline picture.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image {
-    /// The relationship ID of the image part.
-    pub rel_id: String,
+    /// The image's position in the package's image list; the writer turns
+    /// it into the relationship ID.
+    pub index: u32,
     /// Width in EMU.
     pub width_emu: u32,
     /// Height in EMU.

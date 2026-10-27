@@ -22,7 +22,7 @@ use crate::scene::{Draw, FontKind, ImageDraw, LineDraw, RectDraw, Scene, SceneIm
 use crate::text::{Metrics, TextStyle, atomize};
 use crate::theme::Theme;
 
-mod html;
+pub(crate) mod html;
 use html::html_blocks;
 
 /// Vertical rhythm constants, expressed in multiples of the base font size.

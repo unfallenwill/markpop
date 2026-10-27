@@ -75,7 +75,7 @@ fn is_block_tag(tag: &str) -> bool {
 
 /// Converts a raw HTML block (as captured by the Markdown block scanner)
 /// into a sequence of Markdown blocks ready for the normal layout paths.
-pub(super) fn html_blocks(raw: &str) -> Vec<Block> {
+pub(crate) fn html_blocks(raw: &str) -> Vec<Block> {
     let mut out = Vec::new();
     push_nodes(&parse_html(raw), &mut out);
     out
