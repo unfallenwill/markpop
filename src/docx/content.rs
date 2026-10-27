@@ -848,4 +848,77 @@ mod tests {
         assert_eq!(percent_decode("plain.png"), "plain.png");
         assert_eq!(percent_decode("100%"), "100%");
     }
+
+    #[test]
+    fn an_unmatched_close_tag_is_ignored() {
+        let c = build("a </b> b\n");
+        assert_eq!(paragraphs(&c).len(), 1);
+    }
+
+    #[test]
+    fn a_self_closing_tag_does_not_open_a_style() {
+        let c = build("a <br/> b\n");
+        assert!(paragraphs(&c)[0]
+            .runs
+            .iter()
+            .any(|r| matches!(r, Run::Break)));
+        // The text after it is not styled.
+        let p = props(paragraphs(&c)[0]);
+        assert!(p.iter().all(|p| !p.bold && !p.italic));
+    }
+
+    #[test]
+    fn an_anchor_without_a_href_stays_plain_text() {
+        let c = build("a <a>b</a>\n");
+        assert!(c.links.is_empty());
+    }
+
+    #[test]
+    fn a_data_url_is_never_fetched() {
+        let c = build("![alt](data:image/png;base64,AAAA)\n");
+        assert!(c.images.is_empty());
+    }
+
+    #[test]
+    fn an_image_resolves_against_the_base_directory() {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!("markpop-docx-base-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a directory");
+        let pixels: Vec<u8> = vec![0; 4 * 4 * 4];
+        std::fs::write(
+            dir.join("pic.png"),
+            crate::encode::png::encode(2, 2, &pixels),
+        )
+        .expect("write");
+        let options = Options::default().with_base_dir(dir.to_string_lossy().to_string());
+        let c = build_with("![alt](pic.png)\n", &options);
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(c.images.len(), 1);
+        assert_eq!(c.images[0].name, "image1.png");
+    }
+
+    #[test]
+    fn an_image_without_a_base_directory_resolves_against_the_working_one() {
+        // The path is used as given; the file does not exist, so the image
+        // degrades rather than failing.
+        let c = build("![alt](pic.png)\n");
+        assert!(c.images.is_empty());
+    }
+
+    #[test]
+    fn two_images_get_two_parts() {
+        let mut dir = std::env::temp_dir();
+        dir.push(format!("markpop-docx-two-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("a directory");
+        let pixels: Vec<u8> = vec![0; 4 * 4 * 4];
+        let png = crate::encode::png::encode(2, 2, &pixels);
+        std::fs::write(dir.join("a.png"), &png).expect("write");
+        std::fs::write(dir.join("b.png"), &png).expect("write");
+        let options = Options::default().with_base_dir(dir.to_string_lossy().to_string());
+        let c = build_with("![a](a.png)\n\n![b](b.png)\n", &options);
+        let _ = std::fs::remove_dir_all(&dir);
+        assert_eq!(c.images.len(), 2);
+        assert_eq!(c.images[0].name, "image1.png");
+        assert_eq!(c.images[1].name, "image2.png");
+    }
 }

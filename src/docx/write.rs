@@ -488,14 +488,11 @@ fn run_element(run: &Run, content: &Content) -> Element {
                         .attr("xml:space", "preserve")
                         .text(text.text.clone()),
                 );
-            match &text.props.link {
-                Some(url) => {
-                    let id = link_id(url, content);
-                    Element::new("w:hyperlink")
-                        .attr("r:id", id)
-                        .attr("w:history", "1")
-                        .child(element)
-                }
+            match text.props.link.as_deref().and_then(|url| link_id(url, content)) {
+                Some(id) => Element::new("w:hyperlink")
+                    .attr("r:id", id)
+                    .attr("w:history", "1")
+                    .child(element),
                 None => element,
             }
         }
@@ -503,11 +500,15 @@ fn run_element(run: &Run, content: &Content) -> Element {
 }
 
 /// The relationship ID of a link target.
-fn link_id(url: &str, content: &Content) -> String {
-    match content.links.iter().position(|link| link == url) {
-        Some(index) => link_rel_id(content.images.len(), index),
-        None => link_rel_id(content.images.len(), 0),
-    }
+///
+/// Returns `None` for a target that was never registered, so a run can
+/// fall back to plain text rather than point at a missing relationship.
+fn link_id(url: &str, content: &Content) -> Option<String> {
+    content
+        .links
+        .iter()
+        .position(|link| link == url)
+        .map(|index| link_rel_id(content.images.len(), index))
 }
 
 /// The run properties, in the order the schema requires.

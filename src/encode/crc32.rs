@@ -87,4 +87,11 @@ mod tests {
     fn a_single_bit_change_changes_the_checksum() {
         assert_ne!(crc32(b"hello"), crc32(b"hellp"));
     }
+
+    #[test]
+    fn the_default_is_a_fresh_checksum() {
+        let mut c = Crc32::default();
+        c.update(b"123456789");
+        assert_eq!(c.finish(), 0xCBF4_3926);
+    }
 }

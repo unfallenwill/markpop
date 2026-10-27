@@ -1,12 +1,13 @@
 # MarkPop
 
-**MarkPop** renders Markdown **directly to SVG, PNG or lossless WebP** — no HTML, no headless
-browser, no screenshots, no image libraries. Pure Rust, zero dependencies.
+**MarkPop** renders Markdown **directly to SVG, PNG, lossless WebP or Word** — no HTML, no
+headless browser, no screenshots, no image libraries. Pure Rust, zero dependencies.
 
 ```bash
 cat README.md | markpop > README.svg          # vector (default)
 markpop doc.md --format png  -o doc.png       # bitmap, wide compatibility
 markpop doc.md --format webp -o doc.webp      # bitmap, smaller files
+markpop doc.md --format docx -o doc.docx      # editable Word document
 ```
 
 <img src="examples/showcase/showcase.svg" width="800" alt="A Markdown document rendered to SVG by MarkPop">
@@ -32,6 +33,7 @@ Markdown text
   → parse      (src/parse)   → Document  (src/ast.rs)
   → layout     (src/layout)  → Scene     (src/scene.rs)
   → engine     (src/engine)  → SVG | PNG | WebP
+              → docx        (src/docx)   → Word document
 ```
 
 Consequences:
@@ -39,6 +41,8 @@ Consequences:
 - **Three engines, one layout.** SVG is serialized directly; PNG and WebP are produced by a
   built-in software rasterizer (TrueType parser + anti-aliased scanline filler) and our own
   deflate/VP8L encoders. No browser, no system APIs, no C libraries.
+- **Word documents too.** A `.docx` is written from the document rather than the layout,
+  because a Word file is structure — headings, tables, lists — not geometry.
 - **Fast and tiny.** One binary, zero dependencies, no JS runtime.
 - **Vector by default.** Text stays text — selectable, searchable, crisp at any zoom.
 - **Deterministic.** Same input ⇒ same bytes, on every platform. Layout advances come from a
@@ -59,6 +63,7 @@ Consequences:
 | `svg` (default) | `SvgEngine` — direct serializer | You want vectors: crisp at any zoom, selectable text, tiny files |
 | `png` | `BitmapEngine` + PNG encoder | You need the widest compatibility (docs, chat, office tools) |
 | `webp` | `BitmapEngine` + VP8L lossless encoder | You need a bitmap with the smallest size |
+| `docx` | `src/docx` — OOXML writer | You need an editable Word document |
 
 Bitmap engines parse a TrueType font at runtime (discovered from the system, or supplied with
 `--font <FILE>`); SVG needs no font because the viewer resolves the family stack. For the
@@ -67,6 +72,22 @@ pixel-identical images.
 
 The `Engine` trait (`src/engine.rs`) is the extension point: a new format only needs a
 serializer over `Scene`, or an encoder over the raster `Bitmap`.
+
+### Word documents
+
+`--format docx` writes a real Microsoft Word document: Office Open XML in a ZIP container,
+produced by this crate's own deflate encoder and ZIP writer — no new dependency.
+
+It is a document, not a picture of a document. Headings are `Heading1`…`Heading6`, quotes are
+`Quote`, lists are real Word numbering, tables are real `w:tbl` elements, links are real
+hyperlinks, code blocks use the `HTMLPreformatted` style, and local PNG/BMP images are embedded
+as image parts (Word does not accept BMP, so those are converted with this crate's own
+encoder). `--toc` writes a TOC field that Word builds and refreshes when the file opens.
+
+Two things deliberately do not carry over, because they belong to the picture and not to the
+document: the canvas (Word paginates the flow itself, on A4 with one-inch margins) and the
+theme (the document uses Word's own built-in styles, so it looks like a file authored in Word).
+A malformed image degrades to its alt text; nothing in a document can fail the render.
 
 ## Install
 
@@ -85,7 +106,7 @@ ARGS:
 
 OPTIONS:
     -o, --output <FILE>       Write the output to FILE instead of stdout
-    -f, --format <NAME>       Output format: svg (default), png or webp
+    -f, --format <NAME>       Output format: svg (default), png, webp or docx
     -z, --zoom <PERCENT>      Output scale as a percentage (default: 100)
         --theme <NAME>        Color theme: light (default), dark or print
         --canvas <NAME>       Canvas: web (default), a4, a4-large or mobile
@@ -118,6 +139,7 @@ markpop doc.md --canvas a4 -o page.svg                          # A4, auto-pagin
 markpop doc.md --canvas mobile -o long.svg                     # 750px long image
 markpop doc.md --theme print --page-height 1123 -o page.svg   # page-1.svg, page-2.svg, …
 markpop doc.md --format webp --font myfont.ttf -o doc.webp
+markpop doc.md --format docx --toc -o doc.docx               # editable Word document
 markpop doc.md --font SegUIVar.ttf --variation wght=700 -o doc.png   # bold instance
 markpop doc.md --columns 2 --column-gap 28 -o doc.svg          # balanced columns
 markpop doc.md --columns 3 --page-height 1123 -o page.svg      # 3 columns per page
@@ -227,6 +249,9 @@ assert!(scene.find_text("Hi").is_some());
 use markpop::OutputFormat;
 let opts = markpop::Options::default().with_format(OutputFormat::Webp);
 let bytes: Vec<u8> = markpop::render_bytes("# Hi", &opts)?;
+
+// A Word document, written from the document rather than the layout.
+let bytes: Vec<u8> = markpop::render_docx("# Hi", &markpop::Options::default())?;
 
 // Long documents: pagination + table of contents.
 let opts = markpop::Options::default()
@@ -338,6 +363,7 @@ Every stage is a pure function with its own tests:
 | `raster` | `Scene` + fonts + zoom → `Bitmap` | pixels, glyph ink, clipping |
 | `encode` | `Bitmap` → PNG / WebP bytes | headers, CRCs, pixel round-trip |
 | `engine` | `Scene` → bytes | format dispatch |
+| `docx` | `Document` → OOXML parts → ZIP bytes | part integrity, Word round trip |
 
 ```
 src/
@@ -364,8 +390,17 @@ src/
   raster.rs       anti-aliased scanline filler + glyph compositing
   encode/
     deflate.rs    LZ77 + fixed-Huffman deflate, zlib, CRC/Adler
+    crc32.rs      CRC-32 (IEEE), shared by the PNG and ZIP writers
     png.rs        adaptive filtering + chunk writer
     webp.rs       VP8L: Huffman codes, LZ77 tokens, RIFF container
+  docx/
+    mod.rs        part assembly: the Word package
+    model.rs      the Word document model (paragraphs, runs, tables, images)
+    content.rs    Markdown AST → Word model
+    write.rs      Word model → OOXML parts (document, styles, numbering, …)
+    xml.rs        minimal XML writer
+    media.rs      image embedding: decode → PNG, EMU sizing
+    zip.rs        ZIP container writer and reader
   theme.rs        all visual constants, as plain data
   options.rs      zoom, format, pagination, TOC, validation, errors
 ```
@@ -376,7 +411,8 @@ src/
 - **New syntax** — add a variant to `ast::Block`/`ast::Inline`, emit it from `parse`, and handle
   it in `layout`. Both matches are exhaustive, so the compiler lists the work.
 - **New output format** — implement `engine::Engine`; it only needs `Scene` (vector) or
-  `raster::Bitmap` (bitmap).
+  `raster::Bitmap` (bitmap). A format that is *structure* rather than geometry (like
+  `docx`) is written from the AST instead.
 - **Better metrics** — `text::Metrics` is the only place that decides how wide a character is.
 
 ## Testing
@@ -411,8 +447,12 @@ font parsing, rasterizer pixels, encoder containers) plus end-to-end properties:
 - Markdown conformance: every one of the **652 CommonMark 0.31.2 examples** and all **24 GFM
   extension examples** parse to the structure the specifications prescribe (see below)
 - task lists draw real checkboxes, autolink literals become links, HTML renders as markup
+- Word output: the package's parts agree with each other (every relationship, style and
+  numbering instance resolves), the XML parses with .NET's parser, the ZIP opens with .NET's
+  reader, and **Microsoft Word itself** opens the document, finds its tables, lists, links
+  and pictures, and builds the table of contents field
 
-Current coverage: **94% of lines** across 483 tests (`cargo llvm-cov`), including the two
+Current coverage: **93% of lines** across 652 tests (`cargo llvm-cov`), including the two
 specification corpora.
 
 ## Markdown conformance

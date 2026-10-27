@@ -137,12 +137,13 @@ impl Element {
         out.push_str(&self.tag);
         out.push('>');
     }
+}
 
-    /// Renders the element to a string.
-    pub fn to_string(&self) -> String {
+impl std::fmt::Display for Element {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut out = String::new();
         self.write(&mut out);
-        out
+        f.write_str(&out)
     }
 }
 
