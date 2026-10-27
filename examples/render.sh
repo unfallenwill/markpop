@@ -52,6 +52,11 @@ echo "rendering with $bin"
 # Feature showcase: the same document through all three engines.
 render showcase showcase
 
+# The showcase as an editable Word document. A .docx is not paginated the
+# way an image is, so only the showcase carries one.
+"$bin" examples/showcase/source.md -f docx -o examples/showcase/showcase.docx
+echo "  examples/showcase/showcase.docx"
+
 # Use cases.
 render blog-post  blog-post
 render dark-docs  dark-docs  --theme dark
@@ -102,6 +107,12 @@ if [ "$check" = "1" ]; then
       fi
     done
   done
+
+  # The showcase also ships as a Word document.
+  if [ ! -s examples/showcase/showcase.docx ]; then
+    echo "error: examples/showcase/showcase.docx is missing" >&2
+    status=1
+  fi
 
   [ "$status" = "0" ] && echo "check ok: examples/ is up to date"
   exit "$status"

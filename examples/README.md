@@ -12,6 +12,10 @@ Each document is rendered in all three output formats:
 | `.png` | `BitmapEngine` + PNG encoder | you need the widest compatibility (docs, chat, office tools) |
 | `.webp` | `BitmapEngine` + VP8L lossless encoder | you need a bitmap with the smallest size |
 
+The showcase is also shipped as a Word document (`showcase/showcase.docx`), because a
+`.docx` is a document rather than an image: it is not paginated the way a picture is, and
+only that one example carries it.
+
 Regenerate all of them with:
 
 ```bash
@@ -36,7 +40,7 @@ not the system font, so the page count and the line breaks are the same everywhe
 
 | Scenario | Source | Flags | Output |
 |---|---|---|---|
-| Feature showcase | [`showcase/source.md`](showcase/source.md) | — | `showcase.{svg,png,webp}` |
+| Feature showcase | [`showcase/source.md`](showcase/source.md) | — | `showcase.{svg,png,webp,docx}` |
 | Blog post | [`blog-post/source.md`](blog-post/source.md) | — | `blog-post.{svg,png,webp}` |
 | Operations handbook | [`handbook/source.md`](handbook/source.md) | `--canvas a4` | `page-{1,2,3}.{svg,png,webp}` |
 | Dark documentation | [`dark-docs/source.md`](dark-docs/source.md) | `--theme dark` | `dark-docs.{svg,png,webp}` |
