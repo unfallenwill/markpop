@@ -7,6 +7,7 @@
 
 use std::io::Write;
 
+use crate::encode::crc32::Crc32;
 use crate::encode::deflate;
 
 const SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A];
@@ -136,54 +137,6 @@ fn write_chunk(out: &mut Vec<u8>, kind: &[u8; 4], data: &[u8]) {
     crc.update(kind);
     crc.update(data);
     let _ = out.write_all(&crc.finish().to_be_bytes());
-}
-
-/// CRC-32 (IEEE) used by PNG chunks.
-pub struct Crc32 {
-    value: u32,
-}
-
-impl Crc32 {
-    /// Starts a new checksum.
-    pub fn new() -> Crc32 {
-        Crc32 { value: 0xFFFF_FFFF }
-    }
-
-    /// Feeds bytes into the checksum.
-    pub fn update(&mut self, data: &[u8]) {
-        for &b in data {
-            let idx = ((self.value ^ b as u32) & 0xFF) as usize;
-            self.value = CRC_TABLE[idx] ^ (self.value >> 8);
-        }
-    }
-
-    /// Finalizes the checksum.
-    pub fn finish(self) -> u32 {
-        self.value ^ 0xFFFF_FFFF
-    }
-}
-
-/// CRC table, computed at first use.
-static CRC_TABLE: std::sync::LazyLock<[u32; 256]> = std::sync::LazyLock::new(|| {
-    let mut table = [0u32; 256];
-    for (i, entry) in table.iter_mut().enumerate() {
-        let mut c = i as u32;
-        for _ in 0..8 {
-            c = if c & 1 != 0 {
-                0xEDB8_8320 ^ (c >> 1)
-            } else {
-                c >> 1
-            };
-        }
-        *entry = c;
-    }
-    table
-});
-
-impl Default for Crc32 {
-    fn default() -> Self {
-        Crc32::new()
-    }
 }
 
 #[cfg(test)]

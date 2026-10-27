@@ -199,6 +199,8 @@ pub enum RenderError {
     InvalidColumns(u32),
     /// Bitmap output was requested but no usable TrueType font was found.
     FontUnavailable,
+    /// The generated package would be larger than a ZIP entry can describe.
+    PackageTooLarge,
 }
 
 impl std::fmt::Display for RenderError {
@@ -226,6 +228,10 @@ impl std::fmt::Display for RenderError {
             RenderError::FontUnavailable => write!(
                 f,
                 "no TrueType font available for bitmap output: install a system font or pass one explicitly"
+            ),
+            RenderError::PackageTooLarge => write!(
+                f,
+                "the generated package is too large for a single ZIP entry"
             ),
         }
     }

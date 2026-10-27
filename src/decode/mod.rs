@@ -9,7 +9,8 @@ mod bmp;
 mod inflate;
 mod png;
 
-pub(crate) use png::DecodedPng;
+pub(crate) use inflate::inflate;
+pub(crate) use png::{DecodedPng, SIGNATURE};
 
 /// Hard cap on total pixels; a corrupt or hostile header must not make
 /// us allocate gigabytes. Shared with the BMP decoder.

@@ -289,6 +289,9 @@ fn render_message(err: RenderError) -> String {
         RenderError::FontUnavailable => {
             format!("{err}\n      hint: install a system font, or pass one with --font <FILE.ttf>")
         }
+        RenderError::PackageTooLarge => {
+            format!("{err}\n      hint: split the document, or remove its largest image")
+        }
     }
 }
 

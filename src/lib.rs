@@ -102,6 +102,7 @@
 pub mod ast;
 pub mod canvas;
 pub mod color;
+pub mod docx;
 pub mod encode;
 pub mod engine;
 pub mod font;

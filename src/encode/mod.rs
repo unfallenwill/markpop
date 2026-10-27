@@ -4,6 +4,7 @@
 //! by the rasterizer, which keeps the output engines independent of each
 //! other and of the layout engine.
 
+pub mod crc32;
 pub mod deflate;
 pub mod png;
 pub mod webp;
